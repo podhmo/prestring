@@ -168,8 +168,11 @@ class Evaluator(object):
         elif isinstance(code, (list, tuple)):
             self.evaluate(code, i + 1)
         else:
+            sentence = str(code)
+            if sentence == "":
+                return
             self.evaluate_indent(i)
-            self.io.write(str(code))  # Sentence is also ok.
+            self.io.write(sentence)  # Sentence is also ok.
 
     def evaluate(self, frame, i=0):
         if not frame:
@@ -187,4 +190,4 @@ class Evaluator(object):
             self.io.write(self.indent)
 
     def __str__(self):
-        return self.io.getvalue()
+        return self.io.getvalue().rstrip()
