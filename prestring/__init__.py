@@ -78,12 +78,14 @@ class HasScope(object):
         return self.current
 
     def pop_frame(self):
-        self.current = []
+        current = []
         self.level -= 1
         target = self.framelist
         for i in range(self.level):
             target = target[-1]
-        target.append(self.current)
+        if not target[-1]:
+            target.append(current)
+        self.current = target[-1]
         return self.current
 
     @contextlib.contextmanager

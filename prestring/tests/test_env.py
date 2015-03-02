@@ -21,10 +21,10 @@ class EnvTests(unittest.TestCase):
     def test2(self):
         m = self._makeOne()
         m.stmt("foo")
-        m.push_state()
+        m.push_frame()
         m.stmt("boo")
         m.stmt("boo")
-        m.pop_state()
+        m.pop_frame()
         m.stmt("foo")
         result = str(m).replace("    ", "@").split("\n")
         self.assertEqual(result, ["foo", "@boo", "@boo", "foo"])
@@ -32,13 +32,13 @@ class EnvTests(unittest.TestCase):
     def test3(self):
         m = self._makeOne()
         m.stmt("foo")
-        m.push_state()
+        m.push_frame()
         m.stmt("boo")
-        m.push_state()
+        m.push_frame()
         m.stmt("bar")
-        m.pop_state()
+        m.pop_frame()
         m.stmt("boo")
-        m.pop_state()
+        m.pop_frame()
         m.stmt("foo")
         result = str(m).replace("    ", "@").split("\n")
         self.assertEqual(result, ["foo", "@boo", "@@bar", "@boo", "foo"])
@@ -64,7 +64,7 @@ class EnvTests(unittest.TestCase):
 
         pub.subscribe("import bar")
         result = str(m).replace("    ", "@").split("\n")
-        self.assertEqual(result, ["import foo", "import bar", "@something", "@something", ""])
+        self.assertEqual(result, ["import foo", "import bar", "@something", "@something"])
 
     def test_pubsub__with_indented(self):
         m = self._makeOne()
@@ -76,7 +76,7 @@ class EnvTests(unittest.TestCase):
 
         pub.subscribe("import boo")
         result = str(m).replace("    ", "@").split("\n")
-        self.assertEqual(result, ['import foo', '@something', '@import bar', '@import boo', '@something', ''])
+        self.assertEqual(result, ['import foo', '@something', '@import bar', '@import boo', '@something'])
 
     def test_pubsub__with_scope(self):
         m = self._makeOne()
@@ -90,5 +90,5 @@ class EnvTests(unittest.TestCase):
         with pub.scope():
             pub.subscribe("print('boo')")
         result = str(m).replace("    ", "@").split("\n")
-        expected = ['import foo', '@something', '@#--- TBD ---', '@def boo()', "@@print('boo')", '@something', '']
+        expected = ['import foo', '@something', '@#--- TBD ---', '@def boo()', "@@print('boo')", '@something']
         self.assertEqual(result, expected)

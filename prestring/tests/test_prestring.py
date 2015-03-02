@@ -45,5 +45,5 @@ class PreStringTests(unittest.TestCase):
             with target.scope():
                 target.stmt("return n * f(n - 1)")
         result = str(target).split("\n")
-        expected = ["def f(n)", "    if n <= 0:", "        return 1", "    else:", "        return n * f(n - 1)", ""]
+        expected = ["def f(n)", "    if n <= 0:", "        return 1", "    else:", "        return n * f(n - 1)"]
         self.assertEqual(result, expected)
