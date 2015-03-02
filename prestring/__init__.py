@@ -68,7 +68,7 @@ class HasScope(object):
         self.level = 0
         self.current = self.framelist[-1]
 
-    def push_state(self):
+    def push_frame(self):
         self.current = []
         self.level += 1
         target = self.framelist
@@ -77,7 +77,7 @@ class HasScope(object):
         target.append(self.current)
         return self.current
 
-    def pop_state(self):
+    def pop_frame(self):
         self.current = []
         self.level -= 1
         target = self.framelist
@@ -88,9 +88,9 @@ class HasScope(object):
 
     @contextlib.contextmanager
     def scope(self):
-        self.push_state()
+        self.push_frame()
         yield
-        self.pop_state()
+        self.pop_frame()
 
 
 class Sentence(object):
@@ -105,6 +105,28 @@ class Sentence(object):
         return "".join(self.value)
 
 
+class Env(HasScope):
+    def __init__(self, evaluator_factory=None):
+        super(Env, self).__init__()
+        self.evaluator_factory = evaluator_factory or Evaluator
+
+    def stmt(self, value):
+        ps = PreString(value)
+        self.current.append(ps)
+        return ps
+
+    def apply(self):
+        evaluator = self.evaluator_factory()
+        for frame in self.framelist[:-1]:
+            evaluator.evaluate(frame)
+            evaluator.evaluate_newline()
+        evaluator.evaluate(self.framelist[-1])
+        return evaluator
+
+    def __str__(self):
+        return str(self.apply())
+
+
 class SubEnv(HasScope):
     def __init__(self, evaluator):
         super(SubEnv, self).__init__()
@@ -116,9 +138,9 @@ class SubEnv(HasScope):
             if v is NEWLINE:
                 self.current.append(Sentence())
             elif v is INDENT:
-                self.push_state()
+                self.push_frame()
             elif v is UNINDENT:
-                self.pop_state()
+                self.pop_frame()
             else:
                 try:
                     self.current[-1].eat(v)
@@ -164,25 +186,3 @@ class Evaluator(object):
 
     def __str__(self):
         return self.io.getvalue()
-
-
-class Env(HasScope):
-    def __init__(self, evaluator_factory=None):
-        super(Env, self).__init__()
-        self.evaluator_factory = evaluator_factory or Evaluator
-
-    def stmt(self, value):
-        ps = PreString(value)
-        self.current.append(ps)
-        return ps
-
-    def apply(self):
-        evaluator = self.evaluator_factory()
-        for frame in self.framelist[:-1]:
-            evaluator.evaluate(frame)
-            evaluator.evaluate_newline()
-        evaluator.evaluate(self.framelist[-1])
-        return evaluator
-
-    def __str__(self):
-        return str(self.apply())
