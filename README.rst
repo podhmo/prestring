@@ -41,7 +41,7 @@ output is.
 pub/sub actions in code generation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. code-block::
+.. code-block:: python
 
   from prestring.python import PythonModule
 
@@ -59,7 +59,7 @@ pub/sub actions in code generation
 
   print(m)
 
-.. code-block::
+.. code-block:: python
 
   # this is import area ######
   from foo import Foo

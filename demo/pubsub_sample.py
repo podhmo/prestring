@@ -13,8 +13,8 @@ pub.stmt("from foo import Foo")
 m.sep()
 m.stmt("do_action()")
 
-print(m)
 
+print(m)
 """
 # this is import area ######
 from foo import Foo

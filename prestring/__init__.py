@@ -60,6 +60,10 @@ class PreString(object):
     def after(self, value):
         self.value.append(value)
 
+    @property
+    def level(self):
+        return 0  # xxx
+
 
 class HasScope(object):
     def __init__(self, evaluator_factory=None):
