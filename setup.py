@@ -29,7 +29,7 @@ testing_extras = tests_require + [
 ]
 
 setup(name='prestring',
-      version='0.2.0a',
+      version='0.2.0',
       description='source code generation library (with overuse with-syntax)',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
