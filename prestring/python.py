@@ -34,6 +34,9 @@ class PythonModule(Module):
     def sep(self):
         self.body.append(PEPNEWLINE)
 
+    def method(self, name, *args, **kwargs):
+        return self.def_(name, "self", *args, **kwargs)
+
     @contextlib.contextmanager
     def def_(self, name, *args, **kwargs):
         ps = list(args)
