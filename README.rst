@@ -47,27 +47,27 @@ string injection after writing string
 
   m = PythonModule()
 
-  subm = m.submodule("# this is import area ######")
-  m.stmt("############################")
-  m.sep()
-  m.stmt("do_action()")
-  m.sep()
-  m.stmt("use_foo_module()")
-  subm.stmt("from foo import Foo")  # string injection
-  m.sep()
-  m.stmt("do_action()")
+  with m.def_("setup", "config"):
+      import_area = m.submodule()
+      m.sep()
+      for k in ["a", "b", "c", "d", "e"]:
+          import_area.stmt("from .plugins import {k}_plugin", k=k)
+          m.stmt("config.activate({}_plugin)", k)
 
   print(m)
 
+
 .. code-block:: python
 
-  # this is import area ######
-  from foo import Foo
-  ############################
+  def setup(config):
+      from .plugins import a_plugin
+      from .plugins import b_plugin
+      from .plugins import c_plugin
+      from .plugins import d_plugin
+      from .plugins import e_plugin
 
-  do_action()
-
-  use_foo_module()
-
-  do_action()
-
+      config.activate(a_plugin)
+      config.activate(b_plugin)
+      config.activate(c_plugin)
+      config.activate(d_plugin)
+      config.activate(e_plugin)
