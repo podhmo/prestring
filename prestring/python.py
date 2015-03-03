@@ -63,8 +63,8 @@ class PythonModule(Module):
             yield
 
     @contextlib.contextmanager
-    def else_(self, expr):
-        self.stmt("else {}:", expr)
+    def else_(self):
+        self.stmt("else:")
         with self.scope():
             yield
 
@@ -99,6 +99,11 @@ class PythonModule(Module):
                     self.stmt("__metaclass__ = {}".format(metaclass))
         self.sep()
 
+    @contextlib.contextmanager
+    def main(self):
+        with self.if_('__name__ == "__main__"'):
+            yield
+
     # sentence
     def break_(self):
         self.stmt("break")
@@ -123,3 +128,4 @@ class PythonModule(Module):
 
     def pass_(self):
         self.stmt("pass")
+

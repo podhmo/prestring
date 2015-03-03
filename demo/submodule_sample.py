@@ -7,7 +7,7 @@ with m.def_("setup", "config"):
     import_area = m.submodule()
     m.sep()
     for k in ["a", "b", "c", "d", "e"]:
-        import_area.stmt("from .plugins import {k}_plugin", k=k)
+        import_area.from_(".plugins", "{}_plugin".format(k))
         m.stmt("config.activate({}_plugin)", k)
 
 
