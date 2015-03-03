@@ -207,13 +207,16 @@ class Module(object):
         self.parser = parser or Parser(framelist_factory=FrameList)
         self.application = application or Application()
 
-    def submodule(self, value):
+    def submodule(self, value=""):
         submodule = self.__class__(indent=self.indent,
                                    newline=self.newline,
                                    lexer=self.lexer,
                                    parser=self.parser,
                                    application=self.application)
-        submodule.stmt(value)
+        if value == "":
+            submodule.append(value)
+        else:
+            submodule.stmt(value)
         self.body.append(submodule.body)
         return submodule
 

@@ -32,9 +32,6 @@ class PythonModule(Module):
         self.body.append(NEWLINE)
 
     def sep(self):
-        self.body.append(NEWLINE)
-
-    def pepsep(self):
         self.body.append(PEPNEWLINE)
 
     @contextlib.contextmanager
@@ -45,7 +42,7 @@ class PythonModule(Module):
         self.stmt("def {}({}):", name, ", ".join(ps))
         with self.scope():
             yield
-        self.pepsep()
+        self.sep()
 
     @contextlib.contextmanager
     def if_(self, expr):
