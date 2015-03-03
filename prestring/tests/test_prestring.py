@@ -34,16 +34,3 @@ class PreStringTests(unittest.TestCase):
         result = target + self._makeOne("boo")
         result = result + result
         self.assertEqual(str(result), "fooboofooboo")
-
-    def test6(self):
-        target = self._makeOne("def f(n)")
-        with target.scope():
-            target.stmt("if n <= 0:")
-            with target.scope():
-                target.stmt("return 1")
-            target.stmt("else:")
-            with target.scope():
-                target.stmt("return n * f(n - 1)")
-        result = str(target).split("\n")
-        expected = ["def f(n)", "    if n <= 0:", "        return 1", "    else:", "        return n * f(n - 1)"]
-        self.assertEqual(result, expected)

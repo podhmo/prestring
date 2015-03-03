@@ -5,72 +5,102 @@ import contextlib
 from io import StringIO
 
 
-NEWLINE = object()
-INDENT = object()
-UNINDENT = object()
+class Symbol(object):
+    def __init__(self, name):
+        self.name = name
+
+    def __repr__(self):
+        return "<{self.__class__.__name__} {self.name!r}>".format(self=self)
+
+NEWLINE = Symbol("NEWLINE")
+INDENT = Symbol("INDENT")
+UNINDENT = Symbol("UNINDENT")
 
 
 class PreString(object):
     def __init__(self, value, other=None):
-        self.value = [value]
+        self.body = [value]
         if other is not None:
-            self.value.append(other)
-
-    def subscribe(self, value):
-        self.value.append(NEWLINE)
-        self.value.append(value)
-        return self
-
-    stmt = subscribe
+            self.body.append(other)
 
     def __iadd__(self, value):
-        self.value.append(value)
+        self.body.append(value)
         return self
 
-    @contextlib.contextmanager
-    def scope(self):
-        self.value.append(INDENT)
-        yield
-        self.value.append(UNINDENT)
-
-    def apply(self):
-        evalator = Evaluator()
-        evalator._evaluate(self, 0)
-        return evalator
-
-    def __str__(self):
-        return str(self.apply())
-
     def __add__(self, value):
-        return PreString(self, value)
+        return self.__class__(self, value)
 
-    newline = "\n"
-    indent = "    "
-
-    def iterate(self):
-        for v in self.value:
+    def __iter__(self):
+        for v in self.body:
             if isinstance(v, PreString):
-                yield from v.iterate()
+                yield from iter(v)
             else:
                 yield v
 
+    def __str__(self):
+        return "".join(str(v) for v in self)
+
     def before(self, value):
-        self.value.insert(0, value)
+        self.body.insert(0, value)
 
     def after(self, value):
-        self.value.append(value)
+        if self.body[-1] == NEWLINE:
+            self.body.pop()
+            self.append(value)
+            self.body.append(NEWLINE)
+        else:
+            self.append(value)
 
-    @property
-    def level(self):
-        return 0  # xxx
+    def append(self, value):
+        self.body.append(value)
 
 
-class HasScope(object):
-    def __init__(self, evaluator_factory=None):
-        self.evaluator_factory = evaluator_factory or Evaluator
+class Sentence(object):
+    def __init__(self):
+        self.body = []
+
+    def eat(self, v):
+        self.body.append(v)
+        return self
+
+    def is_empty(self):
+        return not self.body
+
+    def __str__(self):
+        return "".join(self.body)
+
+
+class Lexer(object):
+    def __init__(self, container_factory, sentence_factory):
+        self.container_factory = container_factory or list
+        self.sentence_factory = sentence_factory or Sentence
+
+    def __call__(self, prestring):
+        tokens = self.container_factory()
+        sentence = self.sentence_factory()
+
+        for v in prestring:
+            if v is NEWLINE:
+                if not sentence.is_empty():
+                    tokens.append(sentence)
+                    sentence = self.sentence_factory()
+            elif v is INDENT or v is UNINDENT:
+                tokens.append(v)
+            else:
+                sentence.eat(v)
+        if not sentence.is_empty():
+            tokens.append(sentence)
+        return tokens
+
+
+class FrameList(object):
+    def __init__(self):
         self.framelist = [[]]
         self.level = 0
         self.current = self.framelist[-1]
+
+    def __getitem__(self, k):
+        return self.framelist[k]
 
     def push_frame(self):
         self.current = []
@@ -92,91 +122,38 @@ class HasScope(object):
         self.current = target[-1]
         return self.current
 
-    @contextlib.contextmanager
-    def scope(self):
-        self.push_frame()
-        yield
-        self.pop_frame()
+
+class Parser(object):
+    def __init__(self, framelist_factory):
+        self.framelist_factory = framelist_factory
+
+    def __call__(self, tokens):
+        framelist = self.framelist_factory()
+        for v in tokens:
+            if v is INDENT:
+                framelist.push_frame()
+            elif v is UNINDENT:
+                framelist.pop_frame()
+            else:
+                framelist.current.append(v)
+            # todo: command?
+        return framelist
 
 
-class Sentence(object):
-    def __init__(self):
-        self.value = []
-
-    def eat(self, v):
-        self.value.append(v)
-        return self
-
-    def __str__(self):
-        return "".join(self.value)
-
-
-class Env(HasScope):
-    def __init__(self, evaluator_factory=None):
-        super(Env, self).__init__()
-        self.evaluator_factory = evaluator_factory or Evaluator
-
-    def stmt(self, value):
-        ps = PreString(value)
-        self.current.append(ps)
-        return ps
-
-    def apply(self):
-        evaluator = self.evaluator_factory()
-        for frame in self.framelist[:-1]:
+class Application(object):
+    def __call__(self, framelist, evaluator):
+        for frame in framelist[:-1]:
             evaluator.evaluate(frame)
             evaluator.evaluate_newline()
-        evaluator.evaluate(self.framelist[-1])
+        evaluator.evaluate(framelist[-1])
         return evaluator
-
-    def __str__(self):
-        return str(self.apply())
-
-
-class SubEnv(HasScope):
-    def __init__(self, evaluator):
-        super(SubEnv, self).__init__()
-        self.evaluator = evaluator
-        self.current.append(Sentence())
-
-    def apply(self, tokens, i):
-        for v in tokens:
-            if v is NEWLINE:
-                self.current.append(Sentence())
-            elif v is INDENT:
-                self.push_frame()
-            elif v is UNINDENT:
-                self.pop_frame()
-            else:
-                try:
-                    self.current[-1].eat(v)
-                except IndexError:
-                    self.current.append(Sentence())
-                    self.current[-1].eat(v)
-
-        for frame in self.framelist[:-1]:
-            self.evaluator.evaluate(frame, i)
-        self.evaluator.evaluate(self.framelist[-1], i)
-        return self.evaluator
 
 
 class Evaluator(object):
-    def __init__(self, io=None, newline="\n", indent="    "):
-        self.io = io or StringIO()
-        self.newline = newline
+    def __init__(self, io, indent="    ", newline="\n"):
+        self.io = io
         self.indent = indent
-
-    def _evaluate(self, code, i):
-        if isinstance(code, PreString):
-            SubEnv(self).apply(code.iterate(), i)
-        elif isinstance(code, (list, tuple)):
-            self.evaluate(code, i + 1)
-        else:
-            sentence = str(code)
-            if sentence == "":
-                return
-            self.evaluate_indent(i)
-            self.io.write(sentence)  # Sentence is also ok.
+        self.newline = newline
 
     def evaluate(self, frame, i=0):
         if not frame:
@@ -185,6 +162,16 @@ class Evaluator(object):
             self._evaluate(code, i)
             self.evaluate_newline()
         self._evaluate(frame[-1], i)
+
+    def _evaluate(self, code, i):
+        if isinstance(code, (list, tuple)):
+            self.evaluate(code, i + 1)
+        else:
+            sentence = str(code)
+            if sentence == "":
+                return
+            self.evaluate_indent(i)
+            self.io.write(sentence)  # Sentence is also ok.
 
     def evaluate_newline(self):
         self.io.write(self.newline)
@@ -195,3 +182,55 @@ class Evaluator(object):
 
     def __str__(self):
         return self.io.getvalue().rstrip()
+
+
+class Module(object):
+    def create_body(self, value, other=None):
+        return PreString(value)
+
+    def create_evaulator(self):
+        return Evaluator(StringIO(), newline=self.newline, indent=self.indent)
+
+    def __init__(self, value="", newline="\n", indent="    ", lexer=None, parser=None, application=None):
+        self.body = self.create_body(value)
+        self.indent = indent
+        self.newline = newline
+        self.lexer = lexer or Lexer(container_factory=list, sentence_factory=Sentence)
+        self.parser = parser or Parser(framelist_factory=FrameList)
+        self.application = application or Application()
+
+    def submodule(self, value):
+        submodule = self.__class__(indent=self.indent,
+                                   newline=self.newline,
+                                   lexer=self.lexer,
+                                   parser=self.parser,
+                                   application=self.application)
+        submodule.stmt(value)
+        self.body.append(submodule.body)
+        return submodule
+
+    def stmt(self, value):
+        self.body.append(value)
+        self.body.append(NEWLINE)
+        return self
+
+    @contextlib.contextmanager
+    def scope(self):
+        self.body.append(INDENT)
+        yield
+        self.body.append(UNINDENT)
+
+    def before(self, value):
+        self.body.before(value)
+
+    def append(self, value):
+        self.body.append(value)
+
+    def after(self, value):
+        self.body.after(value)
+
+    def __str__(self):
+        evaluator = self.create_evaulator()
+        tokens = self.lexer(self.body)
+        framelist = self.parser(tokens)
+        return str(self.application(framelist, evaluator))

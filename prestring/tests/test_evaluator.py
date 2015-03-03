@@ -5,6 +5,10 @@ import unittest
 
 @test_target("prestring:Evaluator")
 class EvalatorTests(unittest.TestCase):
+    def _makeOne(self, indent=" "):
+        from io import StringIO
+        return self._getTarget()(StringIO(), indent=indent)
+
     def test_flatten_string(self):
         target = self._makeOne()
         script = ["foo", "bar", "boo"]
