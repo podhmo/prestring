@@ -9,7 +9,7 @@ features
 ----------------------------------------
 
 - generating code with with-syntax
-- pub/sub actions in code generation
+- string injection after writing string
 
 generating code with with-syntax
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -38,7 +38,7 @@ output is.
       def __str__(self):
           return self.value
 
-pub/sub actions in code generation
+string injection after writing string
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
@@ -47,13 +47,13 @@ pub/sub actions in code generation
 
   m = PythonModule()
 
-  pub = m.stmt("# this is import area ######")
+  subm = m.submodule("# this is import area ######")
   m.stmt("############################")
   m.sep()
   m.stmt("do_action()")
   m.sep()
   m.stmt("use_foo_module()")
-  pub.stmt("from foo import Foo")  # pubulish
+  subm.stmt("from foo import Foo")  # string injection
   m.sep()
   m.stmt("do_action()")
 

@@ -5,16 +5,20 @@ import contextlib
 from io import StringIO
 
 
-class Symbol(object):
-    def __init__(self, name):
-        self.name = name
+class Newline(object):
+    pass
 
-    def __repr__(self):
-        return "<{self.__class__.__name__} {self.name!r}>".format(self=self)
 
-NEWLINE = Symbol("NEWLINE")
-INDENT = Symbol("INDENT")
-UNINDENT = Symbol("UNINDENT")
+class Indent(object):
+    pass
+
+
+class UnIndent(object):
+    pass
+
+NEWLINE = Newline()
+INDENT = Indent()
+UNINDENT = UnIndent()
 
 
 class PreString(object):
@@ -44,7 +48,7 @@ class PreString(object):
         self.body.insert(0, value)
 
     def after(self, value):
-        if self.body[-1] == NEWLINE:
+        if isinstance(self.body[-1], Newline):
             self.body.pop()
             self.append(value)
             self.body.append(NEWLINE)
@@ -58,6 +62,7 @@ class PreString(object):
 class Sentence(object):
     def __init__(self):
         self.body = []
+        self.newline = None
 
     def eat(self, v):
         self.body.append(v)
@@ -80,11 +85,11 @@ class Lexer(object):
         sentence = self.sentence_factory()
 
         for v in prestring:
-            if v is NEWLINE:
-                if not sentence.is_empty():
-                    tokens.append(sentence)
-                    sentence = self.sentence_factory()
-            elif v is INDENT or v is UNINDENT:
+            if isinstance(v, Newline):
+                sentence.newline = v
+                tokens.append(sentence)
+                sentence = self.sentence_factory()
+            elif isinstance(v, Indent) or isinstance(v, UnIndent):
                 tokens.append(v)
             else:
                 sentence.eat(v)
@@ -130,9 +135,9 @@ class Parser(object):
     def __call__(self, tokens):
         framelist = self.framelist_factory()
         for v in tokens:
-            if v is INDENT:
+            if isinstance(v, Indent):
                 framelist.push_frame()
-            elif v is UNINDENT:
+            elif isinstance(v, UnIndent):
                 framelist.pop_frame()
             else:
                 framelist.current.append(v)
@@ -144,7 +149,7 @@ class Application(object):
     def __call__(self, framelist, evaluator):
         for frame in framelist[:-1]:
             evaluator.evaluate(frame)
-            evaluator.evaluate_newline()
+            evaluator.evaluate_newframe()
         evaluator.evaluate(framelist[-1])
         return evaluator
 
@@ -160,7 +165,7 @@ class Evaluator(object):
             return
         for code in frame[:-1]:
             self._evaluate(code, i)
-            self.evaluate_newline()
+            self.evaluate_newline(code, i)
         self._evaluate(frame[-1], i)
 
     def _evaluate(self, code, i):
@@ -173,7 +178,10 @@ class Evaluator(object):
             self.evaluate_indent(i)
             self.io.write(sentence)  # Sentence is also ok.
 
-    def evaluate_newline(self):
+    def evaluate_newline(self, code, i):
+        self.io.write(self.newline)
+
+    def evaluate_newframe(self):
         self.io.write(self.newline)
 
     def evaluate_indent(self, i):

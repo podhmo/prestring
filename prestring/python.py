@@ -1,12 +1,41 @@
 # -*- coding:utf-8 -*-
 import contextlib
-from . import Env, PreString, NEWLINE
+from io import StringIO
+from . import Module, Newline, NEWLINE, Evaluator
 from .compat import PY3
 
 
-class PythonSyntaxMixin(object):
+PEPNEWLINE = Newline()
+
+
+class PythonEvaluator(Evaluator):
+    def evaluate_newframe(self):
+        self.io.write(self.newline)
+        self.io.write(self.newline)
+
+    def evaluate_newline(self, code, i):
+        self.io.write(self.newline)
+        if i <= 0 and hasattr(code, "newline") and code.newline is PEPNEWLINE:
+            self.io.write(self.newline)
+
+
+class PythonModule(Module):
+    def create_evaulator(self):
+        return PythonEvaluator(StringIO(), newline="\n", indent="    ")
+
+    def stmt(self, fmt, *args, **kwargs):
+        if args or kwargs:
+            value = fmt.format(*args, **kwargs)
+        else:
+            value = fmt
+        self.body.append(value)
+        self.body.append(NEWLINE)
+
     def sep(self):
-        self.stmt("")
+        self.body.append(NEWLINE)
+
+    def pepsep(self):
+        self.body.append(PEPNEWLINE)
 
     @contextlib.contextmanager
     def def_(self, name, *args, **kwargs):
@@ -16,9 +45,7 @@ class PythonSyntaxMixin(object):
         self.stmt("def {}({}):", name, ", ".join(ps))
         with self.scope():
             yield
-        self.sep()
-        if self.level <= 0:
-            self.sep()
+        self.pepsep()
 
     @contextlib.contextmanager
     def if_(self, expr):
@@ -99,25 +126,3 @@ class PythonSyntaxMixin(object):
 
     def pass_(self):
         self.stmt("pass")
-
-
-class PrePython(PythonSyntaxMixin, PreString):
-    def stmt(self, fmt, *args, **kwargs):
-        self.value.append(NEWLINE)
-        if args or kwargs:
-            value = fmt.format(*args, **kwargs)
-        else:
-            value = fmt
-        self.value.append(value)
-        return self
-
-
-class PythonModule(PythonSyntaxMixin, Env):
-    def stmt(self, fmt, *args, **kwargs):
-        if args or kwargs:
-            value = fmt.format(*args, **kwargs)
-        else:
-            value = fmt
-        s = PrePython(value)
-        self.current.append(s)
-        return s

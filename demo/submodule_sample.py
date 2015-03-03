@@ -3,13 +3,13 @@ from prestring.python import PythonModule
 
 m = PythonModule()
 
-pub = m.stmt("# this is import area ######")
+subm = m.submodule("# this is import area ######")
 m.stmt("############################")
 m.sep()
 m.stmt("do_action()")
 m.sep()
 m.stmt("use_foo_module()")
-pub.stmt("from foo import Foo")
+subm.stmt("from foo import Foo")
 m.sep()
 m.stmt("do_action()")
 
