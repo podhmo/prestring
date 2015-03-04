@@ -29,7 +29,7 @@ testing_extras = tests_require + [
 ]
 
 setup(name='prestring',
-      version='0.2.0',
+      version='0.2.1',
       description='source code generation library (with overuse with-syntax)',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
@@ -37,9 +37,9 @@ setup(name='prestring',
           "Programming Language :: Python :: Implementation :: CPython",
       ],
       keywords='',
-      author="",
+      author="podhmo",
       author_email="",
-      url="",
+      url="https://github.com/podhmo/prestring",
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
