@@ -82,6 +82,22 @@ class Sentence(object):
         return "".join(self.body)
 
 
+class MultiSentence(object):
+    def __init__(self, *lines):
+        self.lines = lines
+
+    def iterator(self, sentence):
+        if not sentence.is_empty():
+            yield NEWLINE
+        for line in self.lines:
+            yield line
+            yield NEWLINE
+
+    def as_token(self, lexer, tokens, sentence):
+        lexer.loop(tokens, sentence, self.iterator(sentence))
+        return Sentence()
+
+
 class Lexer(object):
     def __init__(self, container_factory, sentence_factory):
         self.container_factory = container_factory or list

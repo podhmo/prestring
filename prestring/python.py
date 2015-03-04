@@ -29,6 +29,7 @@ class PythonEvaluator(Evaluator):
 
 class PythonModule(Module):
     def __init__(self, *args, **kwargs):
+        self.width = kwargs.pop("width", 100)
         super(PythonModule, self).__init__(*args, **kwargs)
         self.from_map = {}  # module -> PythonModule
 
@@ -146,6 +147,16 @@ class PythonModule(Module):
         except KeyError:
             self.from_map[modname] = self.submodule(FromStatement(modname, attrs), newline=False)
 
+    def call(self, name, *args):
+        parameters = list(args)
+        param_string = ", ".join(parameters)
+
+        oneline = "{}({})".format(name, param_string)
+        if len(oneline) <= self.width:
+            self.stmt(oneline)
+        else:
+            self.body.append(MultiSentenceForCall(name, *parameters))
+
     def pass_(self):
         self.stmt("pass")
 
@@ -183,4 +194,27 @@ class FromStatement(object):
             lexer.loop(tokens, sentence, self.iterator_for_one_symbol(sentence))
         else:
             lexer.loop(tokens, sentence, self.iterator_for_many_symbols(sentence))
+        return Sentence()
+
+
+class MultiSentenceForCall(object):
+    def __init__(self, name, *lines):
+        self.name = name
+        self.lines = lines
+
+    def iterator(self, sentence):
+        if not sentence.is_empty():
+            yield NEWLINE
+        yield "{}(".format(self.name)
+        yield NEWLINE
+        yield INDENT
+        for line in self.lines[:-1]:
+            yield "{},".format(line)
+            yield NEWLINE
+        yield "{})".format(self.lines[-1])
+        yield NEWLINE
+        yield UNINDENT
+
+    def as_token(self, lexer, tokens, sentence):
+        lexer.loop(tokens, sentence, self.iterator(sentence))
         return Sentence()
