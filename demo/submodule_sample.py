@@ -14,11 +14,13 @@ with m.def_("setup", "config"):
 print(m)
 """
 def setup(config):
-    from .plugins import a_plugin
-    from .plugins import b_plugin
-    from .plugins import c_plugin
-    from .plugins import d_plugin
-    from .plugins import e_plugin
+    from .plugins import(
+        a_plugin,
+        b_plugin,
+        c_plugin,
+        d_plugin,
+        e_plugin
+    )
 
     config.activate(a_plugin)
     config.activate(b_plugin)
