@@ -33,6 +33,11 @@ class PythonModule(Module):
         super(PythonModule, self).__init__(*args, **kwargs)
         self.from_map = {}  # module -> PythonModule
 
+    def submodule(self, value="", newline=True):
+        submodule = super(PythonModule, self).submodule(value=value, newline=newline)
+        submodule.width = self.width
+        return submodule
+
     def create_evaulator(self):
         return PythonEvaluator(StringIO(), newline=self.newline, indent=self.indent)
 
