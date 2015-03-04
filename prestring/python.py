@@ -92,11 +92,11 @@ class PythonModule(Module):
         if PY3:
             if metaclass is not None:
                 args += ", metaclass={}".format(metaclass)
-            self.stmt("class {name}({args})", name=name, args=args)
+            self.stmt("class {name}({args}):", name=name, args=args)
             with self.scope():
                 yield
         else:
-            self.stmt("class {name}({args})", name=name, args=args)
+            self.stmt("class {name}({args}):", name=name, args=args)
             with self.scope():
                 if metaclass is not None:
                     self.stmt("__metaclass__ = {}".format(metaclass))
