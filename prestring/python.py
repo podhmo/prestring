@@ -100,7 +100,9 @@ class PythonModule(Module):
     @contextlib.contextmanager
     def class_(self, name, bases=None, metaclass=None):
         if bases is None:
-            bases = ["object"]
+            bases = "object"
+        if not isinstance(bases, (list, tuple)):
+            bases = [bases]
         args = ", ".join(str(b) for b in bases)
         if PY3:
             if metaclass is not None:
