@@ -1,7 +1,15 @@
 # -*- coding:utf-8 -*-
 import contextlib
 from io import StringIO
-from . import Module, Newline, NEWLINE, Evaluator
+from . import (
+    Module,
+    Newline,
+    NEWLINE,
+    INDENT,
+    UNINDENT,
+    Evaluator,
+    Sentence,
+)
 from .compat import PY3
 
 
@@ -20,8 +28,12 @@ class PythonEvaluator(Evaluator):
 
 
 class PythonModule(Module):
+    def __init__(self, *args, **kwargs):
+        super(PythonModule, self).__init__(*args, **kwargs)
+        self.from_map = {}  # module -> PythonModule
+
     def create_evaulator(self):
-        return PythonEvaluator(StringIO(), newline="\n", indent="    ")
+        return PythonEvaluator(StringIO(), newline=self.newline, indent=self.indent)
 
     def stmt(self, fmt, *args, **kwargs):
         if args or kwargs:
@@ -124,11 +136,51 @@ class PythonModule(Module):
         self.stmt("raise %s" % (expr,), *args)
 
     def import_(self, modname):
-        self.stmt("import %s" % (modname,))
+        self.stmt("import {}", modname)
 
     def from_(self, modname, *attrs):
-        self.stmt("from %s import %s" % (modname, ", ".join(attrs)))
+        try:
+            from_stmt = self.from_map[modname].body.tail()
+            for sym in attrs:
+                from_stmt.append(sym)
+        except KeyError:
+            self.from_map[modname] = self.submodule(FromStatement(modname, attrs), newline=False)
 
     def pass_(self):
         self.stmt("pass")
 
+
+class FromStatement(object):
+    def __init__(self, modname, symbols):
+        self.modname = modname
+        self.symbols = list(symbols)
+
+    def append(self, symbol):
+        self.symbols.append(symbol)
+
+    def stmt(self, s):
+        yield s
+        yield NEWLINE
+
+    def iterator_for_one_symbol(self, sentence):
+        if not sentence.is_empty():
+            yield NEWLINE
+        yield from self.stmt("from {} import {}".format(self.modname, self.symbols[0]))
+
+    def iterator_for_many_symbols(self, sentence):
+        if not sentence.is_empty():
+            yield NEWLINE
+        yield from self.stmt("from {} import(".format(self.modname))
+        yield INDENT
+        for sym in self.symbols[:-1]:
+            yield from self.stmt("{},".format(sym))
+        yield from self.stmt("{}".format(self.symbols[-1]))
+        yield UNINDENT
+        yield from self.stmt(")")
+
+    def as_token(self, lexer, tokens, sentence):
+        if len(self.symbols) <= 1:
+            lexer.loop(tokens, sentence, self.iterator_for_one_symbol(sentence))
+        else:
+            lexer.loop(tokens, sentence, self.iterator_for_many_symbols(sentence))
+        return Sentence()

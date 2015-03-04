@@ -11,18 +11,18 @@ class ModuleTests(unittest.TestCase):
         m.stmt("bar")
         self.assertEqual(str(m), "foo\nbar")
 
-    def test_after_module(self):
+    def test_insert_after_module(self):
         m = self._makeOne()
         module = m.stmt("foo")
         m.stmt("bar")
-        module.after("@")
+        module.insert_after("@")
         self.assertEqual(str(m), "foo\nbar@")
 
-    def test_after_submodule(self):
+    def test_insert_after_submodule(self):
         m = self._makeOne()
         subm = m.submodule("foo")
         m.stmt("bar")
-        subm.after("@")
+        subm.insert_after("@")
         self.assertEqual(str(m), "foo@\nbar")
 
     def test_stmt_submodule(self):
@@ -32,11 +32,11 @@ class ModuleTests(unittest.TestCase):
         subm.stmt("@")
         self.assertEqual(str(m), "foo\n@\nbar")
 
-    def test_before_submodule(self):
+    def test_insert_before_submodule(self):
         m = self._makeOne()
         subm = m.submodule("foo")
         m.stmt("bar")
-        subm.before("@")
+        subm.insert_before("@")
         self.assertEqual(str(m), "@foo\nbar")
 
     def test_indent(self):

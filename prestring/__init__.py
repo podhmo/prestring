@@ -16,6 +16,7 @@ class Indent(object):
 class UnIndent(object):
     pass
 
+
 NEWLINE = Newline()
 INDENT = Indent()
 UNINDENT = UnIndent()
@@ -44,10 +45,10 @@ class PreString(object):
     def __str__(self):
         return "".join(str(v) for v in self)
 
-    def before(self, value):
+    def insert_before(self, value):
         self.body.insert(0, value)
 
-    def after(self, value):
+    def insert_after(self, value):
         if isinstance(self.body[-1], Newline):
             self.body.pop()
             self.append(value)
@@ -57,6 +58,12 @@ class PreString(object):
 
     def append(self, value):
         self.body.append(value)
+
+    def tail(self):
+        return self.body[-1]
+
+    def head(self):
+        return self.body[0]
 
 
 class Sentence(object):
@@ -69,7 +76,7 @@ class Sentence(object):
         return self
 
     def is_empty(self):
-        return not self.body
+        return all(x == "" for x in self.body)
 
     def __str__(self):
         return "".join(self.body)
@@ -80,19 +87,25 @@ class Lexer(object):
         self.container_factory = container_factory or list
         self.sentence_factory = sentence_factory or Sentence
 
-    def __call__(self, prestring):
-        tokens = self.container_factory()
-        sentence = self.sentence_factory()
-
-        for v in prestring:
+    def loop(self, tokens, sentence, iterator):
+        for v in iterator:
             if isinstance(v, Newline):
                 sentence.newline = v
                 tokens.append(sentence)
                 sentence = self.sentence_factory()
+            elif hasattr(v, "as_token"):
+                sentence = v.as_token(self, tokens, sentence)
             elif isinstance(v, Indent) or isinstance(v, UnIndent):
                 tokens.append(v)
             else:
                 sentence.eat(v)
+        return (tokens, sentence)
+
+    def __call__(self, prestring):
+        tokens = self.container_factory()
+        sentence = self.sentence_factory()
+
+        tokens, sentence = self.loop(tokens, sentence, prestring)
         if not sentence.is_empty():
             tokens.append(sentence)
         return tokens
@@ -207,13 +220,13 @@ class Module(object):
         self.parser = parser or Parser(framelist_factory=FrameList)
         self.application = application or Application()
 
-    def submodule(self, value=""):
+    def submodule(self, value="", newline=True):
         submodule = self.__class__(indent=self.indent,
                                    newline=self.newline,
                                    lexer=self.lexer,
                                    parser=self.parser,
                                    application=self.application)
-        if value == "":
+        if value == "" or not newline:
             submodule.append(value)
         else:
             submodule.stmt(value)
@@ -231,14 +244,14 @@ class Module(object):
         yield
         self.body.append(UNINDENT)
 
-    def before(self, value):
-        self.body.before(value)
+    def insert_before(self, value):
+        self.body.insert_before(value)
 
     def append(self, value):
         self.body.append(value)
 
-    def after(self, value):
-        self.body.after(value)
+    def insert_after(self, value):
+        self.body.insert_after(value)
 
     def __str__(self):
         evaluator = self.create_evaulator()
