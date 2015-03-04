@@ -9,17 +9,10 @@ class Newline(object):
     pass
 
 
-class Indent(object):
-    pass
-
-
-class UnIndent(object):
-    pass
-
-
 NEWLINE = Newline()
-INDENT = Indent()
-UNINDENT = UnIndent()
+
+INDENT = object()
+UNINDENT = object()
 
 
 class PreString(object):
@@ -111,7 +104,7 @@ class Lexer(object):
                 sentence = self.sentence_factory()
             elif hasattr(v, "as_token"):
                 sentence = v.as_token(self, tokens, sentence)
-            elif isinstance(v, Indent) or isinstance(v, UnIndent):
+            elif v is INDENT or v is UNINDENT:
                 tokens.append(v)
             else:
                 sentence.eat(v)
@@ -164,9 +157,9 @@ class Parser(object):
     def __call__(self, tokens):
         framelist = self.framelist_factory()
         for v in tokens:
-            if isinstance(v, Indent):
+            if v is INDENT:
                 framelist.push_frame()
-            elif isinstance(v, UnIndent):
+            elif v is UNINDENT:
                 framelist.pop_frame()
             else:
                 framelist.current.append(v)
