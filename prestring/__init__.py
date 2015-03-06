@@ -249,9 +249,11 @@ class Module(object):
 
     @contextlib.contextmanager
     def scope(self):
-        self.body.append(INDENT)
-        yield
-        self.body.append(UNINDENT)
+        try:
+            self.body.append(INDENT)
+            yield
+        finally:
+            self.body.append(UNINDENT)
 
     def insert_before(self, value):
         self.body.insert_before(value)
