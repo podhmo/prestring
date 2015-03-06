@@ -56,6 +56,15 @@ class PythonModule(Module):
         return self.def_(name, "self", *args, **kwargs)
 
     @contextlib.contextmanager
+    def with_(self, expr, as_=None):
+        if as_:
+            self.stmt("with {} as {}:".format(expr, as_))
+        else:
+            self.stmt("with {}:".format(expr))
+        with self.scope():
+            yield
+
+    @contextlib.contextmanager
     def def_(self, name, *args, **kwargs):
         ps = list(args)
         ks = ["{}={}".format(str(k), str(v)) for k, v in kwargs.items()]
