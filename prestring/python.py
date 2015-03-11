@@ -30,12 +30,14 @@ class PythonEvaluator(Evaluator):
 class PythonModule(Module):
     def __init__(self, *args, **kwargs):
         self.width = kwargs.pop("width", 100)
+        self.import_unique = kwargs.pop("import_unique", False)
         super(PythonModule, self).__init__(*args, **kwargs)
         self.from_map = {}  # module -> PythonModule
 
     def submodule(self, value="", newline=True):
         submodule = super(PythonModule, self).submodule(value=value, newline=newline)
         submodule.width = self.width
+        submodule.import_unique = self.import_unique
         return submodule
 
     def create_evaulator(self):
@@ -110,6 +112,27 @@ class PythonModule(Module):
         with self.scope():
             yield
 
+    @contextlib.contextmanager
+    def try_(self):
+        self.stmt("try:")
+        with self.scope():
+            yield
+
+    @contextlib.contextmanager
+    def except_(self, expr=None):
+        if expr:
+            self.stmt("except {expr}:", expr=expr)
+        else:
+            self.stmt("except:")
+        with self.scope():
+            yield
+
+    @contextlib.contextmanager
+    def finally_(self):
+        self.stmt("finally:")
+        with self.scope():
+            yield
+
     # class definition
     @contextlib.contextmanager
     def class_(self, name, bases=None, metaclass=None):
@@ -153,6 +176,7 @@ class PythonModule(Module):
         self.stmt("raise %s" % (expr,), *args)
 
     def import_(self, modname):
+        # todo: considering self.import_unique
         self.stmt("import {}", modname)
 
     def from_(self, modname, *attrs):
@@ -161,26 +185,43 @@ class PythonModule(Module):
             for sym in attrs:
                 from_stmt.append(sym)
         except KeyError:
-            self.from_map[modname] = self.submodule(FromStatement(modname, attrs), newline=False)
+            self.from_map[modname] = self.submodule(FromStatement(modname, attrs, unique=self.import_unique), newline=False)
 
-    def call(self, name, *args):
+    @contextlib.contextmanager
+    def hugecall(self, name):
+        caller = Caller(name)
+        yield caller
+        self.call(caller.name, *caller.args)
+
+    def call(self, name_, *args):
         parameters = list(args)
         param_string = ", ".join(parameters)
 
-        oneline = "{}({})".format(name, param_string)
+        oneline = "{}({})".format(name_, param_string)
         if len(oneline) <= self.width:
             self.stmt(oneline)
         else:
-            self.body.append(MultiSentenceForCall(name, *parameters))
+            self.body.append(MultiSentenceForCall(name_, *parameters))
 
     def pass_(self):
         self.stmt("pass")
 
 
+class Caller(object):
+    def __init__(self, name):
+        self.name = name
+        self.args = []
+
+    def add(self, **kwargs):
+        for k, v in kwargs.items():
+            self.args.append("{}={}".format(k, v))
+
+
 class FromStatement(object):
-    def __init__(self, modname, symbols):
+    def __init__(self, modname, symbols, unique=False):
         self.modname = modname
         self.symbols = list(symbols)
+        self.unique = unique
 
     def append(self, symbol):
         self.symbols.append(symbol)
@@ -199,9 +240,13 @@ class FromStatement(object):
             yield NEWLINE
         yield from self.stmt("from {} import(".format(self.modname))
         yield INDENT
-        for sym in self.symbols[:-1]:
+        if self.unique:
+            symbols = tuple(set(self.symbols))
+        else:
+            symbols = self.symbols
+        for sym in symbols[:-1]:
             yield from self.stmt("{},".format(sym))
-        yield from self.stmt("{}".format(self.symbols[-1]))
+        yield from self.stmt("{}".format(symbols[-1]))
         yield UNINDENT
         yield from self.stmt(")")
 
