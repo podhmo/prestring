@@ -1,8 +1,8 @@
 # -*- coding:utf-8 -*-
 import contextlib
 from io import StringIO
+from . import Module as _Module
 from . import (
-    Module,
     Newline,
     NEWLINE,
     INDENT,
@@ -27,7 +27,7 @@ class PythonEvaluator(Evaluator):
             self.io.write(self.newline)
 
 
-class PythonModule(Module):
+class PythonModule(_Module):
     def __init__(self, *args, **kwargs):
         self.width = kwargs.pop("width", 100)
         self.import_unique = kwargs.pop("import_unique", False)
@@ -279,3 +279,6 @@ class MultiSentenceForCall(object):
     def as_token(self, lexer, tokens, sentence):
         lexer.loop(tokens, sentence, self.iterator(sentence))
         return Sentence()
+
+
+Module = PythonModule

@@ -1,8 +1,8 @@
 # -*- coding:utf-8 -*-
 import logging
-logger = logging.getLogger(__name__)
 import contextlib
 from io import StringIO
+logger = logging.getLogger(__name__)
 
 
 class Newline(object):
@@ -54,6 +54,9 @@ class PreString(object):
 
     def tail(self):
         return self.body[-1]
+
+    def pop(self):
+        self.body.pop()
 
     def head(self):
         return self.body[0]
@@ -228,6 +231,10 @@ class Module(object):
         self.lexer = lexer or Lexer(container_factory=list, sentence_factory=Sentence)
         self.parser = parser or Parser(framelist_factory=FrameList)
         self.application = application or Application()
+
+    def unnewline(self):
+        if self.body.tail() == NEWLINE:
+            self.body.pop()
 
     def submodule(self, value="", newline=True, factory=None):
         factory = factory or self.__class__
