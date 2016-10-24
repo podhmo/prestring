@@ -1,0 +1,171 @@
+{
+  "module": {
+    "models": {
+      "file": {
+        "examples/models/file.go": {
+          "alias": {
+            "ArchiveFormat": {
+              "candidates": [
+                {
+                  "name": "Tarball",
+                  "value": "\"tarball\""
+                },
+                {
+                  "name": "Zipball",
+                  "value": "\"zipball\""
+                }
+              ],
+              "name": "ArchiveFormat",
+              "original": {
+                "kind": "primitive",
+                "value": "string"
+              }
+            }
+          },
+          "name": "examples/models/file.go",
+          "struct": {}
+        },
+        "examples/models/group.go": {
+          "alias": {},
+          "name": "examples/models/group.go",
+          "struct": {
+            "Group": {
+              "fields": {
+                "ID": {
+                  "embed": false,
+                  "name": "ID",
+                  "comment": "ID : this is unique ID for persistent",
+                  "tags": [
+                    "`json:\"id\" bson:\"_id\"`"
+                  ],
+                  "type": {
+                    "kind": "selector",
+                    "value": "bson.ObjectId"
+                  }
+                },
+                "Name": {
+                  "embed": false,
+                  "name": "Name",
+                  "tags": [
+                    "`json:\"name\"`"
+                  ],
+                  "type": {
+                    "kind": "primitive",
+                    "value": "string"
+                  }
+                }
+              },
+              "name": "Group"
+            }
+          }
+        },
+        "examples/models/person.go": {
+          "alias": {
+            "PersonStatus": {
+              "candidates": [
+                {
+                  "name": "PersonstatusHungry",
+                  "comment": "PersonstatusHungry : maybe he or she is requesting something to eat",
+                  "value": "\"hungry\""
+                },
+                {
+                  "name": "PersonstatusAngry",
+                  "comment": "PersonstatusAngry : maybe he or she is angry",
+                  "value": "\"angry\""
+                }
+              ],
+              "name": "PersonStatus",
+              "original": {
+                "kind": "primitive",
+                "value": "string"
+              }
+            }
+          },
+          "name": "examples/models/person.go",
+          "struct": {
+            "Person": {
+              "comment": "Person : this is person model",
+              "fields": {
+                "Age": {
+                  "embed": false,
+                  "name": "Age",
+                  "tags": [
+                    "`json:\"age\" bson:\"age\"`"
+                  ],
+                  "type": {
+                    "kind": "primitive",
+                    "value": "int"
+                  }
+                },
+                "Status": {
+                  "embed": false,
+                  "name": "Status",
+                  "tags": [
+                    "`json:\"status\" bson:\"status\"`"
+                  ],
+                  "type": {
+                    "kind": "primitive",
+                    "value": "PersonStatus"
+                  }
+                },
+                "Group": {
+                  "embed": false,
+                  "name": "Group",
+                  "tags": [
+                    "`json:\"-\"`"
+                  ],
+                  "type": {
+                    "kind": "pointer",
+                    "value": {
+                      "kind": "primitive",
+                      "value": "Group"
+                    }
+                  }
+                },
+                "GroupID": {
+                  "embed": false,
+                  "name": "GroupID",
+                  "tags": [
+                    "`json:\"groupId,omitempty\" bson:\"groupId\"`"
+                  ],
+                  "type": {
+                    "kind": "pointer",
+                    "value": {
+                      "kind": "selector",
+                      "value": "bson.ObjectId"
+                    }
+                  }
+                },
+                "ID": {
+                  "embed": false,
+                  "name": "ID",
+                  "comment": "ID : this is unique ID for persistent",
+                  "tags": [
+                    "`json:\"id\" bson:\"_id\"`"
+                  ],
+                  "type": {
+                    "kind": "selector",
+                    "value": "bson.ObjectId"
+                  }
+                },
+                "Name": {
+                  "embed": false,
+                  "name": "Name",
+                  "tags": [
+                    "`json:\"name\" bson:\"name\"`"
+                  ],
+                  "type": {
+                    "kind": "primitive",
+                    "value": "string"
+                  }
+                }
+              },
+              "name": "Person"
+            }
+          }
+        }
+      },
+      "name": "models"
+    }
+  }
+}

@@ -111,13 +111,13 @@ class Group(object):
     def __init__(self, m):
         self.m = m
 
+    def __getattr__(self, name):
+        return getattr(self.m, name)
+
     def __enter__(self):
         self.m.stmt(' (')
         self.m.body.append(INDENT)
         return self
-
-    def import_(self, name):
-        self.m.stmt('{}'.format(name))
 
     def __call__(self, name):
         self.m.stmt('{}'.format(name))
@@ -134,5 +134,6 @@ class ImportGroup(Group):
             self.m.stmt('"{}"'.format(name))
         else:
             self.m.stmt('{} "{}"'.format(as_, name))
+    __call__ = import_
 
 Module = GoModule
