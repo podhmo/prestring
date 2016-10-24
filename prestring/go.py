@@ -34,6 +34,18 @@ class GoModule(_Module):
         self.stmt("package {}".format(name))
         self.sep()
 
+    def type_alias(self, name, value):
+        self.stmt("type {} {}".format(name, value))
+        self.sep()
+
+    @contextlib.contextmanager
+    def type_(self, name, *args):
+        self.stmt("type {} {} {{".format(name, " ".join(args)))
+        with self.scope():
+            yield
+        self.stmt("}")
+        self.sep()
+
     @contextlib.contextmanager
     def func(self, name, *args, return_=""):
         self.stmt("func {}({}) {}{{".format(name, ", ".join(args), return_))
@@ -89,8 +101,14 @@ class Group(object):
 
 
 class ImportGroup(Group):
+    def __call__(self, name, as_=None):
+        self.inner.append((name, as_))
+
     def write_inner(self, inner):
-        for name in inner:
-            self.m.stmt('"{}"'.format(name))
+        for name, as_ in inner:
+            if as_ is None:
+                self.m.stmt('"{}"'.format(name))
+            else:
+                self.m.stmt('{} "{}"'.format(as_, name))
 
 Module = GoModule
