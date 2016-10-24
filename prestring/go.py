@@ -19,8 +19,11 @@ class GoModule(_Module):
         self.body.append(NEWLINE)
 
     @contextlib.contextmanager
-    def block(self):
-        self.stmt("{")
+    def block(self, value=None):
+        if value is None:
+            self.stmt("{")
+        else:
+            self.stmt("{} {{".format(value))
         with self.scope():
             yield
         self.stmt("}")
@@ -34,38 +37,44 @@ class GoModule(_Module):
         self.stmt("package {}".format(name))
         self.sep()
 
+    def return_(self, name):
+        self.stmt("return {}".format(name))
+
     def type_alias(self, name, value):
         self.stmt("type {} {}".format(name, value))
         self.sep()
 
     @contextlib.contextmanager
     def type_(self, name, *args):
-        self.stmt("type {} {} {{".format(name, " ".join(args)))
-        with self.scope():
+        with self.block("type {} {}".format(name, " ".join(args))):
             yield
-        self.stmt("}")
         self.sep()
 
     @contextlib.contextmanager
     def func(self, name, *args, return_=""):
-        self.stmt("func {}({}) {}{{".format(name, ", ".join(args), return_))
-        with self.scope():
+        with self.block("func {}({}) {}".format(name, ", ".join(args), return_)):
             yield
-        self.stmt("}")
         self.sep()
 
     @contextlib.contextmanager
     def if_(self, cond):
-        self.body.append("if {} ".format(cond))
-        with self.block():
+        with self.block("if {} ".format(cond)):
+            yield
+
+    @contextlib.contextmanager
+    def for_(self, cond):
+        with self.block("for {} ".format(cond)):
             yield
 
     @contextlib.contextmanager
     def else_(self):
         self.unnewline()
-        self.body.append(" else ")
-        with self.block():
+        with self.block(" else "):
             yield
+
+    def select(self):
+        m = self.submodule('select', newline=False)
+        return SelectClause(m)
 
     def import_group(self):
         m = self.submodule("import", newline=False)
@@ -76,39 +85,54 @@ class GoModule(_Module):
         return Group(m)
 
 
+class SelectClause(object):
+    def __init__(self, m):
+        self.m = m
+
+    def __getattr__(self, name):
+        return getattr(self.m, name)
+
+    def __enter__(self):
+        self.m.stmt(' {')
+        return self
+
+    @contextlib.contextmanager
+    def case(self, value):
+        self.m.stmt('case {}:'.format(value))
+        with self.m.scope():
+            yield
+
+    def __exit__(self, *args, **kwargs):
+        self.m.stmt('}')
+        self.m.sep()
+
+
 class Group(object):
     def __init__(self, m):
         self.m = m
-        self.inner = []
 
     def __enter__(self):
         self.m.stmt(' (')
         self.m.body.append(INDENT)
         return self
 
-    def __call__(self, name):
-        self.inner.append(name)
+    def import_(self, name):
+        self.m.stmt('{}'.format(name))
 
-    def write_inner(self, inner):
-        for name in inner:
-            self.m.stmt('{}'.format(name))
+    def __call__(self, name):
+        self.m.stmt('{}'.format(name))
 
     def __exit__(self, *args, **kwargs):
-        self.write_inner(self.inner)
         self.m.body.append(UNINDENT)
         self.m.stmt(')')
         self.m.sep()
 
 
 class ImportGroup(Group):
-    def __call__(self, name, as_=None):
-        self.inner.append((name, as_))
-
-    def write_inner(self, inner):
-        for name, as_ in inner:
-            if as_ is None:
-                self.m.stmt('"{}"'.format(name))
-            else:
-                self.m.stmt('{} "{}"'.format(as_, name))
+    def import_(self, name, as_=None):
+        if as_ is None:
+            self.m.stmt('"{}"'.format(name))
+        else:
+            self.m.stmt('{} "{}"'.format(as_, name))
 
 Module = GoModule
