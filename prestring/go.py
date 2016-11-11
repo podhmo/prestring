@@ -110,6 +110,7 @@ class SelectClause(object):
 class Group(object):
     def __init__(self, m):
         self.m = m
+        self.submodule = None
 
     def __getattr__(self, name):
         return getattr(self.m, name)
@@ -117,10 +118,11 @@ class Group(object):
     def __enter__(self):
         self.m.stmt(' (')
         self.m.body.append(INDENT)
+        self.submodule = self.m.submodule("", newline=False)
         return self
 
     def __call__(self, name):
-        self.m.stmt('{}'.format(name))
+        self.submodule.stmt('{}'.format(name))
 
     def __exit__(self, *args, **kwargs):
         self.m.body.append(UNINDENT)
@@ -131,9 +133,9 @@ class Group(object):
 class ImportGroup(Group):
     def import_(self, name, as_=None):
         if as_ is None:
-            self.m.stmt('"{}"'.format(name))
+            self.submodule.stmt('"{}"'.format(name))
         else:
-            self.m.stmt('{} "{}"'.format(as_, name))
+            self.submodule.stmt('{} "{}"'.format(as_, name))
     __call__ = import_
 
 Module = GoModule
