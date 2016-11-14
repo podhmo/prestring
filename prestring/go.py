@@ -57,6 +57,12 @@ class GoModule(_Module):
         self.sep()
 
     @contextlib.contextmanager
+    def method(self, ob, name, *args, return_=""):
+        with self.block("func ({}) {}({}) {}".format(ob, name, ", ".join(args), return_)):
+            yield
+        self.sep()
+
+    @contextlib.contextmanager
     def if_(self, cond):
         with self.block("if {} ".format(cond)):
             yield
@@ -74,7 +80,11 @@ class GoModule(_Module):
 
     def select(self):
         m = self.submodule('select', newline=False)
-        return SelectClause(m)
+        return MultiBranchClause(m)
+
+    def switch(self, cond):
+        m = self.submodule('switch {}'.format(cond), newline=False)
+        return MultiBranchClause(m)
 
     def import_group(self):
         m = self.submodule("import", newline=False)
@@ -85,7 +95,7 @@ class GoModule(_Module):
         return Group(m)
 
 
-class SelectClause(object):
+class MultiBranchClause(object):
     def __init__(self, m):
         self.m = m
 
@@ -105,6 +115,12 @@ class SelectClause(object):
     def __exit__(self, *args, **kwargs):
         self.m.stmt('}')
         self.m.sep()
+
+    @contextlib.contextmanager
+    def default(self):
+        self.m.stmt('default:')
+        with self.m.scope():
+            yield
 
 
 class Group(object):
