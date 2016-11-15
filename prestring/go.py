@@ -5,7 +5,10 @@ from . import Module as _Module
 from . import (
     INDENT,
     UNINDENT,
-    NEWLINE
+    NEWLINE,
+    LazyFormat,
+    LazyArguments,
+    LazyJoin
 )
 logger = logging.getLogger(__name__)
 
@@ -46,30 +49,30 @@ class GoModule(_Module):
 
     @contextlib.contextmanager
     def type_(self, name, *args):
-        with self.block("type {} {}".format(name, " ".join(args))):
+        with self.block(LazyFormat("type {} {}", name, LazyJoin(" ", args))):
             yield
         self.sep()
 
     @contextlib.contextmanager
     def func(self, name, *args, return_=""):
-        with self.block("func {}({}) {}".format(name, ", ".join(args), return_)):
+        with self.block(LazyFormat("func {}({}) {}", name, LazyArguments(args), return_)):
             yield
         self.sep()
 
     @contextlib.contextmanager
     def method(self, ob, name, *args, return_=""):
-        with self.block("func ({}) {}({}) {}".format(ob, name, ", ".join(args), return_)):
+        with self.block(LazyFormat("func ({}) {}({}) {}", ob, name, LazyArguments(args), return_)):
             yield
         self.sep()
 
     @contextlib.contextmanager
     def if_(self, cond):
-        with self.block("if {} ".format(cond)):
+        with self.block(LazyFormat("if {} ", cond)):
             yield
 
     @contextlib.contextmanager
     def for_(self, cond):
-        with self.block("for {} ".format(cond)):
+        with self.block(LazyFormat("for {} ", cond)):
             yield
 
     @contextlib.contextmanager
@@ -83,7 +86,7 @@ class GoModule(_Module):
         return MultiBranchClause(m)
 
     def switch(self, cond):
-        m = self.submodule('switch {}'.format(cond), newline=False)
+        m = self.submodule(LazyFormat('switch {}', cond), newline=False)
         return MultiBranchClause(m)
 
     def import_group(self):

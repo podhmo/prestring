@@ -277,3 +277,31 @@ class Module(object):
         tokens = self.lexer(self.body)
         framelist = self.parser(tokens)
         return str(self.application(framelist, evaluator))
+
+
+# utility
+class LazyArguments(object):
+    def __init__(self, args):
+        self.args = args
+
+    def __str__(self):
+        return ", ".join(self.args)
+
+
+class LazyJoin(object):
+    def __init__(self, sep, args):
+        self.sep = sep
+        self.args = args
+
+    def __str__(self):
+        return self.sep.join(self.args)
+
+
+class LazyFormat(object):
+    def __init__(self, fmt, *args, **kwargs):
+        self.fmt = fmt
+        self.args = args
+        self.kwargs = kwargs
+
+    def __str__(self):
+        return self.fmt.format(*self.args, **self.kwargs)
