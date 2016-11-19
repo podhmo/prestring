@@ -75,7 +75,7 @@ class Sentence(object):
         return all(x == "" for x in self.body)
 
     def __str__(self):
-        return "".join(self.body)
+        return "".join(map(str, self.body))
 
 
 class MultiSentence(object):
@@ -285,7 +285,7 @@ class LazyArguments(object):
         self.args = args
 
     def __str__(self):
-        return ", ".join(self.args)
+        return ", ".join(map(str, self.args))
 
 
 class LazyJoin(object):
@@ -294,7 +294,7 @@ class LazyJoin(object):
         self.args = args
 
     def __str__(self):
-        return self.sep.join(self.args)
+        return self.sep.join(map(str, self.args))
 
 
 class LazyFormat(object):
@@ -304,4 +304,6 @@ class LazyFormat(object):
         self.kwargs = kwargs
 
     def __str__(self):
-        return self.fmt.format(*self.args, **self.kwargs)
+        args = map(str, self.args)
+        kwargs = {k: str(v) for k, v in self.kwargs}
+        return self.fmt.format(*args, **kwargs)

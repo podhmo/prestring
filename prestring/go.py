@@ -26,7 +26,9 @@ class GoModule(_Module):
         if value is None:
             self.stmt("{")
         else:
-            self.stmt("{} {{".format(value))
+            self.body.append(value)
+            self.body.append(" {")
+            self.body.append(NEWLINE)
         with self.scope():
             yield
         self.stmt("}")
@@ -41,10 +43,10 @@ class GoModule(_Module):
         self.sep()
 
     def return_(self, name):
-        self.stmt("return {}".format(name))
+        self.stmt(LazyFormat("return {}", name))
 
     def type_alias(self, name, value):
-        self.stmt("type {} {}".format(name, value))
+        self.stmt(LazyFormat("type {} {}", name, value))
         self.sep()
 
     @contextlib.contextmanager
