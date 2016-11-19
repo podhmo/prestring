@@ -1,3 +1,7 @@
+0.3.1
+
+- more lazy (go module)
+
 0.3.0
 
 - go code output support
