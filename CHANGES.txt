@@ -1,1 +1,3 @@
+0.3.0
 
+- go code output support
