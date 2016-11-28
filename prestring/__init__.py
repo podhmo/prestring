@@ -305,5 +305,5 @@ class LazyFormat(object):
 
     def __str__(self):
         args = map(str, self.args)
-        kwargs = {k: str(v) for k, v in self.kwargs}
+        kwargs = {k: str(v) for k, v in self.kwargs.items()}
         return self.fmt.format(*args, **kwargs)
