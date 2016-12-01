@@ -1,3 +1,7 @@
+0.3.3
+
+- goname function
+
 0.3.1
 
 - more lazy (go module)
