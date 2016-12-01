@@ -74,6 +74,12 @@ class GoModule(_Module):
             yield
 
     @contextlib.contextmanager
+    def elif_(self, cond):
+        self.unnewline()
+        with self.block(LazyFormat(" else if {} ", cond)):
+            yield
+
+    @contextlib.contextmanager
     def for_(self, cond):
         with self.block(LazyFormat("for {} ", cond)):
             yield
