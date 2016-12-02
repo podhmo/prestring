@@ -9,6 +9,10 @@ from . import (
     UNINDENT,
     Evaluator,
     Sentence,
+    LazyArguments,
+    LazyKeywords,
+    LazyArgumentsAndKeywords,
+    LazyFormat
 )
 from .compat import PY3
 
@@ -45,7 +49,7 @@ class PythonModule(_Module):
 
     def stmt(self, fmt, *args, **kwargs):
         if args or kwargs:
-            value = fmt.format(*args, **kwargs)
+            value = LazyFormat(fmt, *args, **kwargs)
         else:
             value = fmt
         self.body.append(value)
@@ -60,18 +64,15 @@ class PythonModule(_Module):
     @contextlib.contextmanager
     def with_(self, expr, as_=None):
         if as_:
-            self.stmt("with {} as {}:".format(expr, as_))
+            self.stmt(LazyFormat("with {} as {}:", expr, as_))
         else:
-            self.stmt("with {}:".format(expr))
+            self.stmt(LazyFormat("with {}:", expr))
         with self.scope():
             yield
 
     @contextlib.contextmanager
     def def_(self, name, *args, **kwargs):
-        ps = list(args)
-        ks = ["{}={}".format(str(k), str(v)) for k, v in kwargs.items()]
-        ps.extend(ks)
-        self.stmt("def {}({}):", name, ", ".join(ps))
+        self.stmt(LazyFormat("def {}({}):", name, LazyArgumentsAndKeywords(args, kwargs)))
         with self.scope():
             yield
         self.sep()
@@ -194,14 +195,11 @@ class PythonModule(_Module):
         self.call(caller.name, *caller.args)
 
     def call(self, name_, *args):
-        parameters = list(args)
-        param_string = ", ".join(parameters)
-
-        oneline = "{}({})".format(name_, param_string)
-        if len(oneline) <= self.width:
+        oneline = LazyFormat("{}({})", name_, LazyArguments(args))
+        if len(str(oneline._string())) <= self.width:
             self.stmt(oneline)
         else:
-            self.body.append(MultiSentenceForCall(name_, *parameters))
+            self.body.append(MultiSentenceForCall(name_, *args))
 
     def pass_(self):
         self.stmt("pass")
@@ -210,11 +208,11 @@ class PythonModule(_Module):
 class Caller(object):
     def __init__(self, name):
         self.name = name
-        self.args = []
+        self.kwargs = LazyKeywords([])
 
     def add(self, **kwargs):
         for k, v in kwargs.items():
-            self.args.append("{}={}".format(k, v))
+            self.kwargs.kwargs[k] = v
 
 
 class FromStatement(object):
@@ -266,13 +264,13 @@ class MultiSentenceForCall(object):
     def iterator(self, sentence):
         if not sentence.is_empty():
             yield NEWLINE
-        yield "{}(".format(self.name)
+        yield LazyFormat("{}(", self.name)
         yield NEWLINE
         yield INDENT
         for line in self.lines[:-1]:
-            yield "{},".format(line)
+            yield LazyFormat("{},", line)
             yield NEWLINE
-        yield "{})".format(self.lines[-1])
+        yield LazyFormat("{})", self.lines[-1])
         yield NEWLINE
         yield UNINDENT
 
