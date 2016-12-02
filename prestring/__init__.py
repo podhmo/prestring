@@ -309,13 +309,30 @@ class Caller(object):
         self.kwargs = LazyKeywords([])
 
 
-def LazyArgumentsAndKeywords(args, kwargs):
-    return LazyArguments([LazyArguments(args), LazyKeywords(kwargs)])
+class LazyArgumentsAndKeywords(object):
+    def __init__(self, args=None, kwargs=None):
+        self.args = LazyArguments(args or [])
+        self.kwargs = LazyKeywords(kwargs or {})
+
+    def _string(self):
+        r = []
+        if len(self.args.args):
+            r.append(self.args)
+        if len(self.kwargs.kwargs):
+            r.append(self.kwargs)
+        return ", ".join(map(str, r))
+
+    @reify
+    def value(self):
+        return self._string()
+
+    def __str__(self):
+        return self.value
 
 
 class LazyArguments(object):
-    def __init__(self, args):
-        self.args = args
+    def __init__(self, args=None):
+        self.args = args or []
 
     def _string(self):
         return ", ".join(map(str, self.args))
@@ -329,8 +346,8 @@ class LazyArguments(object):
 
 
 class LazyKeywords(object):
-    def __init__(self, kwargs):
-        self.kwargs = kwargs
+    def __init__(self, kwargs=None):
+        self.kwargs = kwargs or {}
 
     def _string(self):
         return ", ".join(["{}={}".format(str(k), str(v)) for k, v in self.kwargs.items()])

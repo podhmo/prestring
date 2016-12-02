@@ -75,7 +75,32 @@ class LazyFormatTests(unittest.TestCase):
 
 class MixedTests(unittest.TestCase):
     def test_it(self):
-        from prestring import LazyArguments, LazyKeywords, LazyFormat
-        args = LazyArguments([LazyArguments([1, 2, 3]), LazyKeywords({"x": 1})])
+        from prestring import LazyFormat, LazyArgumentsAndKeywords
+        args = LazyArgumentsAndKeywords([1, 2, 3], {"x": 1})
         target = LazyFormat("{fnname}({args})", fnname="foo", args=args)
         self.assertEqual(str(target), "foo(1, 2, 3, x=1)")
+
+    def test_it_empty(self):
+        from prestring import LazyFormat, LazyArgumentsAndKeywords
+        args = LazyArgumentsAndKeywords([], {})
+        target = LazyFormat("{fnname}({args})", fnname="foo", args=args)
+        self.assertEqual(str(target), "foo()")
+
+    def test_it_empty2(self):
+        from prestring import LazyFormat, LazyArgumentsAndKeywords
+        args = LazyArgumentsAndKeywords()
+        target = LazyFormat("{fnname}({args})", fnname="foo", args=args)
+        self.assertEqual(str(target), "foo()")
+
+    def test_it_empty_kwargs(self):
+        from prestring import LazyFormat, LazyArgumentsAndKeywords
+        args = LazyArgumentsAndKeywords([1])
+        target = LazyFormat("{fnname}({args})", fnname="foo", args=args)
+        self.assertEqual(str(target), "foo(1)")
+
+    def test_it_empty_args(self):
+        from prestring import LazyFormat, LazyArgumentsAndKeywords
+        args = LazyArgumentsAndKeywords(kwargs={"x": 1})
+        target = LazyFormat("{fnname}({args})", fnname="foo", args=args)
+        self.assertEqual(str(target), "foo(x=1)")
+
