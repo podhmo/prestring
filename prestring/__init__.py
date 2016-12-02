@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 import logging
 import contextlib
+from collections import defaultdict
 from io import StringIO
 logger = logging.getLogger(__name__)
 
@@ -313,3 +314,33 @@ class LazyFormat(object):
         args = map(str, self.args)
         kwargs = {k: str(v) for k, v in self.kwargs.items()}
         return self.fmt.format(*args, **kwargs)
+
+
+class NameStore(object):
+    def __init__(self):
+        self.c = defaultdict(int)
+        self.value_map = {}  # (src_type, dst_type) => (name, i)
+
+    def __contains__(self, value):
+        return value in self.value_map
+
+    def __setitem__(self, value, name):
+        if value not in self.value_map:
+            self.value_map[value] = self.get_name(value, name)
+            self.c[name] += 1
+
+    def __getitem__(self, value):
+        return self.value_map[value]
+
+    def get_name(self, value, name):
+        try:
+            return self[value]
+        except KeyError:
+            i = self.c[name]
+            return self.new_name(name, i)
+
+    def new_name(self, name, i):
+        if i == 0:
+            return name
+        else:
+            return "{}Dup{}".format(name, i)
