@@ -1,4 +1,8 @@
-0.4.1
+0.4.3
+
+- clear if empty (e.g. go-module's  import_group)
+
+0.4.2
 
 - bug fix LazyArgumentsAndKeywords
 

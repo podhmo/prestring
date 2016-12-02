@@ -156,10 +156,11 @@ class Group(object):
         self.added.add(name)
         self.submodule.stmt(name)
 
-    def __exit__(self, *args, **kwargs):
+    def clear_ifempty(self):
         if str(self.submodule) == "":
             self.m.clear()
-            return
+
+    def __exit__(self, *args, **kwargs):
         self.m.body.append(UNINDENT)
         self.m.stmt(')')
         self.m.sep()
