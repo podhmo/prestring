@@ -139,6 +139,7 @@ class Group(object):
     def __init__(self, m):
         self.m = m
         self.submodule = None
+        self.added = set()
 
     def __getattr__(self, name):
         return getattr(self.m, name)
@@ -150,9 +151,15 @@ class Group(object):
         return self
 
     def __call__(self, name):
-        self.submodule.stmt('{}'.format(name))
+        if name in self.added:
+            return
+        self.added.add(name)
+        self.submodule.stmt(name)
 
     def __exit__(self, *args, **kwargs):
+        if str(self.submodule) == "":
+            self.m.clear()
+            return
         self.m.body.append(UNINDENT)
         self.m.stmt(')')
         self.m.sep()
@@ -160,6 +167,10 @@ class Group(object):
 
 class ImportGroup(Group):
     def import_(self, name, as_=None):
+        pair = (name, as_)
+        if pair in self.added:
+            return
+        self.added.add(pair)
         if as_ is None:
             self.submodule.stmt('"{}"'.format(name))
         else:
