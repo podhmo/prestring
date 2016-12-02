@@ -454,13 +454,6 @@ output
 ```
 package models
 
-type Group struct {
-	// ID : this is unique ID for persistent
-	ID bson.ObjectId  `json:"id" bson:"_id"`
-	Name string  `json:"name"`
-}
-package models
-
 // Person : this is person model
 type Person struct {
 	Age int  `json:"age" bson:"age"`
@@ -490,6 +483,13 @@ const (
 	// Tarball : a member of ArchiveFormat
 	// Zipball : a member of ArchiveFormat
 )
+package models
+
+type Group struct {
+	// ID : this is unique ID for persistent
+	ID bson.ObjectId  `json:"id" bson:"_id"`
+	Name string  `json:"name"`
+}
 ```
 
 examples/go/person.py
@@ -619,22 +619,22 @@ output
 
 ```
 ========================================
-[Failure] batch script (2016-12-03 00:31:33.541010)
+[Failure] batch script (2016-12-03 02:09:17.250530)
 ========================================
 
 progress:
-task0: done (0.6371787675394867) S
-task1: done (0.033967246079762425) S
-task2: done (0.9543477182751686) F
-task3: done (0.5840952778982481) S
-task4: done (0.0015167428683615647) S
-task5: done (0.1554536793690794) S
-task6: done (0.6276027820576783) S
-task7: done (0.436119745372873) S
-task8: done (0.5512452425253807) S
-task9: done (0.8548636860168785) F
+task0: done (0.8345245950139829) F
+task1: done (0.7863006962234109) F
+task2: done (0.16407456419088062) S
+task3: done (0.9784851931436035) F
+task4: done (0.7663428733166238) F
+task5: done (0.1879694276503202) S
+task6: done (0.5587455130622668) S
+task7: done (0.7234337682918665) F
+task8: done (0.33078343103021346) S
+task9: done (0.7751328790282479) F
 ----------------------------------------
-2, 9,
+0, 1, 3, 4, 7, 9,
 ```
 
 examples/python/cross_product.py
