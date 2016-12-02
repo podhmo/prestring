@@ -21,6 +21,9 @@ class PreString(object):
         if other is not None:
             self.body.append(other)
 
+    def clear(self):
+        self.body.clear()
+
     def __iadd__(self, value):
         self.body.append(value)
         return self
@@ -231,6 +234,9 @@ class Module(object):
         self.lexer = lexer or Lexer(container_factory=list, sentence_factory=Sentence)
         self.parser = parser or Parser(framelist_factory=FrameList)
         self.application = application or Application()
+
+    def clear(self):
+        self.body.clear()
 
     def unnewline(self):
         if self.body.tail() == NEWLINE:
