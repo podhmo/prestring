@@ -196,7 +196,7 @@ class Struct(object):
 
 
 def main():
-    fname = "./models.json"
+    fname = os.path.join(os.path.abspath(os.path.dirname(__file__)), "./models.json")
     writer = GOWriter()
     reader = Reader()
     with open(fname) as rf:
@@ -210,8 +210,7 @@ def main():
         for name, file in world.modules["models"].files.items():
             outname = "output_{}".format(os.path.basename(file.name))
             logger.info("write %s", outname)
-            with open(outname, "w") as wf:
-                wf.write(str(file.dump(writer)))
+            print(file.dump(writer))
 
 
 if __name__ == "__main__":

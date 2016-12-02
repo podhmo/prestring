@@ -7,7 +7,6 @@ from os.path import(
 from os import(
     mkdir
 )
-import sys
 
 
 class AskStringCache(object):
