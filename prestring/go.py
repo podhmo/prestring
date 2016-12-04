@@ -34,10 +34,8 @@ class GoModule(_Module):
             yield
         self.stmt("}")
 
-    def comment(self, *comments):
-        for comment in comments:
-            for s in comment.split("\n"):
-                self.stmt("// {}".format(s))
+    def comment(self, comment):
+        self.stmt(LazyFormat("// {}", comment))
 
     def package(self, name):
         self.stmt("package {}".format(name))
