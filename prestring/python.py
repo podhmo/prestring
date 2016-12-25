@@ -239,7 +239,7 @@ class FromStatement(object):
         yield from self.stmt("from {} import(".format(self.modname))
         yield INDENT
         if self.unique:
-            symbols = tuple(set(self.symbols))
+            symbols = tuple(sorted(set(self.symbols)))
         else:
             symbols = self.symbols
         for sym in symbols[:-1]:
