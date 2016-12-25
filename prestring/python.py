@@ -37,6 +37,7 @@ class PythonModule(_Module):
         self.import_unique = kwargs.pop("import_unique", False)
         super(PythonModule, self).__init__(*args, **kwargs)
         self.from_map = {}  # module -> PythonModule
+        self.imported_set = set()
 
     def submodule(self, value="", newline=True):
         submodule = super(PythonModule, self).submodule(value=value, newline=newline)
@@ -177,6 +178,9 @@ class PythonModule(_Module):
         self.stmt("raise %s" % (expr,), *args)
 
     def import_(self, modname):
+        if modname in self.imported_set:
+            return
+        self.imported_set.add(modname)
         # todo: considering self.import_unique
         self.stmt("import {}", modname)
 
