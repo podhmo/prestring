@@ -1,3 +1,8 @@
+0.4.7
+
+- add prestring.output.SeparatedOutput
+- LazyKeywords is sorted
+
 0.4.3
 
 - clear if empty (e.g. go-module's  import_group)

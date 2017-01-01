@@ -3,6 +3,7 @@ import logging
 import contextlib
 from collections import defaultdict
 from io import StringIO
+from prestring.output import SeparatedOutput  # NOQA
 logger = logging.getLogger(__name__)
 
 
@@ -350,7 +351,7 @@ class LazyKeywords(object):
         self.kwargs = kwargs or {}
 
     def _string(self):
-        return ", ".join(["{}={}".format(str(k), str(v)) for k, v in self.kwargs.items()])
+        return ", ".join(["{}={}".format(str(k), str(v)) for k, v in sorted(self.kwargs.items())])
 
     @reify
     def value(self):
@@ -358,6 +359,11 @@ class LazyKeywords(object):
 
     def __str__(self):
         return self.value
+
+
+class LazyKeywordsRepr(LazyKeywords):
+    def _string(self):
+        return ", ".join(["{}={}".format(str(k), repr(v)) for k, v in sorted(self.kwargs.items())])
 
 
 class LazyJoin(object):
