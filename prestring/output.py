@@ -28,11 +28,11 @@ class SeparatedOutput(object):
         return File(name=os.path.join(dirname, fname), m=m)
 
     def prepare(self, f):
-        dirname = os.path.dirname(f.name)
+        dirname = os.path.dirname(os.path.join(self.dirname, f.name))
         if dirname in self.arrived:
             return
         self.arrived.add(dirname)
-        logger.info("make directory path=%s", dirname)
+        logger.info("touch directory path=%s", dirname)
         os.makedirs(dirname, exist_ok=True)
         if self.prefix:
             for f in glob.glob(os.path.join(dirname, "{}*.py".format(self.prefix))):
@@ -46,6 +46,6 @@ class SeparatedOutput(object):
         self.prepare(file)
 
         path = os.path.join(self.dirname, file.name)
-        logger.info("make file path=%s", path)
+        logger.info("touch file path=%s", path)
         with open(path, "w") as wf:
             wf.write(str(file.m))
