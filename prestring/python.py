@@ -240,7 +240,7 @@ class FromStatement(object):
     def iterator_for_many_symbols(self, sentence):
         if not sentence.is_empty():
             yield NEWLINE
-        yield from self.stmt("from {} import(".format(self.modname))
+        yield from self.stmt("from {} import (".format(self.modname))
         yield INDENT
         if self.unique:
             symbols = tuple(sorted(set(self.symbols)))
