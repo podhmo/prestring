@@ -29,16 +29,16 @@ testing_extras = tests_require + [
 ]
 
 setup(name='prestring',
-      version='0.4.7.2',
+      version='0.4.8',
       description='source code generation library (with overuse with-syntax)',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
           "Programming Language :: Python",
           "Programming Language :: Python :: Implementation :: CPython",
       ],
-      keywords='',
+      keywords='prestring, srcgen, python',
       author="podhmo",
-      author_email="",
+      author_email="ababjam61@gmail.com",
       url="https://github.com/podhmo/prestring",
       packages=find_packages(exclude=["prestring.tests"]),
       include_package_data=True,
