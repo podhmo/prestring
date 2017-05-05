@@ -1,6 +1,10 @@
 prestring
 ========================================
 
+.. image:: https://travis-ci.org/podhmo/prestring.svg?branch=master
+    :target: https://travis-ci.org/podhmo/prestring
+
+
 this is heavily inspired by `srcgen <https://github.com/tomerfiliba/srcgen>`_ .
 
 (todo: gentle introduction)
