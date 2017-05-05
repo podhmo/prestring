@@ -297,3 +297,5 @@ class Module(object):
         tokens = self.lexer(self.body)
         framelist = self.parser(tokens)
         return str(self.application(framelist, evaluator))
+
+    format = LazyFormat
