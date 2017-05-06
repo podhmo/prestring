@@ -270,7 +270,11 @@ class Module(object):
         self.body.append(submodule.body)
         return submodule
 
-    def stmt(self, value):
+    def stmt(self, fmt, *args, **kwargs):
+        if args or kwargs:
+            value = self.format(fmt, *args, **kwargs)
+        else:
+            value = fmt
         self.body.append(value)
         self.body.append(NEWLINE)
         return self

@@ -48,14 +48,6 @@ class PythonModule(_Module):
     def create_evaulator(self):
         return PythonEvaluator(StringIO(), newline=self.newline, indent=self.indent)
 
-    def stmt(self, fmt, *args, **kwargs):
-        if args or kwargs:
-            value = LazyFormat(fmt, *args, **kwargs)
-        else:
-            value = fmt
-        self.body.append(value)
-        self.body.append(NEWLINE)
-
     def sep(self):
         self.body.append(PEPNEWLINE)
 
@@ -65,15 +57,15 @@ class PythonModule(_Module):
     @contextlib.contextmanager
     def with_(self, expr, as_=None):
         if as_:
-            self.stmt(LazyFormat("with {} as {}:", expr, as_))
+            self.stmt("with {} as {}:", expr, as_)
         else:
-            self.stmt(LazyFormat("with {}:", expr))
+            self.stmt("with {}:", expr)
         with self.scope():
             yield
 
     @contextlib.contextmanager
     def def_(self, name, *args, **kwargs):
-        self.stmt(LazyFormat("def {}({}):", name, LazyArgumentsAndKeywords(args, kwargs)))
+        self.stmt("def {}({}):", name, LazyArgumentsAndKeywords(args, kwargs))
         with self.scope():
             yield
         self.sep()
