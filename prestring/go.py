@@ -9,7 +9,7 @@ from . import (
     NEWLINE,
     LazyFormat,
     LazyArguments,
-    LazyJoin
+    LazyJoin,
 )
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class GoModule(_Module):
         self.body.append(NEWLINE)
 
     @contextlib.contextmanager
-    def block(self, value=None):
+    def block(self, value=None, *, end="}", surround=True):
         if value is None:
             self.stmt("{")
         else:
@@ -32,7 +32,9 @@ class GoModule(_Module):
             self.body.append(NEWLINE)
         with self.scope():
             yield
-        self.stmt("}")
+        if not end.startswith("}") and surround:
+            end = "}" + end
+        self.stmt(end)
 
     def comment(self, comment):
         self.stmt(LazyFormat("// {}", comment))
@@ -53,6 +55,9 @@ class GoModule(_Module):
         with self.block(LazyFormat("type {} {}", name, LazyJoin(" ", args))):
             yield
         self.sep()
+
+    def struct(self, name):
+        return self.type_(name, "struct")
 
     @contextlib.contextmanager
     def func(self, name, *args, return_=""):
@@ -120,7 +125,7 @@ class MultiBranchClause(object):
     def case(self, value):
         self.m.stmt('case {}:'.format(value))
         with self.m.scope():
-            yield
+            yield self.m
 
     def __exit__(self, *args, **kwargs):
         self.m.stmt('}')
@@ -130,7 +135,7 @@ class MultiBranchClause(object):
     def default(self):
         self.m.stmt('default:')
         with self.m.scope():
-            yield
+            yield self.m
 
 
 class Group(object):
@@ -174,7 +179,9 @@ class ImportGroup(Group):
             self.submodule.stmt('"{}"'.format(name))
         else:
             self.submodule.stmt('{} "{}"'.format(as_, name))
+
     __call__ = import_
+
 
 Module = GoModule
 
@@ -187,9 +194,12 @@ def titlize(s):
 
 
 class NameFormatter:
-    def format(self, s,
-               num_rx=re.compile("\d{2,}"),
-               exclude_rx=re.compile("[^a-z0-9]", re.IGNORECASE | re.MULTILINE)):
+    def format(
+        self,
+        s,
+        num_rx=re.compile("\d{2,}"),
+        exclude_rx=re.compile("[^a-z0-9]", re.IGNORECASE | re.MULTILINE)
+    ):
         if not s:
             return ""
         elif num_rx.match(s):
@@ -199,23 +209,32 @@ class NameFormatter:
         else:
             return exclude_rx.sub("", self.proper_acronym(s))
 
-    def proper_acronym(self, s,
-                       rx=re.compile("(?P<sep>^|[^a-zA-Z])(?P<frag>[a-z]+)", re.M),
-                       rx2=re.compile("(?P<sep>[A-Z])(?P<frag>[a-z]+)", re.M)):
+    def proper_acronym(
+        self,
+        s,
+        rx=re.compile("(?P<sep>^|[^a-zA-Z])(?P<frag>[a-z]+)", re.M),
+        rx2=re.compile("(?P<sep>[A-Z])(?P<frag>[a-z]+)", re.M)
+    ):
         return rx2.sub(self._proper_repl2, rx.sub(self._proper_repl1, s))
 
     NUMBERS = {
-        '0': "Zero_", '1': "One_", '2': "Two_", '3': "Three_",
-        '4': "Four_", '5': "Five_", '6': "Six_", '7': "Seven_",
-        '8': "Eight_", '9': "Nine_"
+        '0': "Zero_",
+        '1': "One_",
+        '2': "Two_",
+        '3': "Three_",
+        '4': "Four_",
+        '5': "Five_",
+        '6': "Six_",
+        '7': "Seven_",
+        '8': "Eight_",
+        '9': "Nine_"
     }
 
     # https://github.com/golang/lint/blob/39d15d55e9777df34cdffde4f406ab27fd2e60c0/lint.go#L695-L731
     COMMON_INITIALISMS = [
-        "API", "ASCII", "CPU", "CSS", "DNS", "EOF", "GUID", "HTML", "HTTP",
-        "HTTPS", "ID", "IP", "JSON", "LHS", "QPS", "RAM", "RHS", "RPC", "SLA",
-        "SMTP", "SSH", "TCP", "TLS", "TTL", "UDP", "UI", "UID", "UUID", "URI",
-        "URL", "UTF8", "VM", "XML", "XSRF", "XSS"
+        "API", "ASCII", "CPU", "CSS", "DNS", "EOF", "GUID", "HTML", "HTTP", "HTTPS", "ID", "IP",
+        "JSON", "LHS", "QPS", "RAM", "RHS", "RPC", "SLA", "SMTP", "SSH", "TCP", "TLS", "TTL", "UDP",
+        "UI", "UID", "UUID", "URI", "URL", "UTF8", "VM", "XML", "XSRF", "XSS"
     ]
 
     def _proper_repl1(self, m):
