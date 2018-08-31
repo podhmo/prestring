@@ -1,4 +1,4 @@
-default: 00 01 02 03 04 05
+default: 00 01 02 03 04 05 06
 
 00:
 	mkdir -p dst/00
@@ -18,5 +18,8 @@ default: 00 01 02 03 04 05
 05:
 	mkdir -p dst/05
 	python src/05/genpkg.py dst/05
+06:
+	mkdir -p dst/06
+	python src/06/typed.py > dst/06/typed.py
 clean:
 	rm -rf dst
