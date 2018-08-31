@@ -27,8 +27,12 @@ class Caller(object):
 
 class LazyArgumentsAndKeywords(object):
     def __init__(self, args=None, kwargs=None):
-        self.args = LazyArguments(args or [])
-        self.kwargs = LazyKeywords(kwargs or {})
+        self.args = args or []
+        if not hasattr(self.args, "value"):
+            self.args = LazyArguments(self.args)
+        self.kwargs = kwargs or {}
+        if not hasattr(self.kwargs, "value"):
+            self.kwargs = LazyKeywords(self.kwargs)
 
     def append(self, val, type=None):
         self.args.args.append(val)

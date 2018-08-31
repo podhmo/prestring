@@ -50,8 +50,8 @@ class PythonModule(_Module):
     def sep(self):
         self.body.append(PEPNEWLINE)
 
-    def method(self, name, *args, **kwargs):
-        return self.def_(name, "self", *args, **kwargs)
+    def method(self, name, *args, return_type=None, **kwargs):
+        return self.def_(name, "self", *args, return_type=return_type ** kwargs)
 
     @contextlib.contextmanager
     def with_(self, expr, as_=None):
