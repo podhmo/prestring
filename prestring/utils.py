@@ -1,3 +1,5 @@
+import itertools
+from functools import partial
 from collections import defaultdict
 
 
@@ -28,6 +30,25 @@ class LazyArgumentsAndKeywords(object):
         self.args = LazyArguments(args or [])
         self.kwargs = LazyKeywords(kwargs or {})
 
+    def append(self, val, type=None):
+        self.args.args.append(val)
+        if type is not None:
+            self.args.types.append(type)
+
+    def get(self, k):
+        self.kwargs.kwargs.get(k)
+
+    def set(self, k, v, type=None):
+        self.kwargs.kwargs[k] = v
+        if type is not None:
+            self.kwargs.types[k] = type
+
+    def __setitem__(self, k, v):
+        self.kwargs[k] = v
+
+    def __getitem__(self, k):
+        return self.kwargs[k]
+
     def _string(self):
         r = []
         if len(self.args.args):
@@ -44,12 +65,26 @@ class LazyArgumentsAndKeywords(object):
         return self.value
 
 
+def _type_value(v, nonetype=type(None)):
+    # todo: support Optional
+    if hasattr(v, "__origin__"):
+        return "'{}'".format(v)
+    return getattr(v, "__name__", v)
+
+
 class LazyArguments(object):
-    def __init__(self, args=None):
+    def __init__(self, args=None, types=None):
         self.args = args or []
+        self.types = types or []
 
     def _string(self):
-        return ", ".join(map(str, self.args))
+        args = []
+        for name, typ in itertools.zip_longest(self.args, self.types):
+            arg = name = str(name)
+            if typ is not None:
+                arg = "{}: {}".format(arg, _type_value(typ))
+            args.append(arg)
+        return ", ".join(args)
 
     @reify
     def value(self):
@@ -60,11 +95,25 @@ class LazyArguments(object):
 
 
 class LazyKeywords(object):
-    def __init__(self, kwargs=None):
+    def __init__(self, kwargs=None, types=None, defaults=None, raw=False):
         self.kwargs = kwargs or {}
+        self.types = types or {}
+        self.defaults = defaults or {}
+        self._raw = raw
 
     def _string(self):
-        return ", ".join(["{}={}".format(str(k), str(v)) for k, v in sorted(self.kwargs.items())])
+        args = []
+        for name, default in self.kwargs.items():
+            if self._raw:
+                default = repr(default)
+            arg = name = str(name)
+            typ = self.types.get(name)
+            if typ is not None:
+                arg = "{}: {} = {}".format(arg, _type_value(typ), default)
+            else:
+                arg = "{}={}".format(arg, default)
+            args.append(arg)
+        return ", ".join(args)
 
     @reify
     def value(self):
@@ -74,9 +123,7 @@ class LazyKeywords(object):
         return self.value
 
 
-class LazyKeywordsRepr(LazyKeywords):
-    def _string(self):
-        return ", ".join(["{}={}".format(str(k), repr(v)) for k, v in sorted(self.kwargs.items())])
+LazyKeywordsRepr = partial(LazyKeywords, raw=True)
 
 
 class LazyJoin(object):
