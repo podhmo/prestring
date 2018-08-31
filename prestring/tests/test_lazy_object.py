@@ -20,6 +20,27 @@ class LazyArgumentsTests(unittest.TestCase):
         target.args.append(4)
         self.assertEqual(str(target), "1, 2, 3, 4")
 
+    def test_with_types(self):
+        target = self._makeOne(["x", "y"], types=["int"])
+        self.assertEqual(str(target), "x: int, y")
+
+    def test_with_actual_types(self):
+        target = self._makeOne(["x", "y", "*"], types=[int, bool])
+        self.assertEqual(str(target), "x: int, y: bool, *")
+
+    def test_with_actual_types(self):
+        try:
+            import typing as t
+            target = self._makeOne(
+                ["x", "y", "z"], types=[int, t.Optional[int], t.Sequence[t.Optional[int]]]
+            )
+            self.assertEqual(
+                str(target),
+                "x: int, y: 'typing.Union[int, NoneType]', z: 'typing.Sequence[typing.Union[int, NoneType]]'"
+            )
+        except ImportError:
+            pass
+
 
 @test_target("prestring:LazyKeywords")
 class LazyKeywordsTests(unittest.TestCase):
@@ -40,6 +61,10 @@ class LazyKeywordsTests(unittest.TestCase):
         target = self._makeOne({"x": 1, "y": 2, "z": 3})
         target.kwargs["a"] = "b"
         self.assert_unordered(str(target), "x=1, y=2, z=3, a=b")
+
+    def test_with_types(self):
+        target = self._makeOne({"x": 1, "y": 2, "z": 3}, types={"x": int, "z": int})
+        self.assert_unordered(str(target), "x: int = 1, y=2, z: int = 3")
 
 
 @test_target("prestring:LazyFormat")
@@ -103,4 +128,3 @@ class MixedTests(unittest.TestCase):
         args = LazyArgumentsAndKeywords(kwargs={"x": 1})
         target = LazyFormat("{fnname}({args})", fnname="foo", args=args)
         self.assertEqual(str(target), "foo(x=1)")
-

@@ -22,13 +22,43 @@ class Tests(unittest.TestCase):
 
     def test_long_long_call(self):
         m = self._makeOne(indent="@", width=100)
-        m.call("SomeLongNameClass", "x", "y", "long long argument 0", "long long argument 1", "long long argument 2", "long long argument 3")
+        m.call(
+            "SomeLongNameClass",
+            "x",
+            "y",
+            "long long argument 0",
+            "long long argument 1",
+            "long long argument 2",
+            "long long argument 3",
+        )
         expected = [
-            "SomeLongNameClass(", '@x,', '@y,',
+            "SomeLongNameClass(",
+            '@x,',
+            '@y,',
             "@long long argument 0,",
             "@long long argument 1,",
             "@long long argument 2,",
-            "@long long argument 3)"
+            "@long long argument 3)",
         ]
         result = str(m).split("\n")
+        self.assertEqual(result, expected)
+
+    def test_def_with_typed(self):
+        from prestring.utils import LazyArguments, LazyKeywords
+        m = self._makeOne()
+        with m.def_(
+            "sum",
+            LazyArguments(["x"], types=[int]),
+            LazyKeywords({
+                "y": 0
+            }, types={"y": int}),
+            return_type=int
+        ):
+            m.stmt("return x + y")
+
+        expected = """
+def sum(x: int, y: int = 0) -> int:
+    return x + y
+        """.strip()
+        result = str(m)
         self.assertEqual(result, expected)
