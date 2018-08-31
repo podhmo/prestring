@@ -12,11 +12,10 @@ from . import (
     LazyArguments,
     LazyKeywords,
     LazyArgumentsAndKeywords,
-    LazyFormat
+    LazyFormat,
 )
 from .compat import PY3
-
-
+from .utils import _type_value  # xxx
 PEPNEWLINE = Newline()
 
 
@@ -64,8 +63,14 @@ class PythonModule(_Module):
             yield
 
     @contextlib.contextmanager
-    def def_(self, name, *args, **kwargs):
-        self.stmt("def {}({}):", name, LazyArgumentsAndKeywords(args, kwargs))
+    def def_(self, name, *args, return_type=None, **kwargs):
+        if return_type is not None:
+            self.stmt(
+                "def {}({}) -> {}:", name, LazyArgumentsAndKeywords(args, kwargs),
+                _type_value(return_type)
+            )
+        else:
+            self.stmt("def {}({}):", name, LazyArgumentsAndKeywords(args, kwargs))
         with self.scope():
             yield
         self.sep()
@@ -161,13 +166,13 @@ class PythonModule(_Module):
         self.stmt("continue")
 
     def return_(self, expr, *args):
-        self.stmt("return %s" % (expr,), *args)
+        self.stmt("return %s" % (expr, ), *args)
 
     def yield_(self, expr, *args):
-        self.stmt("yield %s" % (expr,), *args)
+        self.stmt("yield %s" % (expr, ), *args)
 
     def raise_(self, expr, *args):
-        self.stmt("raise %s" % (expr,), *args)
+        self.stmt("raise %s" % (expr, ), *args)
 
     def import_(self, modname):
         if modname in self.imported_set:
@@ -182,7 +187,9 @@ class PythonModule(_Module):
             for sym in attrs:
                 from_stmt.append(sym)
         except KeyError:
-            self.from_map[modname] = self.submodule(FromStatement(modname, attrs, unique=self.import_unique), newline=False)
+            self.from_map[modname] = self.submodule(
+                FromStatement(modname, attrs, unique=self.import_unique), newline=False
+            )
 
     @contextlib.contextmanager
     def hugecall(self, name):
