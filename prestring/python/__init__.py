@@ -134,9 +134,12 @@ class PythonModule(_Module):
 
     # class definition
     @contextlib.contextmanager
-    def class_(self, name, bases=None, metaclass=None):
+    def class_(self, name, bases="", metaclass=None):
         if bases is None:
-            bases = "object"
+            if PY3:
+                bases = ""
+            else:
+                bases = "object"
         if not isinstance(bases, (list, tuple)):
             bases = [bases]
         args = ", ".join(str(b) for b in bases)
