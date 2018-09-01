@@ -44,7 +44,16 @@ class Accessor:
     def emit_prefix(self, m, node):
         # output coment (prefix)
         if node.prefix:
-            for line in node.prefix.lstrip().split("\n"):
+            self.emit_comment(m, node.prefix)
+            if node.children:
+                node.prefix = ""  # xxx: consume
+
+    def emit_comment(self, m, comment):
+        if comment:
+            for line in comment.split("\n"):
+                line = line.strip(" ")
+                if not line:
+                    continue
                 m.stmt("m.stmt({!r})", line)
 
     def to_arguments(self, node):
@@ -110,10 +119,12 @@ class Transformer(StrictPyTreeVisitor):  # hai
             self.m.g = self.m.submodule()
 
     def _visit_default(self, node):
-        for child in node.children:
-            self.visit(child)
+        self.accessor.emit_prefix(self.m, node)
+        for snode in node.children:
+            self.accessor.emit_prefix(self.m, snode)
+            self.visit(snode)
 
-    visit_file_input = visit_DEDENT = visit_ENDMARKER = _visit_default
+    visit_DEDENT = visit_file_input = visit_ENDMARKER = _visit_default
 
     def visit_decorated(self, node):
         for snode in node.children[:-1]:
@@ -205,7 +216,6 @@ class Transformer(StrictPyTreeVisitor):  # hai
                 st = i + 1
 
         for (name, expr, body) in blocks:
-            # todo: as support
             if expr:
                 args = " ".join([str(x).strip() for x in expr]).lstrip()
                 self.m.stmt("with m.{}_({!r}):", name.value.lstrip(), args)
@@ -226,9 +236,19 @@ class Transformer(StrictPyTreeVisitor):  # hai
     visit_if_stmt = visit_while_stmt = visit_for_stmt = visit_try_stmt = visit_with_stmt = _visit_block_stmt  # noqa
 
     def visit_suite(self, node):
+        prefixes = []
+        if node.prefix:
+            prefixes.append(node.prefix)
+            node.prefix = ""  # xxx
+
+        # main process
         itr = iter(node.children)
 
         for snode in itr:
+            if snode.prefix:
+                prefixes.append(snode.prefix)
+                snode.prefix = ""  # xxx
+
             typ = type_repr(snode.type)
             if typ == token.INDENT:
                 resttext = str(snode).strip()
@@ -238,11 +258,27 @@ class Transformer(StrictPyTreeVisitor):  # hai
                     self.m.stmt("  {}".format(resttext))
                 break
 
+        suffixes = []
         with self.m.scope():
+            # output coment (prefix)
+            self.accessor.emit_comment(self.m, "\n".join(prefixes))
+
             for snode in itr:
+                if snode.type == token.DEDENT:
+                    suffixes.append(snode.prefix)
+                    snode.prefix = ""
                 self.visit(snode)
 
+        # comment (suffix DEDENT)
+        if suffixes:
+            assert len(suffixes) == 1
+            self.accessor.emit_comment(self.m, suffixes[0])
+
     def visit_simple_stmt(self, node):
+        # output coment (prefix)
+        self.accessor.emit_prefix(self.m, node)
+
+        # main process
         children = node.children
         typ = type_repr(children[0].type)
         # docstring
@@ -299,7 +335,7 @@ class Transformer(StrictPyTreeVisitor):  # hai
 
         if rest:
             for line in "".join([str(x) for x in rest]).split("\n"):
-                line = line.strip()
+                line = line.strip(" ")
                 if not line:
                     continue
                 self.m.stmt("m.stmt({!r})", line)
@@ -329,7 +365,8 @@ def transform(node, *, m=None, is_whole=None):
 
 def transform_string(source: str, *, m=None):
     from prestring.python.parse import parse_string
-    return transform(parse_string(source), m=m)
+    t = parse_string(source)
+    return transform(t, m=m)
 
 
 def transform_file(fname: str, *, m=None):
