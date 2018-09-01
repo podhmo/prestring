@@ -1,0 +1,266 @@
+--- HOME/venvs/my/prestring/prestring/python/transform.py	2018-09-01 23:28:52.773680188 +0900
++++ output/01transform.py	2018-09-01 23:29:22.130233774 +0900
+@@ -13,11 +13,9 @@
+     StrictPyTreeVisitor,
+ )
+ 
+-# todo: comment after ':'
+ 
++# todo: comment after ':'
+ # see: /usr/lib/python3.7/lib2to3/Grammar.txt
+-
+-
+ class Accessor:
+     def __init__(self, tree):
+         self.tree = tree
+@@ -66,14 +64,13 @@
+             node = children[1]
+             assert children[2].value == ")"
+             typ = type_repr(node.type)
+-
+         if typ == "typedargslist":
+             argslist = node.children
+-        elif hasattr(node, "value"):  # leaf
++        elif hasattr(node, "value"):
++            # leaf
+             argslist = [node]
+         else:
+             raise ValueError("invalid type {}".format(typ))
+-
+         params = LParams(kwargs=LKwargs())
+         itr = iter(argslist)
+         while True:
+@@ -81,14 +78,14 @@
+             arg_type = None
+             try:
+                 snode = next(itr)
+-                if type_repr(snode.type) == "tname":  # with type
++                if type_repr(snode.type) == "tname":
++                    # with type
+                     len(snode.children) == "3"
+                     arg_name = snode.children[0].value
+                     assert snode.children[1].value == ":"
+                     arg_type = snode.children[2].value
+                 else:
+                     arg_name = snode.value
+-
+                 arg_default = None
+                 snode = next(itr)  # or EOF
+                 if snode.value == ",":
+@@ -111,7 +108,9 @@
+         return params
+ 
+ 
+-class Transformer(StrictPyTreeVisitor):  # hai
++
++class Transformer(StrictPyTreeVisitor):
++    # hai
+     def __init__(self, tree, m):
+         self.accessor = Accessor(tree)
+         self.m = m
+@@ -125,41 +124,41 @@
+             self.visit(snode)
+ 
+     visit_DEDENT = visit_file_input = visit_ENDMARKER = _visit_default
+-
+     def visit_decorated(self, node):
+         for snode in node.children[:-1]:
+             assert type_repr(snode.type) == "decorator"
+             self.m.stmt(
+-                "m.stmt({!r})", " ".join([str(x)
+-                                          for x in snode.children]).strip().replace("@ ", "@")
++            "m.stmt({!r})", " ".join([str(x)
++            for x in snode.children]).strip().replace("@ ", "@")
+             )
+         return self.visit(node.children[-1])
+ 
+     def visit_classdef(self, node):
+         # output coment (prefix)
+         self.accessor.emit_prefix(self.m, node)
+-
+         # main process
+         children = node.children
+         assert children[0].value == "class"
+         name = children[1].value.strip()
+         if hasattr(children[2], "value"):
+-            if children[2].value == ":":  # 'class', <name>, ':'
++            if children[2].value == ":":
++                # 'class', <name>, ':'
+                 args = [repr(name)]
+                 body = children[3]
+-            elif children[2].value == "(":  # 'class', <name>, '(', <super>,')', ':':
++            elif children[2].value == "(":
++                # 'class', <name>, '(', <super>,')', ':':
+                 args = [repr(name), repr(children[3].value)]
+                 assert children[4].value == ")"
+                 assert children[5].value == ":"
+                 body = children[6]
+-        else:  # 'class', <name>, <parameters>, ':',  <suite>,
++        else:
++            # 'class', <name>, <parameters>, ':',  <suite>,
+             params = self.accessor.to_arguments(children[2])
+             assert children[3].value == ":"
+             args = [repr(name)]
+             args.extend([repr(str(x)) for x in params.args._args()])
+             args.extend([repr(str(x)) for x in params.kwargs._args()])
+             body = children[4]
+-
+         # class Foo(x):
+         #    pass
+         #
+@@ -175,7 +174,6 @@
+     def visit_funcdef(self, node):
+         # output coment (prefix)
+         self.accessor.emit_prefix(self.m, node)
+-
+         # main process
+         children = node.children
+         # 'def', <name>, <parameters>, ':',  <suite>,
+@@ -184,7 +182,6 @@
+         params = self.accessor.to_arguments(children[2])
+         assert children[3].value == ":"
+         body = children[4]
+-
+         # def foo(x:int, y:int=0) -> int:
+         #    pass
+         #
+@@ -203,7 +200,6 @@
+     def _visit_block_stmt(self, node):
+         # output coment (prefix)
+         self.accessor.emit_prefix(self.m, node)
+-
+         # main process
+         children = node.children
+         blocks = []  # (name, expr, body)
+@@ -214,41 +210,37 @@
+                 assert children[i - 1].value == ":"
+                 blocks.append((children[st], children[st + 1:i - 1], children[i]))
+                 st = i + 1
+-
+         for (name, expr, body) in blocks:
+             if expr:
+                 args = " ".join([str(x).strip() for x in expr]).lstrip()
+                 self.m.stmt("with m.{}_({!r}):", name.value.lstrip(), args)
+-            elif hasattr(name, "value"):  # Leaf
++            elif hasattr(name, "value"):
++                # Leaf
+                 self.m.stmt("with m.{}_():", name.value.lstrip())
+             else:
+                 typ = type_repr(name.type)
+                 if typ == "except_clause":
+                     self.m.stmt(
+-                        "with m.{}_({!r}):",
+-                        name.children[0].value,
+-                        " ".join([str(x).strip() for x in name.children[1:]]).lstrip(),
++                    "with m.{}_({!r}):",
++                    name.children[0].value,
++                    " ".join([str(x).strip() for x in name.children[1:]]).lstrip(),
+                     )
+                 else:
+                     raise ValueError("unexpected blocks: {!r}, {!r}".format(name, expr))
+             self.visit_suite(body)
+ 
+     visit_if_stmt = visit_while_stmt = visit_for_stmt = visit_try_stmt = visit_with_stmt = _visit_block_stmt  # noqa
+-
+     def visit_suite(self, node):
+         prefixes = []
+         if node.prefix:
+             prefixes.append(node.prefix)
+             node.prefix = ""  # xxx
+-
+         # main process
+         itr = iter(node.children)
+-
+         for snode in itr:
+             if snode.prefix:
+                 prefixes.append(snode.prefix)
+                 snode.prefix = ""  # xxx
+-
+             typ = type_repr(snode.type)
+             if typ == token.INDENT:
+                 resttext = str(snode).strip()
+@@ -257,19 +249,16 @@
+                     assert v == NEWLINE, v
+                     self.m.stmt("  {}".format(resttext))
+                 break
+-
+         suffixes = []
+         with self.m.scope():
+             # output coment (prefix)
+             self.accessor.emit_comment(self.m, "\n".join(prefixes))
+-
+             for snode in itr:
+                 if snode.type == token.DEDENT:
+                     suffixes.append(snode.prefix)
+                     snode.prefix = ""
+                 self.visit(snode)
+-
+-        # comment (suffix DEDENT)
++            # comment (suffix DEDENT)
+         if suffixes:
+             assert len(suffixes) == 1
+             self.accessor.emit_comment(self.m, suffixes[0])
+@@ -277,7 +266,6 @@
+     def visit_simple_stmt(self, node):
+         # output coment (prefix)
+         self.accessor.emit_prefix(self.m, node)
+-
+         # main process
+         children = node.children
+         typ = type_repr(children[0].type)
+@@ -292,21 +280,17 @@
+                 for line in docstring.split("\n"):
+                     self.m.stmt(line)
+                 self.m.stmt("))")
+-
+-        # from x import (y, z) ?
++            # from x import (y, z) ?
+         elif typ == "import_name":
+             # 'import' <dotted_as_names>
+             nodes = children[0].children
+-
+             assert nodes[0].value == "import"
+             self.accessor.import_contextually(self.m, node, str(nodes[1]).strip())
+             rest = nodes[2:]
+-
+         # import_name | import_from
+         elif typ == "import_from":
+             # 'from' <module> 'import' ('*' | '(' <import_asnames> ')' | <import_asnames>)
+             nodes = children[0].children
+-
+             assert nodes[0].value == "from"
+             module = str(nodes[1]).strip()
+             assert nodes[2].value == "import"
+@@ -332,7 +316,6 @@
+             rest = children[1:]
+         else:
+             rest = node.children
+-
+         if rest:
+             for line in "".join([str(x) for x in rest]).split("\n"):
+                 line = line.strip(" ")
+@@ -341,23 +324,20 @@
+                 self.m.stmt("m.stmt({!r})", line)
+ 
+ 
++
+ def transform(node, *, m=None, is_whole=None):
+     is_whole = is_whole or m is None
+     if m is None:
+         m = Module()
+         m.g = m.submodule()
+-
+     if is_whole:
+         m.g.from_("prestring.python", "Module")
+         m.g.stmt("m = Module()  # noqa")
+-
+     t = Transformer(node, m=m)
+     t.visit(node)
+-
+     if len(m.g.imported_set) > 0:
+         m.g.stmt("m.sep()")
+         m.g.sep()
+-
+     if is_whole:
+         m.stmt("print(m)")
+     return m
