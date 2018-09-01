@@ -41,6 +41,12 @@ class Accessor:
         else:
             m.stmt("m.submodule().from_({!r}, {})", module, ", ".join([repr(x) for x in names]))
 
+    def emit_prefix(self, m, node):
+        # output coment (prefix)
+        if node.prefix:
+            for line in node.prefix.lstrip().split("\n"):
+                m.stmt("m.stmt({!r})", line)
+
     def to_arguments(self, node):
         typ = type_repr(node.type)
         if typ == "parameters":
@@ -119,8 +125,11 @@ class Transformer(StrictPyTreeVisitor):  # hai
         return self.visit(node.children[-1])
 
     def visit_classdef(self, node):
-        children = node.children
+        # output coment (prefix)
+        self.accessor.emit_prefix(self.m, node)
 
+        # main process
+        children = node.children
         assert children[0].value == "class"
         name = children[1].value.strip()
         if hasattr(children[2], "value"):
@@ -153,6 +162,10 @@ class Transformer(StrictPyTreeVisitor):  # hai
         return True  # break
 
     def visit_funcdef(self, node):
+        # output coment (prefix)
+        self.accessor.emit_prefix(self.m, node)
+
+        # main process
         children = node.children
         # 'def', <name>, <parameters>, ':',  <suite>,
         assert children[0].value == "def"
@@ -168,7 +181,6 @@ class Transformer(StrictPyTreeVisitor):  # hai
         #
         # with m.def_("foo", 'x: int', 'y: int = 0'):
         #     m.stmt("pass")
-
         args = [repr(name)]
         args.extend([repr(str(x)) for x in params.args._args()])
         args.extend([repr(str(x)) for x in params.kwargs._args()])
@@ -178,6 +190,10 @@ class Transformer(StrictPyTreeVisitor):  # hai
         return True  # break
 
     def _visit_block_stmt(self, node):
+        # output coment (prefix)
+        self.accessor.emit_prefix(self.m, node)
+
+        # main process
         children = node.children
         blocks = []  # (name, expr, body)
         st = 0
