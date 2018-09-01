@@ -1,8 +1,8 @@
 # -*- coding:utf-8 -*-
 import contextlib
 from io import StringIO
-from . import Module as _Module
-from . import (
+from .. import Module as _Module
+from .. import (
     Newline,
     NEWLINE,
     INDENT,
@@ -14,8 +14,8 @@ from . import (
     LazyArgumentsAndKeywords,
     LazyFormat,
 )
-from .compat import PY3
-from .utils import _type_value  # xxx
+from ..compat import PY3
+from ..utils import _type_value  # xxx
 PEPNEWLINE = Newline()
 
 
