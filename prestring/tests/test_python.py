@@ -11,7 +11,7 @@ class Tests(unittest.TestCase):
         m.from_("boo", "x")
         m.from_("foo", "c")
         result = str(m).split("\n")
-        expected = ["from foo import (", "@a,", "@b,", "@c", ")", "from boo import x"]
+        expected = ["from foo import (", "@a,", "@b,", "@c,", ")", "from boo import x"]
         self.assertEqual(result, expected)
 
     def test_short_call(self):
@@ -48,7 +48,7 @@ class Tests(unittest.TestCase):
         m = self._makeOne()
         with m.def_(
             "sum",
-            LazyArguments(["x"], types=[int]),
+            LazyArguments(["x"], types={"x": int}),
             LazyKeywords({
                 "y": 0
             }, types={"y": int}),

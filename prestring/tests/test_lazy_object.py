@@ -21,18 +21,23 @@ class LazyArgumentsTests(unittest.TestCase):
         self.assertEqual(str(target), "1, 2, 3, 4")
 
     def test_with_types(self):
-        target = self._makeOne(["x", "y"], types=["int"])
+        target = self._makeOne(["x", "y"], types={"x": "int"})
         self.assertEqual(str(target), "x: int, y")
 
     def test_with_actual_types(self):
-        target = self._makeOne(["x", "y", "*"], types=[int, bool])
+        target = self._makeOne(["x", "y", "*"], types={"x": int, "y": bool})
         self.assertEqual(str(target), "x: int, y: bool, *")
 
     def test_with_actual_types(self):
         try:
             import typing as t
             target = self._makeOne(
-                ["x", "y", "z"], types=[int, t.Optional[int], t.Sequence[t.Optional[int]]]
+                ["x", "y", "z"],
+                types={
+                    "x": int,
+                    "y": t.Optional[int],
+                    "z": t.Sequence[t.Optional[int]]
+                }
             )
             self.assertEqual(
                 str(target),

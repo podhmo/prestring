@@ -1,8 +1,8 @@
 # -*- coding:utf-8 -*-
 import contextlib
 from io import StringIO
-from . import Module as _Module
-from . import (
+from .. import Module as _Module
+from .. import (
     Newline,
     NEWLINE,
     INDENT,
@@ -14,8 +14,8 @@ from . import (
     LazyArgumentsAndKeywords,
     LazyFormat,
 )
-from .compat import PY3
-from .utils import _type_value  # xxx
+from ..compat import PY3
+from ..utils import _type_value  # xxx
 PEPNEWLINE = Newline()
 
 
@@ -38,10 +38,12 @@ class PythonModule(_Module):
         self.from_map = {}  # module -> PythonModule
         self.imported_set = set()
 
-    def submodule(self, value="", newline=True):
+    def submodule(self, value="", newline=True, import_unique=None):
         submodule = super(PythonModule, self).submodule(value=value, newline=newline)
         submodule.width = self.width
-        submodule.import_unique = self.import_unique
+        if import_unique is None:
+            import_unique = self.import_unique
+        submodule.import_unique = import_unique
         return submodule
 
     def create_evaulator(self):
@@ -51,7 +53,7 @@ class PythonModule(_Module):
         self.body.append(PEPNEWLINE)
 
     def method(self, name, *args, return_type=None, **kwargs):
-        return self.def_(name, "self", *args, return_type=return_type ** kwargs)
+        return self.def_(name, "self", *args, return_type=return_type, **kwargs)
 
     @contextlib.contextmanager
     def with_(self, expr, as_=None):
@@ -81,6 +83,12 @@ class PythonModule(_Module):
         with self.scope():
             yield
 
+    def docstring(self, doc):
+        self.stmt('"""')
+        for line in doc.split("\n"):
+            self.stmt(line)
+        self.stmt('"""')
+
     @contextlib.contextmanager
     def unless(self, expr):
         self.stmt("if not ({}):", expr)
@@ -100,8 +108,11 @@ class PythonModule(_Module):
             yield
 
     @contextlib.contextmanager
-    def for_(self, var, iterator):
-        self.stmt("for {var} in {iterator}:", var=var, iterator=iterator)
+    def for_(self, var, iterator=None):
+        if iterator is None:
+            self.stmt("for {var}:", var=var)
+        else:
+            self.stmt("for {var} in {iterator}:", var=var, iterator=iterator)
         with self.scope():
             yield
 
@@ -134,20 +145,24 @@ class PythonModule(_Module):
 
     # class definition
     @contextlib.contextmanager
-    def class_(self, name, bases=None, metaclass=None):
+    def class_(self, name, bases="", metaclass=None):
         if bases is None:
-            bases = "object"
+            if not PY3:
+                bases = "object"
         if not isinstance(bases, (list, tuple)):
             bases = [bases]
-        args = ", ".join(str(b) for b in bases)
+        args = [str(b) for b in bases if b]
         if PY3:
             if metaclass is not None:
-                args += ", metaclass={}".format(metaclass)
-            self.stmt("class {name}({args}):", name=name, args=args)
+                args.append("metaclass={}".format(metaclass))
+            if args:
+                self.stmt("class {name}({args}):", name=name, args=", ".join(args))
+            else:
+                self.stmt("class {name}:", name=name)
             with self.scope():
                 yield
         else:
-            self.stmt("class {name}({args}):", name=name, args=args)
+            self.stmt("class {name}({args}):", name=name, args=", ".join(args))
             with self.scope():
                 if metaclass is not None:
                     self.stmt("__metaclass__ = {}".format(metaclass))
@@ -174,15 +189,19 @@ class PythonModule(_Module):
     def raise_(self, expr, *args):
         self.stmt("raise %s" % (expr, ), *args)
 
-    def import_(self, modname):
+    def import_(self, modname, as_=None):
         if modname in self.imported_set:
             return
         self.imported_set.add(modname)
         # todo: considering self.import_unique
-        self.stmt("import {}", modname)
+        if as_ is None:
+            self.stmt("import {}", modname)
+        else:
+            self.stmt("import {} as {}", modname, as_)
 
     def from_(self, modname, *attrs):
         try:
+            self.imported_set.add(modname)
             from_stmt = self.from_map[modname].body.tail()
             for sym in attrs:
                 from_stmt.append(sym)
@@ -245,9 +264,8 @@ class FromStatement(object):
             symbols = tuple(sorted(set(self.symbols)))
         else:
             symbols = self.symbols
-        for sym in symbols[:-1]:
+        for sym in symbols:
             yield from self.stmt("{},".format(sym))
-        yield from self.stmt("{}".format(symbols[-1]))
         yield UNINDENT
         yield from self.stmt(")")
 
