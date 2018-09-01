@@ -280,7 +280,8 @@ with m.class_('Transformer', 'StrictPyTreeVisitor'):
                 with m.for_('line in docstring.split("\\n")'):
                     m.stmt('self.m.stmt(line)')
                 m.stmt('self.m.stmt("))")')
-            m.stmt('# from x import (y, z) ?')
+            m.stmt('return')
+        m.stmt('# from x import (y, z) ?')
         with m.elif_('typ == "import_name"'):
             m.stmt("# 'import' <dotted_as_names>")
             m.stmt('nodes = children[0].children')

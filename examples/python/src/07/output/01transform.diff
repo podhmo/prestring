@@ -1,5 +1,5 @@
---- HOME/venvs/my/prestring/prestring/python/transform.py	2018-09-01 23:54:24.343489316 +0900
-+++ output/01transform.py	2018-09-01 23:54:25.523501590 +0900
+--- HOME/venvs/my/prestring/prestring/python/transform.py	2018-09-02 00:44:11.177856974 +0900
++++ output/01transform.py	2018-09-02 00:44:13.244532283 +0900
 @@ -13,11 +13,9 @@
      StrictPyTreeVisitor,
  )
@@ -208,13 +208,12 @@
          # main process
          children = node.children
          typ = type_repr(children[0].type)
-@@ -299,21 +287,17 @@
-                 for line in docstring.split("\n"):
+@@ -300,21 +288,17 @@
                      self.m.stmt(line)
                  self.m.stmt("))")
+             return
 -
--        # from x import (y, z) ?
-+            # from x import (y, z) ?
+         # from x import (y, z) ?
          elif typ == "import_name":
              # 'import' <dotted_as_names>
              nodes = children[0].children
@@ -231,7 +230,7 @@
              assert nodes[0].value == "from"
              module = str(nodes[1]).strip()
              assert nodes[2].value == "import"
-@@ -339,28 +323,24 @@
+@@ -340,29 +324,24 @@
              rest = children[1:]
          else:
              rest = node.children
@@ -250,6 +249,7 @@
      if is_whole:
          m.g.from_("prestring.python", "Module")
          m.g.stmt("m = Module()  # noqa")
+-
 -
      t = Transformer(node, m=m)
      t.visit(node)

@@ -287,7 +287,8 @@ class Transformer(StrictPyTreeVisitor):
                 for line in docstring.split("\n"):
                     self.m.stmt(line)
                 self.m.stmt("))")
-            # from x import (y, z) ?
+            return
+        # from x import (y, z) ?
         elif typ == "import_name":
             # 'import' <dotted_as_names>
             nodes = children[0].children
