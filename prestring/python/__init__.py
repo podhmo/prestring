@@ -147,21 +147,22 @@ class PythonModule(_Module):
     @contextlib.contextmanager
     def class_(self, name, bases="", metaclass=None):
         if bases is None:
-            if PY3:
-                bases = ""
-            else:
+            if not PY3:
                 bases = "object"
         if not isinstance(bases, (list, tuple)):
             bases = [bases]
-        args = ", ".join(str(b) for b in bases)
+        args = [str(b) for b in bases if b]
         if PY3:
             if metaclass is not None:
-                args += ", metaclass={}".format(metaclass)
-            self.stmt("class {name}({args}):", name=name, args=args)
+                args.append("metaclass={}".format(metaclass))
+            if args:
+                self.stmt("class {name}({args}):", name=name, args=", ".join(args))
+            else:
+                self.stmt("class {name}:", name=name)
             with self.scope():
                 yield
         else:
-            self.stmt("class {name}({args}):", name=name, args=args)
+            self.stmt("class {name}({args}):", name=name, args=", ".join(args))
             with self.scope():
                 if metaclass is not None:
                     self.stmt("__metaclass__ = {}".format(metaclass))
