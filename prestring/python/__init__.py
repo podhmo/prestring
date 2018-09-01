@@ -201,6 +201,7 @@ class PythonModule(_Module):
 
     def from_(self, modname, *attrs):
         try:
+            self.imported_set.add(modname)
             from_stmt = self.from_map[modname].body.tail()
             for sym in attrs:
                 from_stmt.append(sym)
