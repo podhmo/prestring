@@ -181,12 +181,15 @@ class PythonModule(_Module):
     def raise_(self, expr, *args):
         self.stmt("raise %s" % (expr, ), *args)
 
-    def import_(self, modname):
+    def import_(self, modname, as_=None):
         if modname in self.imported_set:
             return
         self.imported_set.add(modname)
         # todo: considering self.import_unique
-        self.stmt("import {}", modname)
+        if as_ is None:
+            self.stmt("import {}", modname)
+        else:
+            self.stmt("import {} as {}", modnema, as_)
 
     def from_(self, modname, *attrs):
         try:
