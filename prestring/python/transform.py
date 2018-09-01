@@ -99,8 +99,9 @@ class Accessor:
                 elif snode.type == token.STAR:
                     prefix = "*"
                     snode = next(itr)
+
                     if snode.type == token.COMMA:
-                        arg_name = "*"
+                        params.append("*")
                         continue
 
                 if type_repr(snode.type) == "tname":  # with type
@@ -172,7 +173,7 @@ class Transformer(StrictPyTreeVisitor):  # hai
                 args = [repr(name)]
                 body = children[3]
             elif children[2].value == "(":  # 'class', <name>, '(', <super>,')', ':':
-                args = [repr(name), repr(children[3].value)]
+                args = [repr(name), repr(str(children[3]).strip())]
                 assert children[4].value == ")"
                 assert children[5].value == ":"
                 body = children[6]
@@ -201,7 +202,6 @@ class Transformer(StrictPyTreeVisitor):  # hai
     def visit_funcdef(self, node):
         # output coment (prefix)
         self.accessor.emit_prefix_and_consuming(self.m, node)
-
         # main process
         children = node.children
         # 'def', <name>, <parameters>, ':',  <suite>,
@@ -266,16 +266,15 @@ class Transformer(StrictPyTreeVisitor):  # hai
     def visit_suite(self, node):
         prefixes = []
         if node.prefix:
-            prefixes.append(node.prefix)
-            node.prefix = ""  # xxx
+            prefixes.append(node)
 
         # main process
         itr = iter(node.children)
 
+        found_indent = False
         for snode in itr:
             if snode.prefix:
-                prefixes.append(snode.prefix)
-                snode.prefix = ""  # xxx
+                prefixes.append(snode)
 
             typ = type_repr(snode.type)
             if typ == token.INDENT:
@@ -284,12 +283,22 @@ class Transformer(StrictPyTreeVisitor):  # hai
                     v = self.m.body.pop()
                     assert v == NEWLINE, v
                     self.m.stmt("  {}".format(resttext))
+                found_indent = True
                 break
+
+        if not found_indent:
+            with self.m.scope():
+                self.m.stmt("m.stmt({!r})", str(node).strip())
+                return
 
         suffixes = []
         with self.m.scope():
             # output coment (prefix)
-            self.accessor.emit_comment(self.m, "\n".join(prefixes))
+            comments = []
+            for has_prefix_node in prefixes:
+                comments.append(has_prefix_node.prefix)
+                has_prefix_node.prefix = ""
+            self.accessor.emit_comment(self.m, "\n".join(comments))
 
             for snode in itr:
                 if snode.type == token.DEDENT:
@@ -347,6 +356,9 @@ class Transformer(StrictPyTreeVisitor):  # hai
                         if type_repr(ssnode.type) == token.COMMA:
                             continue
                         names.append(str(ssnode).strip())
+                elif typ == "import_as_name":
+                    assert len(snode.children) == 3
+                    names.append(str(snode).strip())
                 elif typ == token.COMMA:
                     continue
                 elif typ == token.LPAR:
