@@ -1,10 +1,10 @@
 from prestring.python import Module
 from prestring.utils import (
     LazyJoin,
-    LParams,
+    LazyArgumentsAndKeywords as LParams,
     LKwargs,
 )
-from lib2to3.pgen2 import token
+import lib2to3.pgen2.token as token
 from prestring.python.parse import (
     type_repr,
     StrictPyTreeVisitor,
@@ -12,6 +12,9 @@ from prestring.python.parse import (
 
 # todo: import
 # todo: comment after ':'
+
+# see: /usr/lib/python3.7/lib2to3/Grammar.txt
+
 
 class Accessor:
     def __init__(self, tree):
@@ -202,8 +205,9 @@ class Transformer(StrictPyTreeVisitor):  # hai
                 self.visit(snode)
 
     def visit_simple_stmt(self, node):
-        # docstring?
         children = node.children
+        typ = type_repr(children[0].type)
+        # docstring
         if hasattr(children[0], "value") and children[0].value.startswith(("'''", '"""')):
             docstring = "".join([snode.value for snode in children]).strip()
             if "\n" not in docstring:
@@ -214,9 +218,50 @@ class Transformer(StrictPyTreeVisitor):  # hai
                 for line in docstring.split("\n"):
                     self.m.stmt(line)
                 self.m.stmt("))")
+
+        # from x import (y, z) ?
+        elif typ == "import_name":
+            # 'import' <dotted_as_names>
+            nodes = children[0].children
+
+            assert nodes[0].value == "import"
+            self.m.g.stmt("m.import_({!r})", str(nodes[1]).strip())
+            rest = nodes[2:]
+
+        # import_name | import_from
+        elif typ == "import_from":
+            # 'from' <module> 'import' ('*' | '(' <import_asnames> ')' | <import_asnames>)
+            nodes = children[0].children
+
+            assert nodes[0].value == "from"
+            module = str(nodes[1]).strip()
+            assert nodes[2].value == "import"
+            names = []
+            for snode in nodes[2:]:
+                typ = type_repr(snode.type)
+                if typ == "import_as_names":
+                    for ssnode in snode.children:
+                        if type_repr(ssnode.type) == token.COMMA:
+                            continue
+                        names.append(str(ssnode).strip())
+                elif typ == token.COMMA:
+                    continue
+                elif typ == token.LPAR:
+                    continue
+                elif typ == token.RPAR:
+                    continue
+                elif snode.value == "import":
+                    continue
+                else:
+                    names.append(snode.value)
+            self.m.g.stmt("m.from_({!r}, {})", module, ", ".join([repr(x) for x in names]))
+            rest = children[1:]
         else:
-            for line in str(node).split("\n"):
-                line = line.strip(" ")
+            rest = node.children
+
+        if rest:
+            for line in "".join([str(x) for x in rest]).split("\n"):
+                line = line.strip()
                 if not line:
                     continue
                 self.m.stmt("m.stmt({!r})", line)
@@ -229,12 +274,15 @@ def transform(node, *, m=None, is_whole=None):
         m.g = m.submodule()
 
     if is_whole:
-        m.from_("prestring.python", "Module")
-        m.stmt("m = Module()  # noqa")
-        m.sep()
+        m.g.from_("prestring.python", "Module")
+        m.g.stmt("m = Module()  # noqa")
 
     t = Transformer(node, m=m)
     t.visit(node)
+
+    if len(m.g.imported_set) > 0:
+        m.g.stmt("m.sep()")
+        m.g.sep()
 
     if is_whole:
         m.stmt("print(m)")
@@ -256,7 +304,8 @@ def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("file")
     args = parser.parse_args(argv)
-    print(transform_file(args.file))
+    m = transform_file(args.file)
+    print(str(m))
 
 
 if __name__ == "__main__":
