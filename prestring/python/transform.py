@@ -1,4 +1,7 @@
-from prestring.python import Module
+from prestring.python import (
+    Module,
+    NEWLINE,
+)
 from prestring.utils import (
     LazyJoin,
     LazyArgumentsAndKeywords as LParams,
@@ -10,7 +13,6 @@ from prestring.python.parse import (
     StrictPyTreeVisitor,
 )
 
-# todo: import
 # todo: comment after ':'
 
 # see: /usr/lib/python3.7/lib2to3/Grammar.txt
@@ -23,6 +25,21 @@ class Accessor:
     def is_def(self, node, _candidates=("funcdef", "classdef")):
         typ = type_repr(node.type)
         return typ in _candidates
+
+    def is_toplevel(self, node):
+        return type_repr(node.parent.type) == "file_input"
+
+    def import_contextually(self, m, node, name):
+        if self.is_toplevel(node):
+            m.g.stmt("m.import_({!r})", name)
+        else:
+            m.stmt("m.submodule().import_({!r})", name)
+
+    def from_contextually(self, m, node, module, names):
+        if self.is_toplevel(node):
+            m.g.stmt("m.from_({!r}, {})", module, ", ".join([repr(x) for x in names]))
+        else:
+            m.stmt("m.submodule().from_({!r}, {})", module, ", ".join([repr(x) for x in names]))
 
     def to_arguments(self, node):
         typ = type_repr(node.type)
@@ -198,6 +215,11 @@ class Transformer(StrictPyTreeVisitor):  # hai
         for snode in itr:
             typ = type_repr(snode.type)
             if typ == token.INDENT:
+                resttext = str(snode).strip()
+                if resttext.startswith("#"):
+                    v = self.m.body.pop()
+                    assert v == NEWLINE, v
+                    self.m.stmt("  {}".format(resttext))
                 break
 
         with self.m.scope():
@@ -225,7 +247,7 @@ class Transformer(StrictPyTreeVisitor):  # hai
             nodes = children[0].children
 
             assert nodes[0].value == "import"
-            self.m.g.stmt("m.import_({!r})", str(nodes[1]).strip())
+            self.accessor.import_contextually(self.m, node, str(nodes[1]).strip())
             rest = nodes[2:]
 
         # import_name | import_from
@@ -254,7 +276,7 @@ class Transformer(StrictPyTreeVisitor):  # hai
                     continue
                 else:
                     names.append(snode.value)
-            self.m.g.stmt("m.from_({!r}, {})", module, ", ".join([repr(x) for x in names]))
+            self.accessor.from_contextually(self.m, node, module, names)
             rest = children[1:]
         else:
             rest = node.children
