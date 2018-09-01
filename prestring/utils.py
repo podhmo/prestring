@@ -1,9 +1,8 @@
-import itertools
 from functools import partial
 from collections import defaultdict
 
 
-class reify(object):
+class reify:
     def __init__(self, wrapped):
         self.wrapped = wrapped
         try:
@@ -19,13 +18,13 @@ class reify(object):
         return val
 
 
-class Caller(object):
+class Caller:
     def __init__(self, name):
         self.name = name
         self.kwargs = LazyKeywords([])
 
 
-class LazyArgumentsAndKeywords(object):
+class LazyArgumentsAndKeywords:
     def __init__(self, args=None, kwargs=None):
         self.args = args or []
         if not hasattr(self.args, "value"):
@@ -37,7 +36,7 @@ class LazyArgumentsAndKeywords(object):
     def append(self, val, type=None):
         self.args.args.append(val)
         if type is not None:
-            self.args.types.append(type)
+            self.args.types[val] = type
 
     def get(self, k):
         self.kwargs.kwargs.get(k)
@@ -53,17 +52,17 @@ class LazyArgumentsAndKeywords(object):
     def __getitem__(self, k):
         return self.kwargs[k]
 
-    def _string(self):
+    def _args(self):
         r = []
         if len(self.args.args):
             r.append(self.args)
         if len(self.kwargs.kwargs):
             r.append(self.kwargs)
-        return ", ".join(map(str, r))
+        return map(str, r)
 
     @reify
     def value(self):
-        return self._string()
+        return ", ".join(self._args())
 
     def __str__(self):
         return self.value
@@ -76,36 +75,36 @@ def _type_value(v, nonetype=type(None)):
     return getattr(v, "__name__", v)
 
 
-class LazyArguments(object):
+class LazyArguments:
     def __init__(self, args=None, types=None):
         self.args = args or []
-        self.types = types or []
+        self.types = types or {}
 
-    def _string(self):
+    def _args(self):
         args = []
-        for name, typ in itertools.zip_longest(self.args, self.types):
+        for name in self.args:
             arg = name = str(name)
+            typ = self.types.get(name)
             if typ is not None:
                 arg = "{}: {}".format(arg, _type_value(typ))
             args.append(arg)
-        return ", ".join(args)
+        return args
 
     @reify
     def value(self):
-        return self._string()
+        return ", ".join(self._args())
 
     def __str__(self):
         return self.value
 
 
-class LazyKeywords(object):
-    def __init__(self, kwargs=None, types=None, defaults=None, raw=False):
+class LazyKeywords:
+    def __init__(self, kwargs=None, types=None, raw=False):
         self.kwargs = kwargs or {}
         self.types = types or {}
-        self.defaults = defaults or {}
         self._raw = raw
 
-    def _string(self):
+    def _args(self):
         args = []
         for name, default in self.kwargs.items():
             if self._raw:
@@ -117,11 +116,11 @@ class LazyKeywords(object):
             else:
                 arg = "{}={}".format(arg, default)
             args.append(arg)
-        return ", ".join(args)
+        return args
 
     @reify
     def value(self):
-        return self._string()
+        return ", ".join(self._args())
 
     def __str__(self):
         return self.value
@@ -130,7 +129,7 @@ class LazyKeywords(object):
 LazyKeywordsRepr = partial(LazyKeywords, raw=True)
 
 
-class LazyJoin(object):
+class LazyJoin:
     def __init__(self, sep, args):
         self.sep = sep
         self.args = args
@@ -146,7 +145,7 @@ class LazyJoin(object):
         return self.value
 
 
-class LazyFormat(object):
+class LazyFormat:
     def __init__(self, fmt, *args, **kwargs):
         self.fmt = fmt
         self.args = args
@@ -165,7 +164,7 @@ class LazyFormat(object):
         return self.value
 
 
-class NameStore(object):
+class NameStore:
     def __init__(self):
         self.c = defaultdict(int)
         self.value_map = {}  # (src_type, dst_type) => (name, i)

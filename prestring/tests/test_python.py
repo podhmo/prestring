@@ -48,7 +48,7 @@ class Tests(unittest.TestCase):
         m = self._makeOne()
         with m.def_(
             "sum",
-            LazyArguments(["x"], types=[int]),
+            LazyArguments(["x"], types={"x": int}),
             LazyKeywords({
                 "y": 0
             }, types={"y": int}),
