@@ -38,10 +38,12 @@ class PythonModule(_Module):
         self.from_map = {}  # module -> PythonModule
         self.imported_set = set()
 
-    def submodule(self, value="", newline=True):
+    def submodule(self, value="", newline=True, import_unique=None):
         submodule = super(PythonModule, self).submodule(value=value, newline=newline)
         submodule.width = self.width
-        submodule.import_unique = self.import_unique
+        if import_unique is None:
+            import_unique = self.import_unique
+        submodule.import_unique = import_unique
         return submodule
 
     def create_evaulator(self):
@@ -82,8 +84,10 @@ class PythonModule(_Module):
             yield
 
     def docstring(self, doc):
+        self.stmt('"""')
         for line in doc.split("\n"):
-            self.stmt("# {}", doc)
+            self.stmt(line)
+        self.stmt('"""')
 
     @contextlib.contextmanager
     def unless(self, expr):
@@ -104,8 +108,11 @@ class PythonModule(_Module):
             yield
 
     @contextlib.contextmanager
-    def for_(self, var, iterator):
-        self.stmt("for {var} in {iterator}:", var=var, iterator=iterator)
+    def for_(self, var, iterator=None):
+        if iterator is None:
+            self.stmt("for {var}:", var=var)
+        else:
+            self.stmt("for {var} in {iterator}:", var=var, iterator=iterator)
         with self.scope():
             yield
 
@@ -189,7 +196,7 @@ class PythonModule(_Module):
         if as_ is None:
             self.stmt("import {}", modname)
         else:
-            self.stmt("import {} as {}", modnema, as_)
+            self.stmt("import {} as {}", modname, as_)
 
     def from_(self, modname, *attrs):
         try:

@@ -75,6 +75,14 @@ def _type_value(v, nonetype=type(None)):
     return getattr(v, "__name__", v)
 
 
+class UnRepr:
+    def __init__(self, value):
+        self.value = value
+
+    def __repr__(self):
+        return str(self.value)
+
+
 class LazyArguments:
     def __init__(self, args=None, types=None):
         self.args = args or []
@@ -127,6 +135,11 @@ class LazyKeywords:
 
 
 LazyKeywordsRepr = partial(LazyKeywords, raw=True)
+
+# shortname
+LParams = LazyArgumentsAndKeywords
+LArgs = LazyArguments
+LKwargs = LazyKeywords
 
 
 class LazyJoin:
