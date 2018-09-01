@@ -53,7 +53,7 @@ class PythonModule(_Module):
         self.body.append(PEPNEWLINE)
 
     def method(self, name, *args, return_type=None, **kwargs):
-        return self.def_(name, "self", *args, return_type=return_type ** kwargs)
+        return self.def_(name, "self", *args, return_type=return_type, **kwargs)
 
     @contextlib.contextmanager
     def with_(self, expr, as_=None):
