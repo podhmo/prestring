@@ -32,11 +32,19 @@ class LazyArgumentsAndKeywords:
         self.kwargs = kwargs or {}
         if not hasattr(self.kwargs, "value"):
             self.kwargs = LazyKeywords(self.kwargs)
+        self.tails = None
 
     def append(self, val, type=None):
         self.args.args.append(val)
         if type is not None:
             self.args.types[val] = type
+
+    def append_tail(self, val, type=None):
+        if self.tails is None:
+            self.tails = LazyArguments()
+        self.tails.args.append(val)
+        if type is not None:
+            self.tails.types[val] = type
 
     def get(self, k):
         self.kwargs.kwargs.get(k)
@@ -58,6 +66,8 @@ class LazyArgumentsAndKeywords:
             r.append(self.args)
         if len(self.kwargs.kwargs):
             r.append(self.kwargs)
+        if self.tails is not None:
+            r.append(self.tails)
         return map(str, r)
 
     @reify

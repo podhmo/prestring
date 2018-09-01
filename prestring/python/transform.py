@@ -68,6 +68,10 @@ class Accessor:
         if typ == "parameters":
             # '(', <typedargslist>, ')'
             children = node.children
+
+            if len(children) == 2:
+                return LParams(kwargs=LKwargs())
+
             assert len(children) == 3
             assert children[0].value == "("
             node = children[1]
@@ -86,32 +90,45 @@ class Accessor:
         while True:
             arg_name = None
             arg_type = None
+            prefix = ""
             try:
                 snode = next(itr)
+                if snode.type == token.DOUBLESTAR:
+                    prefix = "**"
+                    snode = next(itr)
+                elif snode.type == token.STAR:
+                    prefix = "*"
+                    snode = next(itr)
+                    if snode.type == token.COMMA:
+                        arg_name = "*"
+                        continue
+
                 if type_repr(snode.type) == "tname":  # with type
                     len(snode.children) == "3"
                     arg_name = snode.children[0].value
-                    assert snode.children[1].value == ":"
-                    arg_type = snode.children[2].value
+                    assert snode.children[1].type == token.COLON
+                    arg_type = str(snode.children[2]).strip()
                 else:
                     arg_name = snode.value
 
                 arg_default = None
                 snode = next(itr)  # or EOF
-                if snode.value == ",":
+                if snode.type == token.COMMA:
                     pass
-                elif snode.value == "=":
+                elif snode.type == token.EQUAL:
                     snode = next(itr)
                     arg_default = str(snode)
                     snode = next(itr)  # , or EOF
-                    assert snode.value == ","
+                    assert snode.type == token.COMMA
                 else:
                     raise ValueError("invalid arglist {!r}".format(argslist))
             except StopIteration:
                 break
             finally:
                 if arg_name is not None:
-                    if arg_default is None:
+                    if prefix:  # *args or **kwargs
+                        params.append_tail(prefix + arg_name, type=arg_type)
+                    elif arg_default is None:
                         params.append(arg_name, type=arg_type)
                     else:
                         params.set(arg_name, arg_default, type=arg_type)
@@ -165,6 +182,8 @@ class Transformer(StrictPyTreeVisitor):  # hai
             args = [repr(name)]
             args.extend([repr(str(x)) for x in params.args._args()])
             args.extend([repr(str(x)) for x in params.kwargs._args()])
+            if params.tails is not None:
+                args.extend([repr(str(x)) for x in params.tails._args()])
             body = children[4]
 
         # class Foo(x):
@@ -202,6 +221,8 @@ class Transformer(StrictPyTreeVisitor):  # hai
         args = [repr(name)]
         args.extend([repr(str(x)) for x in params.args._args()])
         args.extend([repr(str(x)) for x in params.kwargs._args()])
+        if params.tails is not None:
+            args.extend([repr(str(x)) for x in params.tails._args()])
         self.m.stmt('with m.def_({}):'.format(LazyJoin(", ", args)))
         self.visit_suite(body)
         self.m.sep()
