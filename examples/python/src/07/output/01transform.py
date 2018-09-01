@@ -39,7 +39,7 @@ class Accessor:
         else:
             m.stmt("m.submodule().from_({!r}, {})", module, ", ".join([repr(x) for x in names]))
 
-    def emit_prefix(self, m, node):
+    def emit_prefix_and_consuming(self, m, node):
         # output coment (prefix)
         if node.prefix:
             self.emit_comment(m, node.prefix)
@@ -49,10 +49,17 @@ class Accessor:
     def emit_comment(self, m, comment):
         if comment:
             for line in comment.split("\n"):
-                line = line.strip(" ")
+                line = line.lstrip(" ")
                 if not line:
                     continue
                 m.stmt("m.stmt({!r})", line)
+
+    def emit_stmt_multiline(self, m, statement):
+        for i, line in enumerate(statement.split("\n")):
+            line = line.strip(" ")
+            if not line:
+                continue
+            m.stmt("m.stmt({!r})", line)
 
     def to_arguments(self, node):
         typ = type_repr(node.type)
@@ -118,9 +125,9 @@ class Transformer(StrictPyTreeVisitor):
             self.m.g = self.m.submodule()
 
     def _visit_default(self, node):
-        self.accessor.emit_prefix(self.m, node)
+        self.accessor.emit_prefix_and_consuming(self.m, node)
         for snode in node.children:
-            self.accessor.emit_prefix(self.m, snode)
+            self.accessor.emit_prefix_and_consuming(self.m, snode)
             self.visit(snode)
 
     visit_DEDENT = visit_file_input = visit_ENDMARKER = _visit_default
@@ -135,7 +142,7 @@ class Transformer(StrictPyTreeVisitor):
 
     def visit_classdef(self, node):
         # output coment (prefix)
-        self.accessor.emit_prefix(self.m, node)
+        self.accessor.emit_prefix_and_consuming(self.m, node)
         # main process
         children = node.children
         assert children[0].value == "class"
@@ -173,7 +180,7 @@ class Transformer(StrictPyTreeVisitor):
 
     def visit_funcdef(self, node):
         # output coment (prefix)
-        self.accessor.emit_prefix(self.m, node)
+        self.accessor.emit_prefix_and_consuming(self.m, node)
         # main process
         children = node.children
         # 'def', <name>, <parameters>, ':',  <suite>,
@@ -199,7 +206,7 @@ class Transformer(StrictPyTreeVisitor):
 
     def _visit_block_stmt(self, node):
         # output coment (prefix)
-        self.accessor.emit_prefix(self.m, node)
+        self.accessor.emit_prefix_and_consuming(self.m, node)
         # main process
         children = node.children
         blocks = []  # (name, expr, body)
@@ -265,7 +272,7 @@ class Transformer(StrictPyTreeVisitor):
 
     def visit_simple_stmt(self, node):
         # output coment (prefix)
-        self.accessor.emit_prefix(self.m, node)
+        self.accessor.emit_prefix_and_consuming(self.m, node)
         # main process
         children = node.children
         typ = type_repr(children[0].type)
@@ -317,11 +324,7 @@ class Transformer(StrictPyTreeVisitor):
         else:
             rest = node.children
         if rest:
-            for line in "".join([str(x) for x in rest]).split("\n"):
-                line = line.strip(" ")
-                if not line:
-                    continue
-                self.m.stmt("m.stmt({!r})", line)
+            self.accessor.emit_stmt_multiline(self.m, "".join([str(x) for x in rest]))
 
 
 
@@ -360,6 +363,8 @@ def main(argv=None):
     parser.add_argument("file")
     args = parser.parse_args(argv)
     m = transform_file(args.file)
+    # import inspect
+    # m = transform_string(inspect.getsource(main))
     print(str(m))
 
 

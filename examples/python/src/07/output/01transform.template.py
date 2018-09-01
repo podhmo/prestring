@@ -32,7 +32,7 @@ with m.class_('Accessor'):
         with m.else_():
             m.stmt('m.stmt("m.submodule().from_({!r}, {})", module, ", ".join([repr(x) for x in names]))')
 
-    with m.def_('emit_prefix', 'self', 'm', 'node'):
+    with m.def_('emit_prefix_and_consuming', 'self', 'm', 'node'):
         m.stmt('# output coment (prefix)')
         with m.if_('node.prefix'):
             m.stmt('self.emit_comment(m, node.prefix)')
@@ -42,10 +42,17 @@ with m.class_('Accessor'):
     with m.def_('emit_comment', 'self', 'm', 'comment'):
         with m.if_('comment'):
             with m.for_('line in comment.split("\\n")'):
-                m.stmt('line = line.strip(" ")')
+                m.stmt('line = line.lstrip(" ")')
                 with m.if_('not line'):
                     m.stmt('continue')
                 m.stmt('m.stmt("m.stmt({!r})", line)')
+
+    with m.def_('emit_stmt_multiline', 'self', 'm', 'statement'):
+        with m.for_('i, line in enumerate(statement.split("\\n"))'):
+            m.stmt('line = line.strip(" ")')
+            with m.if_('not line'):
+                m.stmt('continue')
+            m.stmt('m.stmt("m.stmt({!r})", line)')
 
     with m.def_('to_arguments', 'self', 'node'):
         m.stmt('typ = type_repr(node.type)')
@@ -111,9 +118,9 @@ with m.class_('Transformer', 'StrictPyTreeVisitor'):
             m.stmt('self.m.g = self.m.submodule()')
 
     with m.def_('_visit_default', 'self', 'node'):
-        m.stmt('self.accessor.emit_prefix(self.m, node)')
+        m.stmt('self.accessor.emit_prefix_and_consuming(self.m, node)')
         with m.for_('snode in node.children'):
-            m.stmt('self.accessor.emit_prefix(self.m, snode)')
+            m.stmt('self.accessor.emit_prefix_and_consuming(self.m, snode)')
             m.stmt('self.visit(snode)')
 
     m.stmt('visit_DEDENT = visit_file_input = visit_ENDMARKER = _visit_default')
@@ -128,7 +135,7 @@ with m.class_('Transformer', 'StrictPyTreeVisitor'):
 
     with m.def_('visit_classdef', 'self', 'node'):
         m.stmt('# output coment (prefix)')
-        m.stmt('self.accessor.emit_prefix(self.m, node)')
+        m.stmt('self.accessor.emit_prefix_and_consuming(self.m, node)')
         m.stmt('# main process')
         m.stmt('children = node.children')
         m.stmt('assert children[0].value == "class"')
@@ -166,7 +173,7 @@ with m.class_('Transformer', 'StrictPyTreeVisitor'):
 
     with m.def_('visit_funcdef', 'self', 'node'):
         m.stmt('# output coment (prefix)')
-        m.stmt('self.accessor.emit_prefix(self.m, node)')
+        m.stmt('self.accessor.emit_prefix_and_consuming(self.m, node)')
         m.stmt('# main process')
         m.stmt('children = node.children')
         m.stmt("# 'def', <name>, <parameters>, ':',  <suite>,")
@@ -192,7 +199,7 @@ with m.class_('Transformer', 'StrictPyTreeVisitor'):
 
     with m.def_('_visit_block_stmt', 'self', 'node'):
         m.stmt('# output coment (prefix)')
-        m.stmt('self.accessor.emit_prefix(self.m, node)')
+        m.stmt('self.accessor.emit_prefix_and_consuming(self.m, node)')
         m.stmt('# main process')
         m.stmt('children = node.children')
         m.stmt('blocks = []  # (name, expr, body)')
@@ -258,7 +265,7 @@ with m.class_('Transformer', 'StrictPyTreeVisitor'):
 
     with m.def_('visit_simple_stmt', 'self', 'node'):
         m.stmt('# output coment (prefix)')
-        m.stmt('self.accessor.emit_prefix(self.m, node)')
+        m.stmt('self.accessor.emit_prefix_and_consuming(self.m, node)')
         m.stmt('# main process')
         m.stmt('children = node.children')
         m.stmt('typ = type_repr(children[0].type)')
@@ -310,11 +317,7 @@ with m.class_('Transformer', 'StrictPyTreeVisitor'):
         with m.else_():
             m.stmt('rest = node.children')
         with m.if_('rest'):
-            with m.for_('line in "".join([str(x) for x in rest]).split("\\n")'):
-                m.stmt('line = line.strip(" ")')
-                with m.if_('not line'):
-                    m.stmt('continue')
-                m.stmt('self.m.stmt("m.stmt({!r})", line)')
+            m.stmt('self.accessor.emit_stmt_multiline(self.m, "".join([str(x) for x in rest]))')
 
 
 
@@ -353,6 +356,8 @@ with m.def_('main', 'argv=None'):
     m.stmt('parser.add_argument("file")')
     m.stmt('args = parser.parse_args(argv)')
     m.stmt('m = transform_file(args.file)')
+    m.stmt('# import inspect')
+    m.stmt('# m = transform_string(inspect.getsource(main))')
     m.stmt('print(str(m))')
 
 

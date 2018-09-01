@@ -1,5 +1,5 @@
---- HOME/venvs/my/prestring/prestring/python/transform.py	2018-09-01 23:28:52.773680188 +0900
-+++ output/01transform.py	2018-09-01 23:29:22.130233774 +0900
+--- HOME/venvs/my/prestring/prestring/python/transform.py	2018-09-01 23:54:24.343489316 +0900
++++ output/01transform.py	2018-09-01 23:54:25.523501590 +0900
 @@ -13,11 +13,9 @@
      StrictPyTreeVisitor,
  )
@@ -13,7 +13,7 @@
  class Accessor:
      def __init__(self, tree):
          self.tree = tree
-@@ -66,14 +64,13 @@
+@@ -73,14 +71,13 @@
              node = children[1]
              assert children[2].value == ")"
              typ = type_repr(node.type)
@@ -30,7 +30,7 @@
          params = LParams(kwargs=LKwargs())
          itr = iter(argslist)
          while True:
-@@ -81,14 +78,14 @@
+@@ -88,14 +85,14 @@
              arg_type = None
              try:
                  snode = next(itr)
@@ -47,7 +47,7 @@
                  arg_default = None
                  snode = next(itr)  # or EOF
                  if snode.value == ",":
-@@ -111,7 +108,9 @@
+@@ -118,7 +115,9 @@
          return params
  
  
@@ -58,7 +58,7 @@
      def __init__(self, tree, m):
          self.accessor = Accessor(tree)
          self.m = m
-@@ -125,41 +124,41 @@
+@@ -132,41 +131,41 @@
              self.visit(snode)
  
      visit_DEDENT = visit_file_input = visit_ENDMARKER = _visit_default
@@ -76,7 +76,7 @@
  
      def visit_classdef(self, node):
          # output coment (prefix)
-         self.accessor.emit_prefix(self.m, node)
+         self.accessor.emit_prefix_and_consuming(self.m, node)
 -
          # main process
          children = node.children
@@ -108,15 +108,15 @@
          # class Foo(x):
          #    pass
          #
-@@ -175,7 +174,6 @@
+@@ -182,7 +181,6 @@
      def visit_funcdef(self, node):
          # output coment (prefix)
-         self.accessor.emit_prefix(self.m, node)
+         self.accessor.emit_prefix_and_consuming(self.m, node)
 -
          # main process
          children = node.children
          # 'def', <name>, <parameters>, ':',  <suite>,
-@@ -184,7 +182,6 @@
+@@ -191,7 +189,6 @@
          params = self.accessor.to_arguments(children[2])
          assert children[3].value == ":"
          body = children[4]
@@ -124,15 +124,15 @@
          # def foo(x:int, y:int=0) -> int:
          #    pass
          #
-@@ -203,7 +200,6 @@
+@@ -210,7 +207,6 @@
      def _visit_block_stmt(self, node):
          # output coment (prefix)
-         self.accessor.emit_prefix(self.m, node)
+         self.accessor.emit_prefix_and_consuming(self.m, node)
 -
          # main process
          children = node.children
          blocks = []  # (name, expr, body)
-@@ -214,41 +210,37 @@
+@@ -221,41 +217,37 @@
                  assert children[i - 1].value == ":"
                  blocks.append((children[st], children[st + 1:i - 1], children[i]))
                  st = i + 1
@@ -179,7 +179,7 @@
              typ = type_repr(snode.type)
              if typ == token.INDENT:
                  resttext = str(snode).strip()
-@@ -257,19 +249,16 @@
+@@ -264,19 +256,16 @@
                      assert v == NEWLINE, v
                      self.m.stmt("  {}".format(resttext))
                  break
@@ -200,15 +200,15 @@
          if suffixes:
              assert len(suffixes) == 1
              self.accessor.emit_comment(self.m, suffixes[0])
-@@ -277,7 +266,6 @@
+@@ -284,7 +273,6 @@
      def visit_simple_stmt(self, node):
          # output coment (prefix)
-         self.accessor.emit_prefix(self.m, node)
+         self.accessor.emit_prefix_and_consuming(self.m, node)
 -
          # main process
          children = node.children
          typ = type_repr(children[0].type)
-@@ -292,21 +280,17 @@
+@@ -299,21 +287,17 @@
                  for line in docstring.split("\n"):
                      self.m.stmt(line)
                  self.m.stmt("))")
@@ -231,16 +231,13 @@
              assert nodes[0].value == "from"
              module = str(nodes[1]).strip()
              assert nodes[2].value == "import"
-@@ -332,7 +316,6 @@
+@@ -339,28 +323,24 @@
              rest = children[1:]
          else:
              rest = node.children
 -
          if rest:
-             for line in "".join([str(x) for x in rest]).split("\n"):
-                 line = line.strip(" ")
-@@ -341,23 +324,20 @@
-                 self.m.stmt("m.stmt({!r})", line)
+             self.accessor.emit_stmt_multiline(self.m, "".join([str(x) for x in rest]))
  
  
 +
