@@ -11,7 +11,7 @@ class Tests(unittest.TestCase):
         m.from_("boo", "x")
         m.from_("foo", "c")
         result = str(m).split("\n")
-        expected = ["from foo import (", "@a,", "@b,", "@c", ")", "from boo import x"]
+        expected = ["from foo import (", "@a,", "@b,", "@c,", ")", "from boo import x"]
         self.assertEqual(result, expected)
 
     def test_short_call(self):

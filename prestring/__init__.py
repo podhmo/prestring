@@ -70,7 +70,7 @@ class PreString(object):
         return self.body[-1]
 
     def pop(self):
-        self.body.pop()
+        return self.body.pop()
 
     def head(self):
         return self.body[0]

@@ -264,9 +264,8 @@ class FromStatement(object):
             symbols = tuple(sorted(set(self.symbols)))
         else:
             symbols = self.symbols
-        for sym in symbols[:-1]:
+        for sym in symbols:
             yield from self.stmt("{},".format(sym))
-        yield from self.stmt("{}".format(symbols[-1]))
         yield UNINDENT
         yield from self.stmt(")")
 
