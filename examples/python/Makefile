@@ -1,4 +1,4 @@
-default: 00 01 02 03 04 05 06
+default: 00 01 02 03 04 05 06 07
 
 00:
 	mkdir -p dst/00
@@ -21,5 +21,15 @@ default: 00 01 02 03 04 05 06
 06:
 	mkdir -p dst/06
 	python src/06/typed.py > dst/06/typed.py
+07:
+	mkdir -p dst/07
+	@echo ---------------------------------------- > /dev/stderr
+	python -m prestring.python.transform src/07/hello.py | tee dst/07/hello.template.py
+	@echo ---------------------------------------- > /dev/stderr
+	python dst/07/hello.template.py | tee dst/07/hello.py
+	@echo ---------------------------------------- > /dev/stderr
+	python dst/07/hello.py foo
+	python src/07/hello.py foo
+	diff -u src/07/hello.py dst/07/hello.py
 clean:
 	rm -rf dst

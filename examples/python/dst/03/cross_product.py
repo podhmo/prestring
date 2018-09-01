@@ -1,12 +1,3 @@
-class Point(object, metaclass=InterfaceMeta):
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return self.value
-
-
-
 def cross1(xs0):
     r = []
     for x0 in xs0:
