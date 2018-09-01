@@ -81,6 +81,10 @@ class PythonModule(_Module):
         with self.scope():
             yield
 
+    def docstring(self, doc):
+        for line in doc.split("\n"):
+            self.stmt("# {}", doc)
+
     @contextlib.contextmanager
     def unless(self, expr):
         self.stmt("if not ({}):", expr)
