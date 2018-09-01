@@ -299,6 +299,7 @@ class Transformer(StrictPyTreeVisitor):  # hai
                 for line in docstring.split("\n"):
                     self.m.stmt(line)
                 self.m.stmt("))")
+            return
 
         # from x import (y, z) ?
         elif typ == "import_name":
