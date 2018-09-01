@@ -11,7 +11,7 @@ from prestring.python.parse import (
 )
 
 # todo: import
-
+# todo: comment after ':'
 
 class Accessor:
     def __init__(self, tree):
@@ -76,7 +76,7 @@ class Accessor:
         return params
 
 
-class Transformer(StrictPyTreeVisitor):
+class Transformer(StrictPyTreeVisitor):  # hai
     def __init__(self, tree, m):
         self.accessor = Accessor(tree)
         self.m = m
@@ -100,19 +100,25 @@ class Transformer(StrictPyTreeVisitor):
 
     def visit_classdef(self, node):
         children = node.children
-        # 'class', <name>, <parameters>, ':',  <suite>,
+
         assert children[0].value == "class"
         name = children[1].value.strip()
-        if hasattr(children[2], "value") and children[2].value == ":":
-            body = children[3]
-            args = [repr(name)]
-        else:
+        if hasattr(children[2], "value"):
+            if children[2].value == ":":  # 'class', <name>, ':'
+                args = [repr(name)]
+                body = children[3]
+            elif children[2].value == "(":  # 'class', <name>, '(', <super>,')', ':':
+                args = [repr(name), repr(children[3].value)]
+                assert children[4].value == ")"
+                assert children[5].value == ":"
+                body = children[6]
+        else:  # 'class', <name>, <parameters>, ':',  <suite>,
             params = self.accessor.to_arguments(children[2])
             assert children[3].value == ":"
-            body = children[4]
             args = [repr(name)]
             args.extend([repr(str(x)) for x in params.args._args()])
             args.extend([repr(str(x)) for x in params.kwargs._args()])
+            body = children[4]
 
         # class Foo(x):
         #    pass
@@ -165,7 +171,7 @@ class Transformer(StrictPyTreeVisitor):
         for (name, expr, body) in blocks:
             # todo: as support
             if expr:
-                args = " ".join([str(x) for x in expr]).lstrip()
+                args = " ".join([str(x).strip() for x in expr]).lstrip()
                 self.m.stmt("with m.{}_({!r}):", name.value.lstrip(), args)
             elif hasattr(name, "value"):  # Leaf
                 self.m.stmt("with m.{}_():", name.value.lstrip())
@@ -175,7 +181,7 @@ class Transformer(StrictPyTreeVisitor):
                     self.m.stmt(
                         "with m.{}_({!r}):",
                         name.children[0].value,
-                        " ".join([str(x) for x in name.children[1:]]).lstrip(),
+                        " ".join([str(x).strip() for x in name.children[1:]]).lstrip(),
                     )
                 else:
                     raise ValueError("unexpected blocks: {!r}, {!r}".format(name, expr))
@@ -209,7 +215,11 @@ class Transformer(StrictPyTreeVisitor):
                     self.m.stmt(line)
                 self.m.stmt("))")
         else:
-            self.m.stmt("m.stmt({!r})", str(node).strip())
+            for line in str(node).split("\n"):
+                line = line.strip(" ")
+                if not line:
+                    continue
+                self.m.stmt("m.stmt({!r})", line)
 
 
 def transform(node, *, m=None, is_whole=None):
