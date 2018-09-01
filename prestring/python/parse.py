@@ -42,13 +42,18 @@ def node_fullname(node):
         return "{}[name={}]".format(node_name(node), repr(node.children[1].value))
     elif typ == "typedargslist":
         return "{}[args={}]".format(
-            node_name(node), " ".join([repr(c.value) for c in node.children])
+            node_name(node), " ".join(
+                [
+                    repr(c.value) if hasattr(c, "value") else repr(node_fullname(c))
+                    for c in node.children
+                ]
+            )
         )
     else:
         return node_name(node)
 
 
-def dump_node_to_string(node):
+def _dump_node_to_string(node):
     if hasattr(node, "value"):  # Leaf
         fmt = '{name}({value}) [lineno={lineno}, column={column}, prefix={prefix}]'
         return fmt.format(
@@ -89,7 +94,7 @@ class PyTreeVisitor:
 
 
 class PyTreeDumper(PyTreeVisitor):
-    def __init__(self, *, target_stream=sys.stdout, tostring=dump_node_to_string):
+    def __init__(self, *, target_stream=sys.stdout, tostring=_dump_node_to_string):
         self._target_stream = target_stream
         self._current_indent = 0
         self._tostring = tostring
@@ -119,6 +124,6 @@ class StrictPyTreeVisitor(PyTreeVisitor):
             raise NotImplementedError(method)
 
 
-def dump_tree(tree, stream=sys.stdout, tostring=dump_node_to_string):
+def dump_tree(tree, stream=sys.stdout, tostring=_dump_node_to_string):
     dumper = PyTreeDumper(target_stream=stream, tostring=tostring)
     dumper.visit(tree)
