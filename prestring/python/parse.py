@@ -31,8 +31,11 @@ def node_name(node):
         return pygram.python_grammar.number2symbol[node.type]
 
 
+type_repr = pytree.type_repr
+
+
 def node_fullname(node):
-    typ = pytree.type_repr(node.type)
+    typ = type_repr(node.type)
     if typ == "funcdef":
         return "{}[name={}]".format(node_name(node), repr(node.children[1].value))
     elif typ == "classdef":
@@ -46,7 +49,7 @@ def node_fullname(node):
 
 
 def dump_node_to_string(node):
-    if isinstance(node, pytree.Leaf):
+    if hasattr(node, "value"):  # Leaf
         fmt = '{name}({value}) [lineno={lineno}, column={column}, prefix={prefix}]'
         return fmt.format(
             name=node_fullname(node),
@@ -64,17 +67,18 @@ def dump_node_to_string(node):
 
 
 # from yapf
-class PyTreeVisitor(object):
+class PyTreeVisitor:
     def visit(self, node):
         method = 'visit_{0}'.format(node_name(node))
         if hasattr(self, method):
             # Found a specific visitor for this node
-            getattr(self, method)(node)
+            if getattr(self, method)(node):
+                return
+
+        elif hasattr(node, "value"):  # Leaf
+            self.default_leaf_visit(node)
         else:
-            if isinstance(node, pytree.Leaf):
-                self.default_leaf_visit(node)
-            else:
-                self.default_node_visit(node)
+            self.default_node_visit(node)
 
     def default_node_visit(self, node):
         for child in node.children:
