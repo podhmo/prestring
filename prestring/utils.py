@@ -55,10 +55,10 @@ class LazyArgumentsAndKeywords:
             self.kwargs.types[k] = type
 
     def __setitem__(self, k, v):
-        self.kwargs[k] = v
+        self.kwargs.kwargs[k] = v
 
     def __getitem__(self, k):
-        return self.kwargs[k]
+        return self.kwargs.kwargs[k]
 
     def _args(self):
         r = []
@@ -98,6 +98,12 @@ class LazyArguments:
         self.args = args or []
         self.types = types or {}
 
+    def __setitem__(self, k, v):
+        self.args[k] = v
+
+    def __getitem__(self, k):
+        return self.args[k]
+
     def _args(self):
         args = []
         for name in self.args:
@@ -121,6 +127,12 @@ class LazyKeywords:
         self.kwargs = kwargs or {}
         self.types = types or {}
         self._raw = raw
+
+    def __setitem__(self, k, v):
+        self.kwargs[k] = v
+
+    def __getitem__(self, k):
+        return self.kwargs[k]
 
     def _args(self):
         args = []

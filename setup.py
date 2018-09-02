@@ -1,5 +1,3 @@
-# -*- coding:utf-8 -*-
-
 import os
 import sys
 
@@ -23,7 +21,7 @@ testing_extras = tests_require + []
 
 setup(
     name='prestring',
-    version='0.5.0',
+    version='0.5.1',
     description='source code generation library (with overuse with-syntax)',
     long_description=README + '\n\n' + CHANGES,
     classifiers=[
