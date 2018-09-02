@@ -174,12 +174,16 @@ LKwargs = LazyKeywords
 
 
 class LazyJoin:
-    def __init__(self, sep, args):
+    def __init__(self, sep, args, *, trim_empty=False):
         self.sep = sep
         self.args = args
+        self.trim_empty = trim_empty
 
     def _string(self):
-        return self.sep.join(map(str, self.args))
+        if self.trim_empty:
+            return self.sep.join([str(x) for x in self.args if x])
+        else:
+            return self.sep.join(map(str, self.args))
 
     @reify
     def value(self):
