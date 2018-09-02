@@ -34,6 +34,9 @@ class LazyArgumentsAndKeywords:
             self.kwargs = LazyKeywords(self.kwargs)
         self.tails = None
 
+    def __bool__(self):
+        return bool(self.args) or bool(self.kwargs) or bool(self.tails)
+
     def append(self, val, type=None):
         self.args.args.append(val)
         if type is not None:
@@ -98,6 +101,9 @@ class LazyArguments:
         self.args = args or []
         self.types = types or {}
 
+    def __bool__(self):
+        return bool(self.args)
+
     def __setitem__(self, k, v):
         self.args[k] = v
 
@@ -127,6 +133,9 @@ class LazyKeywords:
         self.kwargs = kwargs or {}
         self.types = types or {}
         self._raw = raw
+
+    def __bool__(self):
+        return bool(self.kwargs)
 
     def __setitem__(self, k, v):
         self.kwargs[k] = v
@@ -165,12 +174,16 @@ LKwargs = LazyKeywords
 
 
 class LazyJoin:
-    def __init__(self, sep, args):
+    def __init__(self, sep, args, *, trim_empty=False):
         self.sep = sep
         self.args = args
+        self.trim_empty = trim_empty
 
     def _string(self):
-        return self.sep.join(map(str, self.args))
+        if self.trim_empty:
+            return self.sep.join([str(x) for x in self.args if x])
+        else:
+            return self.sep.join(map(str, self.args))
 
     @reify
     def value(self):

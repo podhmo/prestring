@@ -13,6 +13,7 @@ from .. import (
     LazyKeywords,
     LazyArgumentsAndKeywords,
     LazyFormat,
+    LazyJoin,
 )
 from ..compat import PY3
 from ..utils import _type_value  # xxx
@@ -28,6 +29,12 @@ class PythonEvaluator(Evaluator):
         self.io.write(self.newline)
         if i <= 0 and hasattr(code, "newline") and code.newline is PEPNEWLINE:
             self.io.write(self.newline)
+
+
+def make_params(args, kwargs):
+    if not kwargs and len(args) == 1 and hasattr(args[0], "append_tail"):
+        return args[0]
+    return LazyArgumentsAndKeywords(args, kwargs)
 
 
 class PythonModule(_Module):
@@ -52,9 +59,6 @@ class PythonModule(_Module):
     def sep(self):
         self.body.append(PEPNEWLINE)
 
-    def method(self, name, *args, return_type=None, **kwargs):
-        return self.def_(name, "self", *args, return_type=return_type, **kwargs)
-
     @contextlib.contextmanager
     def with_(self, expr, as_=None):
         if as_:
@@ -66,13 +70,22 @@ class PythonModule(_Module):
 
     @contextlib.contextmanager
     def def_(self, name, *args, return_type=None, **kwargs):
+        params = make_params(args, kwargs)
         if return_type is not None:
-            self.stmt(
-                "def {}({}) -> {}:", name, LazyArgumentsAndKeywords(args, kwargs),
-                _type_value(return_type)
-            )
+            self.stmt("def {}({}) -> {}:", name, params, _type_value(return_type))
         else:
-            self.stmt("def {}({}):", name, LazyArgumentsAndKeywords(args, kwargs))
+            self.stmt("def {}({}):", name, params)
+        with self.scope():
+            yield
+        self.sep()
+
+    @contextlib.contextmanager
+    def method(self, name, *args, return_type=None, **kwargs):
+        params = LazyJoin(", ", ["self", make_params(args, kwargs)], trim_empty=True)
+        if return_type is not None:
+            self.stmt("def {}({}) -> {}:", name, params, _type_value(return_type))
+        else:
+            self.stmt("def {}({}):", name, params)
         with self.scope():
             yield
         self.sep()
