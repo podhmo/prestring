@@ -62,3 +62,61 @@ def sum(x: int, y: int = 0) -> int:
         """.strip()
         result = str(m)
         self.assertEqual(result, expected)
+
+    def test_def_empty_params(self):
+        from prestring.utils import LazyArgumentsAndKeywords
+        m = self._makeOne()
+        with m.def_("sum", LazyArgumentsAndKeywords()):
+            m.stmt("return x + y")
+
+        expected = """
+def sum():
+    return x + y
+        """.strip()
+        result = str(m)
+        self.assertEqual(result, expected)
+
+    def test_def_params__after_changed__added(self):
+        from prestring.utils import LazyArgumentsAndKeywords
+        m = self._makeOne()
+        params = LazyArgumentsAndKeywords()
+        with m.def_("sum", params):
+            m.stmt("return x + y")
+
+        params.append("x")
+        expected = """
+def sum(x):
+    return x + y
+        """.strip()
+
+        result = str(m)
+        self.assertEqual(result, expected)
+
+    def test_method_empty_params(self):
+        from prestring.utils import LazyArgumentsAndKeywords
+        m = self._makeOne()
+        with m.method("sum", LazyArgumentsAndKeywords()):
+            m.stmt("return x + y")
+
+        expected = """
+def sum(self):
+    return x + y
+        """.strip()
+        result = str(m)
+        self.assertEqual(result, expected)
+
+    def test_method_params__after_changed__added(self):
+        from prestring.utils import LazyArgumentsAndKeywords
+        m = self._makeOne()
+        params = LazyArgumentsAndKeywords()
+        with m.method("sum", params):
+            m.stmt("return x + y")
+
+        params.append("x")
+        expected = """
+def sum(self, x):
+    return x + y
+        """.strip()
+
+        result = str(m)
+        self.assertEqual(result, expected)
