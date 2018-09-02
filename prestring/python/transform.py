@@ -278,11 +278,6 @@ class Transformer(StrictPyTreeVisitor):  # hai
 
             typ = type_repr(snode.type)
             if typ == token.INDENT:
-                resttext = str(snode).strip()
-                if resttext.startswith("#"):
-                    v = self.m.body.pop()
-                    assert v == NEWLINE, v
-                    self.m.stmt("  {}".format(resttext))
                 found_indent = True
                 break
 
