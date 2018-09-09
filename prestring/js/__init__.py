@@ -46,6 +46,11 @@ class JSModule(_Module):
     brace = block  # hmm
 
     def if_(self, header):
+        """
+        if (<header>) {
+          ...
+        }
+        """
         return block_for_sematics(self, LazyFormat("if ({})", header), end="}", semicolon="")
 
     def comment(self, comment):
@@ -58,6 +63,13 @@ class Block:
 
     @contextlib.contextmanager
     def chain(self, header):
+        """
+        <header>
+          .<chain0>
+          .<chain1>
+          ...
+          .<chainN>;
+        """
         m = self.m.submodule(newline=True)
         m.semicolon = ""  # disabled
         m.body.append(header)
