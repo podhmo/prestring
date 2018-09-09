@@ -1,9 +1,8 @@
-# -*- coding:utf-8 -*-
 import contextlib
 import logging
 import re
-from . import Module as _Module
-from . import (
+from .. import Module as _Module
+from .. import (
     INDENT,
     UNINDENT,
     NEWLINE,
