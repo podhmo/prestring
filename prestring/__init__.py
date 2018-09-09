@@ -17,7 +17,8 @@ logger = logging.getLogger(__name__)
 
 
 class Newline(object):
-    pass
+    def __repr__(self):
+        return "<NEWLINE>"
 
 
 NEWLINE = Newline()
@@ -74,6 +75,10 @@ class PreString(object):
 
     def head(self):
         return self.body[0]
+
+    @property
+    def is_empty(self):
+        return not any(True for x in self.body if x)
 
 
 class Sentence(object):
