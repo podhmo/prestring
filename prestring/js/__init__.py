@@ -5,6 +5,7 @@ from .. import NEWLINE
 from ..utils import (
     LazyCall,
     LazyFormat,
+    LazyRStrip,
     UnRepr,
 )
 logger = logging.getLogger(__name__)
@@ -111,8 +112,7 @@ class Block:
             yield subm
             if not subm.body.is_empty:
                 subm.unnewline()
-                stmt = str(subm.body.pop())
-                subm.body.append(stmt.rstrip(","))
+                subm.body.append(LazyRStrip(subm.body.pop(), ","))
                 subm.body.append(NEWLINE)
         m.stmt(end, semicolon=semicolon)
 

@@ -217,6 +217,31 @@ class LazyFormat:
         return self.value
 
 
+class _LazyCallback:
+    def __init__(self, ob, callback):
+        self.ob = ob
+        self.callback = callback
+
+    def _string(self):
+        value = str(self.ob)
+        return self.callback(value)
+
+    @reify
+    def value(self):
+        return self._string()
+
+    def __str__(self):
+        return self.value
+
+
+def LazyRStrip(value, chars=None):
+    return _LazyCallback(value, lambda x: x.rstrip(chars))
+
+
+def LazyStrip(value, chars=None):
+    return _LazyCallback(value, lambda x: x.strip(chars))
+
+
 class NameStore:
     def __init__(self):
         self.c = defaultdict(int)

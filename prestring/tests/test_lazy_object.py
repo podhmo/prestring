@@ -3,7 +3,7 @@ import unittest
 from evilunit import test_target
 
 
-@test_target("prestring:LazyArguments")
+@test_target("prestring.utils:LazyArguments")
 class LazyArgumentsTests(unittest.TestCase):
     def test_it(self):
         target = self._makeOne([1, 2, 3])
@@ -48,7 +48,7 @@ class LazyArgumentsTests(unittest.TestCase):
             pass
 
 
-@test_target("prestring:LazyKeywords")
+@test_target("prestring.utils:LazyKeywords")
 class LazyKeywordsTests(unittest.TestCase):
     def assert_unordered(self, xs, ys):
         self.assertEqual(tuple(sorted(xs.split(", "))), tuple(sorted(ys.split(", "))))
@@ -73,7 +73,7 @@ class LazyKeywordsTests(unittest.TestCase):
         self.assert_unordered(str(target), "x: int = 1, y=2, z: int = 3")
 
 
-@test_target("prestring:LazyFormat")
+@test_target("prestring.utils:LazyFormat")
 class LazyFormatTests(unittest.TestCase):
     def test_it(self):
         fmt = "{}:{}"
@@ -103,39 +103,55 @@ class LazyFormatTests(unittest.TestCase):
         target.kwargs["z"] = "boo"
         self.assertEqual(str(target), fmt2.format(x=x, z="boo"))
 
+    def test_lazy_lazy(self):
+        fmt = "@{x}@"
+        x = self._makeOne("({} {})", "f", "z")
+        target = self._makeOne(fmt, x=x)
+        self.assertEqual(str(target), "@(f z)@")
+
 
 class MixedTests(unittest.TestCase):
     def test_it(self):
-        from prestring import LazyFormat, LazyArgumentsAndKeywords
+        from prestring.utils import LazyFormat, LazyArgumentsAndKeywords
 
         args = LazyArgumentsAndKeywords([1, 2, 3], {"x": 1})
         target = LazyFormat("{fnname}({args})", fnname="foo", args=args)
         self.assertEqual(str(target), "foo(1, 2, 3, x=1)")
 
     def test_it_empty(self):
-        from prestring import LazyFormat, LazyArgumentsAndKeywords
+        from prestring.utils import LazyFormat, LazyArgumentsAndKeywords
 
         args = LazyArgumentsAndKeywords([], {})
         target = LazyFormat("{fnname}({args})", fnname="foo", args=args)
         self.assertEqual(str(target), "foo()")
 
     def test_it_empty2(self):
-        from prestring import LazyFormat, LazyArgumentsAndKeywords
+        from prestring.utils import LazyFormat, LazyArgumentsAndKeywords
 
         args = LazyArgumentsAndKeywords()
         target = LazyFormat("{fnname}({args})", fnname="foo", args=args)
         self.assertEqual(str(target), "foo()")
 
     def test_it_empty_kwargs(self):
-        from prestring import LazyFormat, LazyArgumentsAndKeywords
+        from prestring.utils import LazyFormat, LazyArgumentsAndKeywords
 
         args = LazyArgumentsAndKeywords([1])
         target = LazyFormat("{fnname}({args})", fnname="foo", args=args)
         self.assertEqual(str(target), "foo(1)")
 
     def test_it_empty_args(self):
-        from prestring import LazyFormat, LazyArgumentsAndKeywords
+        from prestring.utils import LazyFormat, LazyArgumentsAndKeywords
 
         args = LazyArgumentsAndKeywords(kwargs={"x": 1})
         target = LazyFormat("{fnname}({args})", fnname="foo", args=args)
         self.assertEqual(str(target), "foo(x=1)")
+
+
+@test_target("prestring.utils:LazyRStrip")
+class LazyRStripTests(unittest.TestCase):
+    def test_it(self):
+        from prestring.utils import LazyFormat
+
+        fmt = "{}, {},"
+        target = self._makeOne(LazyFormat(fmt, "f", "x"), ",")
+        self.assertEqual(str(target), "f, x")
