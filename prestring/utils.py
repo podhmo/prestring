@@ -190,6 +190,11 @@ class LazyJoin:
         return self.value
 
 
+def LazyCall(fmt, *args, trim_empty=True):
+    args = [repr(x) if hasattr(x, "encode") else x for x in args]
+    return LazyFormat("{fmt}({{}})".format(fmt=fmt), LazyJoin(", ", args, trim_empty=trim_empty))
+
+
 class LazyFormat:
     def __init__(self, fmt, *args, **kwargs):
         self.fmt = fmt
@@ -199,7 +204,10 @@ class LazyFormat:
     def _string(self):
         args = map(str, self.args)
         kwargs = {k: str(v) for k, v in self.kwargs.items()}
-        return self.fmt.format(*args, **kwargs)
+        fmt = self.fmt
+        if hasattr(fmt, "_string"):
+            fmt = fmt._string()
+        return fmt.format(*args, **kwargs)
 
     @reify
     def value(self):
