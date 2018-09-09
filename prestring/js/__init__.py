@@ -28,7 +28,7 @@ class JSModule(_Module):
 
     __call__ = stmt
     call = staticmethod(LazyCall)
-    symbol = var = staticmethod(UnRepr)
+    symbol = var = staticmethod(UnRepr)  # hmm
 
     def assign(self, lhs, rhs):
         self.stmt(LazyFormat("{} = {}", lhs, rhs))
@@ -43,10 +43,10 @@ class JSModule(_Module):
     def block(self):
         return Block(self)
 
-    def if_(self, condition):
-        return Block(self).if_(condition)
+    brace = block  # hmm
 
-    brace = block
+    def if_(self, header):
+        return block_for_sematics(self, LazyFormat("if ({})", header), end="}", semicolon="")
 
     def comment(self, comment):
         self.stmt(LazyFormat("// {}", comment))
@@ -56,33 +56,16 @@ class Block:
     def __init__(self, m):
         self.m = m
 
-    def chain(self, header):
-        subm = self.m.submodule(newline=True)
-        subm.semicolon = ""  # disabled
-        self.m = subm  # xxx: side-effect
-        return self._chain(header)
-
     @contextlib.contextmanager
-    def _chain(self, header):
-        m = self.m
+    def chain(self, header):
+        m = self.m.submodule(newline=True)
+        m.semicolon = ""  # disabled
         m.body.append(header)
         m.body.append(NEWLINE)
         with m.scope():
             yield m
             m.unnewline()
             m.stmt(";")
-
-    def object(self, header, *, semicolon=";"):
-        """
-        <header> {
-          <arg0>,
-          <arg1>,
-          ...
-          <argN>
-        };
-        """
-        # todo: rename
-        return self._call_block(header, end="}", semicolon=semicolon)
 
     def call(self, header, *, semicolon=";"):
         """
@@ -94,10 +77,18 @@ class Block:
         });
         """
         # todo: rename
-        return self._call_block(header, end="})", semicolon=semicolon)
+        return self.brace(header, end="})", semicolon=semicolon)
 
     @contextlib.contextmanager
-    def _call_block(self, header, *, end="})", semicolon=";"):
+    def __call__(self, header, *, end="}", semicolon=";"):
+        """
+        <header> {
+          <arg0>,
+          <arg1>,
+          ...
+          <argN>
+        };
+        """
         m = self.m
         m.body.append(header)
         m.body.append(" {")
@@ -113,21 +104,18 @@ class Block:
                 subm.body.append(NEWLINE)
         m.stmt(end, semicolon=semicolon)
 
-    def if_(self, header):
-        return self._block(LazyFormat("if ({})", header), end="}", semicolon="")
 
-    @contextlib.contextmanager
-    def _block(self, value=None, *, end="}", semicolon=None):
-        m = self.m
-        if value is None:
-            m.stmt("{")
-        else:
-            m.body.append(value)
-            m.body.append(" {")
-            m.body.append(NEWLINE)
-        with m.scope():
-            yield
-        m.stmt(end, semicolon=semicolon)
+@contextlib.contextmanager
+def block_for_sematics(m, value=None, *, end="}", semicolon=None):
+    if value is None:
+        m.stmt("{")
+    else:
+        m.body.append(value)
+        m.body.append(" {")
+        m.body.append(NEWLINE)
+    with m.scope():
+        yield
+    m.stmt(end, semicolon=semicolon)
 
 
 Module = JSModule
