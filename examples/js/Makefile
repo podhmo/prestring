@@ -1,4 +1,7 @@
 default: 00
 00:
-	python 00/gen.py > 00/cat.js
+	mkdir -p dst/00/
+	python src/00/gen.py > dst/00/cat.js
+00-use:
+	node dst/00/cat.js dst/00/cat.js
 .PHONY: 00
