@@ -6,9 +6,16 @@ from ..utils import (
     LazyCall,
     LazyFormat,
     LazyRStrip,
+    LazyArgumentsAndKeywords,
     UnRepr,
 )
 logger = logging.getLogger(__name__)
+
+
+def make_params(args, kwargs):
+    if not kwargs and len(args) == 1 and hasattr(args[0], "append_tail"):
+        return args[0]
+    return LazyArgumentsAndKeywords(args, kwargs)
 
 
 class JSModule(_Module):
@@ -21,10 +28,12 @@ class JSModule(_Module):
     def sep(self):
         self.body.append(NEWLINE)
 
-    def stmt(self, fmt, *args, semicolon=None, **kwargs):
+    def stmt(self, fmt, *args, semicolon=None, comment=None, **kwargs):
         if semicolon is None:
             semicolon = self.semicolon
         fmt = LazyFormat("{}{}", fmt, semicolon)
+        if comment is not None:
+            fmt = LazyFormat("{} // {}", fmt, comment)
         return super().stmt(fmt, *args, **kwargs)
 
     __call__ = stmt
@@ -46,13 +55,56 @@ class JSModule(_Module):
 
     brace = block  # hmm
 
-    def if_(self, header):
+    def if_(self, condition):
         """
-        if (<header>) {
+        if (<condition>) {
           ...
         }
         """
-        return block_for_sematics(self, LazyFormat("if ({})", header), end="}", semicolon="")
+        return block_for_sematics(self, LazyFormat("if ({})", condition), end="}", semicolon="")
+
+    def else_(self):
+        """
+        else {
+          ...
+        }
+        """
+        return block_for_sematics(self, "else", end="}", semicolon="")
+
+    def else_if(self, condition):
+        """
+        else if (<condition>) {
+          ...
+        }
+        """
+        return block_for_sematics(
+            self, LazyFormat("else if ({})", condition), end="}", semicolon=""
+        )
+
+    elif_ = else_if
+
+    def class_(self, name, extends=None):
+        """
+        class <name> {
+          ...
+        }
+        """
+        if extends is None:
+            return block_for_sematics(self, LazyFormat("class {}", name), end="}", semicolon="\n")
+        else:
+            return block_for_sematics(
+                self, LazyFormat("class {} extends {}", name, extends), end="}", semicolon="\n"
+            )
+
+    def method(self, name, *args, **kwargs):
+        """
+        <name>(<params>) {
+          ...
+        }
+        """
+        return block_for_sematics(
+            self, LazyFormat("{}({})", name, make_params(args, kwargs)), end="}", semicolon="\n"
+        )
 
     def comment(self, comment):
         self.stmt(LazyFormat("// {}", comment))
