@@ -5,6 +5,7 @@ from .. import NEWLINE
 from ..utils import (
     LazyCall,
     LazyFormat,
+    LazyJoin,
     LazyRStrip,
     LazyArgumentsAndKeywords,
     UnRepr,
@@ -55,6 +56,24 @@ class JSModule(_Module):
 
     brace = block  # hmm
 
+    def for_(self, *args):
+        """
+        for (<x>; <y>; <z>) {
+          ...
+        }
+        """
+        return block_for_sematics(
+            self, LazyFormat("for ({})", LazyJoin("; ", args)), end="}", semicolon=""
+        )
+
+    def while_(self, condition):
+        """
+        while (<condition>) {
+          ...
+        }
+        """
+        return block_for_sematics(self, LazyFormat("while ({})", condition), end="}", semicolon="")
+
     def if_(self, condition):
         """
         if (<condition>) {
@@ -83,6 +102,32 @@ class JSModule(_Module):
 
     elif_ = else_if
 
+    def try_(self):
+        """
+        try {
+          ...
+        }
+        """
+        return block_for_sematics(self, "try", end="}", semicolon="")
+
+    def catch(self, err):
+        """
+        } catch (<err>) {
+          ...
+        }
+        """
+        self.unnewline()
+        return block_for_sematics(self, LazyFormat(" catch ({})", err), end="}", semicolon="")
+
+    def finally_(self):
+        """
+        } finally {
+          ...
+        }
+        """
+        self.unnewline()
+        return block_for_sematics(self, " finally", end="}", semicolon="")
+
     def class_(self, name, extends=None):
         """
         class <name> {
@@ -104,6 +149,19 @@ class JSModule(_Module):
         """
         return block_for_sematics(
             self, LazyFormat("{}({})", name, make_params(args, kwargs)), end="}", semicolon="\n"
+        )
+
+    def function(self, name, *args, **kwargs):
+        """
+        function <name>(<params>) {
+          ...
+        }
+        """
+        return block_for_sematics(
+            self,
+            LazyFormat("function {}({})", name, make_params(args, kwargs)),
+            end="}",
+            semicolon="\n"
         )
 
     def comment(self, comment):
