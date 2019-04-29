@@ -342,9 +342,16 @@ class Transformer(StrictPyTreeVisitor):  # hai
 
             assert nodes[0].value == "from"
             module = str(nodes[1]).strip()
-            assert nodes[2].value == "import"
+            for i in range(2, len(nodes)):
+                if nodes[i].value == "import":
+                    break
+                module = module + nodes[i].value
+            else:
+                raise ValueError("invalid import: {!r}".format(nodes))
+
+            assert nodes[i].value == "import"
             names = []
-            for snode in nodes[2:]:
+            for snode in nodes[i:]:
                 typ = type_repr(snode.type)
                 if typ == "import_as_names":
                     for ssnode in snode.children:
