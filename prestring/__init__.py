@@ -2,7 +2,6 @@
 import logging
 import contextlib
 from io import StringIO
-from prestring.output import SeparatedOutput  # NOQA
 from prestring.utils import (  # NOQA
     reify,
     LazyFormat,
@@ -13,6 +12,7 @@ from prestring.utils import (  # NOQA
     LazyArgumentsAndKeywords,
     NameStore,
 )
+
 logger = logging.getLogger(__name__)
 
 
@@ -239,7 +239,13 @@ class Module(object):
         return Evaluator(StringIO(), newline=self.newline, indent=self.indent)
 
     def __init__(
-        self, value="", newline="\n", indent="    ", lexer=None, parser=None, application=None
+        self,
+        value="",
+        newline="\n",
+        indent="    ",
+        lexer=None,
+        parser=None,
+        application=None,
     ):
         self.body = self.create_body(value)
         self.indent = indent
@@ -262,7 +268,7 @@ class Module(object):
             newline=self.newline,
             lexer=self.lexer,
             parser=self.parser,
-            application=self.application
+            application=self.application,
         )
         if value == "" or not newline:
             submodule.append(value)

@@ -1,51 +1,118 @@
-# -*- coding:utf-8 -*-
+import typing as t
+import sys
 import logging
 import os.path
-import glob
-from collections import namedtuple, defaultdict
-
+import dataclasses
+from io import StringIO
+from .minifs import MiniFS
+from .utils import reify
 
 logger = logging.getLogger(__name__)
-File = namedtuple("File", "name, m")
 
 
-class SeparatedOutput(object):
-    @staticmethod
-    def module_factory():
-        raise NotImplementedError("e.g. python.PythonModule()")
+def cleanup_all(output: "Output"):
+    import shutil
 
-    def __init__(self, dirname, prefix="autogen_", module_factory=None):
-        self.dirname = dirname
-        self.prefix = prefix
-        self.arrived = set()
-        self.files = defaultdict(self.new_file)
-        self.module_factory = module_factory or self.__class__.module_factory
+    logger.info("cleanup %s", output.root)
+    shutil.rmtree(output.root, ignore_errors=True)  # todo: dryrun
 
-    def new_file(self, file_name, m=None):
-        dirname, basename = os.path.split(file_name)
-        fname = "{}{}".format(self.prefix, basename)
-        m = m or self.module_factory()
-        return File(name=os.path.join(dirname, fname), m=m)
 
-    def prepare(self, f):
-        dirname = os.path.dirname(os.path.join(self.dirname, f.name))
-        if dirname in self.arrived:
+@dataclasses.dataclass(frozen=False, unsafe_hash=False)
+class output:
+    root: str
+
+    prefix: str = ""
+    suffix: str = ""
+
+    # for MiniFS
+    opener: t.Callable[..., t.Any] = StringIO  # todo: typing
+    sep: str = "/"
+    store: t.Dict[str, t.Any] = dataclasses.field(default_factory=dict)
+
+    cleanup: t.Optional[str] = None
+    verbose: bool = os.environ.get("VERBOSE", "") != ""
+    fake: bool = os.environ.get("FAKE", "") != ""
+
+    def fullpath(self, name: str) -> str:
+        dirname, basename = os.path.split(name)
+        fname = "{}{}{}".format(self.prefix, basename, self.suffix)
+        return os.path.join(self.root, os.path.join(dirname, fname))
+
+    def guess_action(self, fullpath: str) -> str:
+        if os.path.exists(fullpath):
+            return "update"
+        else:
+            return "create"
+
+    @reify
+    def fs(self):
+        return MiniFS(opener=self.opener, sep=self.sep)
+
+    @reify
+    def writer(self):
+        if self.fake:
+            return _ConsoleWriter(self)
+        else:
+            return _ActualWriter(self)
+
+    def __enter__(self):
+        return self.fs
+
+    def __exit__(self, typ, val, tb):
+        writer = self.writer
+        if not self.fake and self.cleanup is not None:
+            self.cleanup(self)
+        for name, f in self.fs.walk():
+            writer.write(name, f)
+
+
+class _ActualWriter:
+    def __init__(self, output: output):
+        self.output = output
+
+    def write(self, name, file, *, _retry=False):
+        fullpath = self.output.fullpath(name)
+        logger.info("%s file path=%s", self.output.guess_action(fullpath), fullpath)
+        try:
+            with open(fullpath, "w") as wf:
+                file.write(wf)
+        except FileNotFoundError:
+            if _retry:
+                raise
+            logger.info("create directory path=%s", os.path.dirname(fullpath))
+            os.makedirs(os.path.dirname(fullpath), exist_ok=True)
+            return self.write(name, file, _retry=True)
+
+
+class _ConsoleWriter:
+    def __init__(self, output: output, *, stdout=sys.stdout, stderr=sys.stderr):
+        self.output = output
+        self.stdout = stdout
+        self.stderr = stderr
+
+    def write(self, name, f, *, _retry=False):
+        fullpath = self.output.fullpath(name)
+        if not self.output.verbose:
+            print(
+                "{}: {}".format(self.output.guess_action(fullpath), fullpath),
+                file=self.stdout,
+            )
             return
-        self.arrived.add(dirname)
-        logger.info("touch directory path=%s", dirname)
-        os.makedirs(dirname, exist_ok=True)
-        if self.prefix:
-            for f in glob.glob(os.path.join(dirname, "{}*.py".format(self.prefix))):
-                os.remove(f)
 
-    def output(self):
-        for file in self.files.values():
-            self.output_file(file)
+        print("----------------------------------------", file=self.stderr)
+        print(fullpath, file=self.stderr)
+        print("----------------------------------------", file=self.stderr)
+        self.stderr.flush()
 
-    def output_file(self, file):
-        self.prepare(file)
-
-        path = os.path.join(self.dirname, file.name)
-        logger.info("touch file path=%s", path)
-        with open(path, "w") as wf:
-            wf.write(str(file.m))
+        o = StringIO()
+        f.write(o)
+        print(
+            "  ",
+            o.getvalue().replace("\n", "\n  ").rstrip("  "),
+            file=self.stdout,
+            sep="",
+            end="",
+        )
+        self.stdout.flush()
+        print("----------------------------------------\n", file=self.stderr)
+        self.stderr.flush()
