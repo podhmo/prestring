@@ -1,10 +1,12 @@
 import logging
+import sys
 from prestring.python import Module
 from prestring.output import output, cleanup_all # noqa
 
 logging.basicConfig(level=logging.DEBUG)
 
-with output(root="dst/00", fake=False, verbose=True) as fs:
+dst = sys.argv[1]
+with output(root=dst, fake=False) as fs:
     with fs.open("projects/x.txt", "w") as wf:
         print("hello x", file=wf)
         print("bye x", file=wf)
