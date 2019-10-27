@@ -1,7 +1,6 @@
 import typing as t
 from ._glob import glob
 from ._flatten import flatten
-from .writer import Option  # noqa
 
 T = t.TypeVar("T")
 
@@ -32,7 +31,7 @@ class File:
 class MiniFS(t.Generic[T]):
     """in memory tiny file system like object"""
 
-    fs: t.Dict[str, t.Any]  # recursive
+    store: t.Dict[str, t.Any]  # recursive
     sep: str
 
     def __init__(
@@ -40,22 +39,23 @@ class MiniFS(t.Generic[T]):
         *,
         sep="/",
         store: t.Optional[t.Dict[str, t.Any]] = None,
-        default_factory=t.Callable[[str], t.Any],
+        opener=t.Callable[[str], t.Any],
         container_factory=File,
-        writer=None,
     ):
         self._store = store or {}
         self.sep = sep
 
-        self.default_factory = default_factory
+        self.opener = opener
         self.container_factory = container_factory
-        self.writer = writer
 
-    def open(self, name: str, mode: str, content: t.Optional[t.Any] = None) -> T:
+    def open(
+        self, name: str, mode: str, content: t.Optional[t.Any] = None, *, opener=None
+    ) -> T:
         if mode == "r":
             return _access(self._store, name, sep=self.sep)
         elif mode == "w":
-            content = self.container_factory(name, content or self.default_factory())
+            opener = opener or self.opener
+            content = self.container_factory(name, content or opener())
             _touch(self._store, name, content=content, force_create=True, sep=self.sep)
             return content
         else:
@@ -70,13 +70,6 @@ class MiniFS(t.Generic[T]):
     def glob(self, pattern: str) -> t.Iterable[T]:
         for row in glob(self._store, pattern, sep=self.sep):
             yield row
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, typ, val, tb):
-        if self.writer is not None:
-            self.writer.write_all(self.walk())
 
 
 def _touch(d: dict, filename, *, content="", sep="/", force_create=False):

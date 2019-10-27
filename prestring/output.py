@@ -4,17 +4,34 @@ from io import StringIO
 import logging
 import os.path
 import dataclasses
+from .minifs import MiniFS
+from .utils import reify
 
 logger = logging.getLogger(__name__)
 
 
+def cleanup_all(output: "Output"):
+    import shutil
+
+    logger.info("cleanup %s", output.root)
+    shutil.rmtree(output.root, ignore_errors=True)  # todo: dryrun
+
+
 @dataclasses.dataclass(frozen=False, unsafe_hash=False)
-class Option:
+class output:
     root: str
+
     prefix: str = ""
     suffix: str = ""
+
+    # for MiniFS
+    opener: t.Callable[..., t.Any] = StringIO  # todo: typing
+    sep: str = "/"
+    store: t.Dict[str, t.Any] = dataclasses.field(default_factory=dict)
+
     cleanup: t.Optional[str] = None
     verbose: bool = False
+    fake: bool = False
 
     def fullpath(self, name: str) -> str:
         dirname, basename = os.path.split(name)
@@ -27,21 +44,35 @@ class Option:
         else:
             return "create"
 
-    def console_writer(self, *, cleanup=True):
-        return ConsoleWriter(self)
+    @reify
+    def fs(self):
+        return MiniFS(opener=self.opener, sep=self.sep)
 
-    def writer(self, *, cleanup=True):
-        return Writer(self, cleanup=cleanup_all if cleanup else None)
+    @reify
+    def writer(self):
+        if self.fake:
+            return _ConsoleWriter(self)
+        else:
+            return _ActualWriter(self)
+
+    def __enter__(self):
+        return self.fs
+
+    def __exit__(self, typ, val, tb):
+        writer = self.writer
+        if not self.fake and self.cleanup is not None:
+            self.cleanup(self)
+        for name, f in self.fs.walk():
+            writer.write(name, f)
 
 
-class Writer:
-    def __init__(self, option: Option, *, cleanup=None):
-        self.option = option
-        self.cleanup = cleanup
+class _ActualWriter:
+    def __init__(self, output: output):
+        self.output = output
 
     def write(self, name, file, *, _retry=False):
-        fullpath = self.option.fullpath(name)
-        logger.info("%s file path=%s", self.option.guess_action(fullpath), fullpath)
+        fullpath = self.output.fullpath(name)
+        logger.info("%s file path=%s", self.output.guess_action(fullpath), fullpath)
         try:
             with open(fullpath, "w") as wf:
                 file.write(wf)
@@ -52,25 +83,18 @@ class Writer:
             os.makedirs(os.path.dirname(fullpath), exist_ok=True)
             return self.write(name, file, _retry=True)
 
-    def write_all(self, files):
-        if self.cleanup is not None:
-            self.cleanup(self.option)
 
-        for name, f in files:
-            self.write(name, f)
-
-
-class ConsoleWriter:
-    def __init__(self, option: Option, *, stdout=sys.stdout, stderr=sys.stderr):
-        self.option = option
+class _ConsoleWriter:
+    def __init__(self, output: output, *, stdout=sys.stdout, stderr=sys.stderr):
+        self.output = output
         self.stdout = stdout
         self.stderr = stderr
 
     def write(self, name, f, *, _retry=False):
-        fullpath = self.option.fullpath(name)
-        if not self.option.verbose:
+        fullpath = self.output.fullpath(name)
+        if not self.output.verbose:
             print(
-                "{}: {}".format(self.option.guess_action(fullpath), fullpath),
+                "{}: {}".format(self.output.guess_action(fullpath), fullpath),
                 file=self.stdout,
             )
             return
@@ -92,14 +116,3 @@ class ConsoleWriter:
         self.stdout.flush()
         print("----------------------------------------\n", file=self.stderr)
         self.stderr.flush()
-
-    def write_all(self, files):
-        for name, f in files:
-            self.write(name, f)
-
-
-def cleanup_all(option: Option):
-    import shutil
-
-    logger.info("cleanup %s", option.root)
-    shutil.rmtree(option.root)  # todo: dryrun
