@@ -101,17 +101,19 @@ class _ActualWriter:
                 os.replace(tmppath, fullpath)
                 logger.info("%s file path=%s", action, os.path.dirname(fullpath))
 
-    def _write_without_check(self, name: str, file, *, action=None):
+    def _write_without_check(self, name: str, file, *, action=None, _retry=False):
         fullpath = self.output.fullpath(name)
         action = action or output.guess_action(fullpath)
-
-        if not os.path.exists(os.path.dirname(fullpath)):
+        try:
+            with open(fullpath, "w") as wf:
+                file.write(wf)
+            logger.info("%s file path=%s", action, os.path.dirname(fullpath))
+        except FileNotFoundError:
+            if _retry:
+                raise
             logger.info("create directory path=%s", os.path.dirname(fullpath))
             os.makedirs(os.path.dirname(fullpath), exist_ok=True)
-
-        logger.info("%s file path=%s", action, os.path.dirname(fullpath))
-        with open(fullpath, "w") as wf:
-            file.write(wf)
+            self._write_without_check(name, file, action="create", _retry=True)
 
 
 class _ConsoleWriter:
