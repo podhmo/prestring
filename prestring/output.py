@@ -11,7 +11,7 @@ from .utils import reify
 logger = logging.getLogger(__name__)
 
 
-def cleanup_all(output: "Output"):
+def cleanup_all(output: "output"):
     import shutil
 
     logger.info("cleanup %s", output.root)
