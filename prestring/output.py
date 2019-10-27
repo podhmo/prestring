@@ -35,7 +35,7 @@ class output:
 
     def fullpath(self, name: str) -> str:
         dirname, basename = os.path.split(name)
-        fname = "{}{}".format(self.prefix, basename)
+        fname = "{}{}{}".format(self.prefix, basename, self.suffix)
         return os.path.join(self.root, os.path.join(dirname, fname))
 
     def guess_action(self, fullpath: str) -> str:
