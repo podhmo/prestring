@@ -3,6 +3,7 @@ import sys
 import logging
 import os.path
 import dataclasses
+import filecmp
 from io import StringIO
 from .minifs import MiniFS
 from .utils import reify
@@ -32,6 +33,7 @@ class output:
     cleanup: t.Optional[str] = None
     verbose: bool = os.environ.get("VERBOSE", "") != ""
     fake: bool = os.environ.get("FAKE", "") != ""
+    nocheck: bool = os.environ.get("NOCHECK", "") != ""
 
     def fullpath(self, name: str) -> str:
         dirname, basename = os.path.split(name)
@@ -67,21 +69,49 @@ class output:
 
 
 class _ActualWriter:
+    TMP_SUFFIX = "_TMP"
+
     def __init__(self, output: output):
         self.output = output
 
-    def write(self, name, file, *, _retry=False):
+    def write(self, name, file):
+        if self.output.nocheck:
+            self._write_without_check(name, file)
+        else:
+            self._write_with_check(name, file)
+
+    def _write_with_check(self, name: str, file):
         fullpath = self.output.fullpath(name)
-        logger.info("%s file path=%s", self.output.guess_action(fullpath), fullpath)
-        try:
-            with open(fullpath, "w") as wf:
+        if not os.path.exists(fullpath):
+            self._write_without_check(name, file, action="create")
+        else:
+            tmppath = fullpath + self.TMP_SUFFIX
+
+            with open(tmppath, "w") as wf:
                 file.write(wf)
-        except FileNotFoundError:
-            if _retry:
-                raise
+
+            not_changed = filecmp.cmp(fullpath, tmppath, shallow=True)
+            if not_changed:
+                action = "no change"
+                os.remove(tmppath)
+                if self.output.verbose:
+                    logger.info("%s file path=%s", action, os.path.dirname(fullpath))
+            else:
+                action = "update"
+                os.replace(tmppath, fullpath)
+                logger.info("%s file path=%s", action, os.path.dirname(fullpath))
+
+    def _write_without_check(self, name: str, file, *, action=None):
+        fullpath = self.output.fullpath(name)
+        action = action or output.guess_action(fullpath)
+
+        if not os.path.exists(os.path.dirname(fullpath)):
             logger.info("create directory path=%s", os.path.dirname(fullpath))
             os.makedirs(os.path.dirname(fullpath), exist_ok=True)
-            return self.write(name, file, _retry=True)
+
+        logger.info("%s file path=%s", action, os.path.dirname(fullpath))
+        with open(fullpath, "w") as wf:
+            file.write(wf)
 
 
 class _ConsoleWriter:
