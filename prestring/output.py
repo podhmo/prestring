@@ -1,9 +1,9 @@
 import typing as t
 import sys
-from io import StringIO
 import logging
 import os.path
 import dataclasses
+from io import StringIO
 from .minifs import MiniFS
 from .utils import reify
 
@@ -30,8 +30,8 @@ class output:
     store: t.Dict[str, t.Any] = dataclasses.field(default_factory=dict)
 
     cleanup: t.Optional[str] = None
-    verbose: bool = False
-    fake: bool = False
+    verbose: bool = os.environ.get("VERBOSE", "") != ""
+    fake: bool = os.environ.get("FAKE", "") != ""
 
     def fullpath(self, name: str) -> str:
         dirname, basename = os.path.split(name)
