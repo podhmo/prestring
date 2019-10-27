@@ -17,7 +17,7 @@ def flatten(d, *, sep="/"):
             for k, v in d.items()
             for k2, v2 in flatten(v, sep=sep).items()
         }
-    elif hasattr(d, "__next__"):
+    elif hasattr(d, "__next__") and not isinstance(d, (bytes, str)):
         return flatten(list(d), sep=sep)
     else:
-        return {None: str(d)}
+        return {None: d}
