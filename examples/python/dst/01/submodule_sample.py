@@ -4,7 +4,7 @@ def setup(config):
         b_plugin,
         c_plugin,
         d_plugin,
-        e_plugin,
+        e_plugin
     )
 
     config.activate(a_plugin)

@@ -1,4 +1,4 @@
-default: 00 01 02 03 04 05 06 07
+default: 00 01 03 04 06 07  # skip 02 05
 
 00:
 	mkdir -p dst/00
