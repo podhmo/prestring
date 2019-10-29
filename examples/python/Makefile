@@ -22,14 +22,15 @@ default: 00 01 03 04 06 07  # skip 02 05
 	mkdir -p dst/06
 	python src/06/typed.py > dst/06/typed.py
 07:
-	mkdir -p dst/07
+	mkdir -p dst/$@
 	@echo ---------------------------------------- > /dev/stderr
-	python -m prestring.python.transform src/07/hello.py | tee dst/07/hello.template.py
+	python -m prestring.python.transform src/$@/hello.py | tee dst/$@/hello.template.py
 	@echo ---------------------------------------- > /dev/stderr
-	python dst/07/hello.template.py | tee dst/07/hello.py
+	python dst/$@/hello.template.py | tee dst/$@/hello.py
 	@echo ---------------------------------------- > /dev/stderr
-	python dst/07/hello.py foo
-	python src/07/hello.py foo
-	diff -u src/07/hello.py dst/07/hello.py
+	python dst/$@/hello.py foo
+	python src/$@/hello.py foo
+#	black src/$@/hello.py dst/$@/hello.py
+	diff -u src/$@/hello.py dst/$@/hello.py
 clean:
 	rm -rf dst
