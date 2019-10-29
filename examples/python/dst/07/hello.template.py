@@ -7,9 +7,7 @@ m.sep()
 with m.def_('hello', 'name', '*', 'message: str =  "hello world"'):
     m.docstring(textwrap.dedent(
     """
-
         greeting message
-
         """
     ))
     m.stmt('print(f"{name}: {message}")')

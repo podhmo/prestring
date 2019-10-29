@@ -30,6 +30,7 @@ def genfizzbuzz(m, beg, end):
         with m.main():
             m.import_("sys")
             m.stmt("print(fizzbuzz(int(sys.argv[1])))")
+
     genfn()
     genmain()
     return m
@@ -37,6 +38,7 @@ def genfizzbuzz(m, beg, end):
 
 if __name__ == "__main__":
     import sys
+
     try:
         beg, end = sys.argv[1:]
     except ValueError:
