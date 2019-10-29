@@ -1,17 +1,7 @@
-from prestring.python import (
-    Module,
-    NEWLINE,
-)
-from prestring.utils import (
-    LazyJoin,
-    LazyArgumentsAndKeywords as LParams,
-    LKwargs,
-)
+from prestring.python import Module, NEWLINE
+from prestring.utils import LazyJoin, LazyArgumentsAndKeywords as LParams, LKwargs
 import lib2to3.pgen2.token as token
-from prestring.python.parse import (
-    type_repr,
-    StrictPyTreeVisitor,
-)
+from prestring.python.parse import type_repr, StrictPyTreeVisitor
 
 # todo: comment after ':'
 
@@ -39,7 +29,11 @@ class Accessor:
         if self.is_toplevel(node):
             m.g.stmt("m.from_({!r}, {})", module, ", ".join([repr(x) for x in names]))
         else:
-            m.stmt("m.submodule().from_({!r}, {})", module, ", ".join([repr(x) for x in names]))
+            m.stmt(
+                "m.submodule().from_({!r}, {})",
+                module,
+                ", ".join([repr(x) for x in names]),
+            )
 
     def emit_prefix_and_consuming(self, m, node):
         # output coment (prefix)
@@ -155,8 +149,8 @@ class Transformer(StrictPyTreeVisitor):  # hai
         for snode in node.children[:-1]:
             assert type_repr(snode.type) == "decorator"
             self.m.stmt(
-                "m.stmt({!r})", " ".join([str(x)
-                                          for x in snode.children]).strip().replace("@ ", "@")
+                "m.stmt({!r})",
+                " ".join([str(x) for x in snode.children]).strip().replace("@ ", "@"),
             )
         return self.visit(node.children[-1])
 
@@ -194,7 +188,7 @@ class Transformer(StrictPyTreeVisitor):  # hai
         #
         # with m.class("Foo", 'x'):
         #     m.stmt("pass")
-        self.m.stmt('with m.class_({}):'.format(LazyJoin(", ", args)))
+        self.m.stmt("with m.class_({}):".format(LazyJoin(", ", args)))
         self.visit_suite(body)
         self.m.sep()
         return True  # break
@@ -223,7 +217,7 @@ class Transformer(StrictPyTreeVisitor):  # hai
         args.extend([repr(str(x)) for x in params.kwargs._args()])
         if params.tails is not None:
             args.extend([repr(str(x)) for x in params.tails._args()])
-        self.m.stmt('with m.def_({}):'.format(LazyJoin(", ", args)))
+        self.m.stmt("with m.def_({}):".format(LazyJoin(", ", args)))
         self.visit_suite(body)
         self.m.sep()
         return True  # break
@@ -240,7 +234,7 @@ class Transformer(StrictPyTreeVisitor):  # hai
             typ = type_repr(snode.type)
             if typ == "suite":
                 assert children[i - 1].value == ":"
-                blocks.append((children[st], children[st + 1:i - 1], children[i]))
+                blocks.append((children[st], children[st + 1 : i - 1], children[i]))
                 st = i + 1
 
         for (name, expr, body) in blocks:
@@ -261,7 +255,9 @@ class Transformer(StrictPyTreeVisitor):  # hai
                     raise ValueError("unexpected blocks: {!r}, {!r}".format(name, expr))
             self.visit_suite(body)
 
-    visit_if_stmt = visit_while_stmt = visit_for_stmt = visit_try_stmt = visit_with_stmt = _visit_block_stmt  # noqa
+    visit_if_stmt = (
+        visit_while_stmt
+    ) = visit_for_stmt = visit_try_stmt = visit_with_stmt = _visit_block_stmt  # noqa
 
     def visit_suite(self, node):
         prefixes = []
@@ -314,13 +310,15 @@ class Transformer(StrictPyTreeVisitor):  # hai
         children = node.children
         typ = type_repr(children[0].type)
         # docstring
-        if hasattr(children[0], "value") and children[0].value.startswith(("'''", '"""')):
+        if hasattr(children[0], "value") and children[0].value.startswith(
+            ("'''", '"""')
+        ):
             docstring = "".join([snode.value for snode in children]).strip()
             if "\n" not in docstring:
                 self.m.stmt("m.docstring({!r})", docstring.strip("\"'"))
             else:
                 self.m.g.import_("textwrap")
-                self.m.stmt('m.docstring(textwrap.dedent(')
+                self.m.stmt("m.docstring(textwrap.dedent(")
                 for line in docstring.split("\n"):
                     self.m.stmt(line)
                 self.m.stmt("))")
@@ -404,6 +402,7 @@ def transform(node, *, m=None, is_whole=None):
 
 def transform_string(source: str, *, m=None):
     from prestring.python.parse import parse_string
+
     t = parse_string(source)
     return transform(t, m=m)
 
@@ -415,6 +414,7 @@ def transform_file(fname: str, *, m=None):
 
 def main(argv=None):
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument("file")
     args = parser.parse_args(argv)
@@ -426,4 +426,5 @@ def main(argv=None):
 
 if __name__ == "__main__":
     import sys
+
     main(sys.argv[1:] or [__file__])

@@ -17,6 +17,7 @@ from .. import (
 )
 from ..compat import PY3
 from ..utils import _type_value  # xxx
+
 PEPNEWLINE = Newline()
 
 
@@ -194,13 +195,13 @@ class PythonModule(_Module):
         self.stmt("continue")
 
     def return_(self, expr, *args):
-        self.stmt("return %s" % (expr, ), *args)
+        self.stmt("return %s" % (expr,), *args)
 
     def yield_(self, expr, *args):
-        self.stmt("yield %s" % (expr, ), *args)
+        self.stmt("yield %s" % (expr,), *args)
 
     def raise_(self, expr, *args):
-        self.stmt("raise %s" % (expr, ), *args)
+        self.stmt("raise %s" % (expr,), *args)
 
     def import_(self, modname, as_=None):
         if modname in self.imported_set:

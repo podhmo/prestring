@@ -7,6 +7,7 @@ import unittest
 class EvalatorTests(unittest.TestCase):
     def _makeOne(self, indent=" "):
         from io import StringIO
+
         return self._getTarget()(StringIO(), indent=indent)
 
     def test_flatten_string(self):
@@ -47,4 +48,3 @@ class EvalatorTests(unittest.TestCase):
         target.evaluate(script)
         result = str(target).split("\n")
         self.assertEqual(result, ["@@foo", "@@bar"])
-

@@ -31,17 +31,18 @@ class LazyArgumentsTests(unittest.TestCase):
     def test_with_actual_types(self):
         try:
             import typing as t
+
             target = self._makeOne(
                 ["x", "y", "z"],
                 types={
                     "x": int,
                     "y": t.Optional[int],
-                    "z": t.Sequence[t.Optional[int]]
-                }
+                    "z": t.Sequence[t.Optional[int]],
+                },
             )
             self.assertEqual(
                 str(target),
-                "x: int, y: 'typing.Union[int, NoneType]', z: 'typing.Sequence[typing.Union[int, NoneType]]'"
+                "x: int, y: 'typing.Union[int, NoneType]', z: 'typing.Sequence[typing.Union[int, NoneType]]'",
             )
         except ImportError:
             pass
@@ -106,30 +107,35 @@ class LazyFormatTests(unittest.TestCase):
 class MixedTests(unittest.TestCase):
     def test_it(self):
         from prestring import LazyFormat, LazyArgumentsAndKeywords
+
         args = LazyArgumentsAndKeywords([1, 2, 3], {"x": 1})
         target = LazyFormat("{fnname}({args})", fnname="foo", args=args)
         self.assertEqual(str(target), "foo(1, 2, 3, x=1)")
 
     def test_it_empty(self):
         from prestring import LazyFormat, LazyArgumentsAndKeywords
+
         args = LazyArgumentsAndKeywords([], {})
         target = LazyFormat("{fnname}({args})", fnname="foo", args=args)
         self.assertEqual(str(target), "foo()")
 
     def test_it_empty2(self):
         from prestring import LazyFormat, LazyArgumentsAndKeywords
+
         args = LazyArgumentsAndKeywords()
         target = LazyFormat("{fnname}({args})", fnname="foo", args=args)
         self.assertEqual(str(target), "foo()")
 
     def test_it_empty_kwargs(self):
         from prestring import LazyFormat, LazyArgumentsAndKeywords
+
         args = LazyArgumentsAndKeywords([1])
         target = LazyFormat("{fnname}({args})", fnname="foo", args=args)
         self.assertEqual(str(target), "foo(1)")
 
     def test_it_empty_args(self):
         from prestring import LazyFormat, LazyArgumentsAndKeywords
+
         args = LazyArgumentsAndKeywords(kwargs={"x": 1})
         target = LazyFormat("{fnname}({args})", fnname="foo", args=args)
         self.assertEqual(str(target), "foo(x=1)")
