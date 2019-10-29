@@ -33,8 +33,8 @@ class Tests(unittest.TestCase):
         )
         expected = [
             "SomeLongNameClass(",
-            '@x,',
-            '@y,',
+            "@x,",
+            "@y,",
             "@long long argument 0,",
             "@long long argument 1,",
             "@long long argument 2,",
@@ -45,14 +45,13 @@ class Tests(unittest.TestCase):
 
     def test_def_with_typed(self):
         from prestring.utils import LazyArguments, LazyKeywords
+
         m = self._makeOne()
         with m.def_(
             "sum",
             LazyArguments(["x"], types={"x": int}),
-            LazyKeywords({
-                "y": 0
-            }, types={"y": int}),
-            return_type=int
+            LazyKeywords({"y": 0}, types={"y": int}),
+            return_type=int,
         ):
             m.stmt("return x + y")
 
@@ -65,6 +64,7 @@ def sum(x: int, y: int = 0) -> int:
 
     def test_def_empty_params(self):
         from prestring.utils import LazyArgumentsAndKeywords
+
         m = self._makeOne()
         with m.def_("sum", LazyArgumentsAndKeywords()):
             m.stmt("return x + y")
@@ -78,6 +78,7 @@ def sum():
 
     def test_def_params__after_changed__added(self):
         from prestring.utils import LazyArgumentsAndKeywords
+
         m = self._makeOne()
         params = LazyArgumentsAndKeywords()
         with m.def_("sum", params):
@@ -94,6 +95,7 @@ def sum(x):
 
     def test_method_empty_params(self):
         from prestring.utils import LazyArgumentsAndKeywords
+
         m = self._makeOne()
         with m.method("sum", LazyArgumentsAndKeywords()):
             m.stmt("return x + y")
@@ -107,6 +109,7 @@ def sum(self):
 
     def test_method_params__after_changed__added(self):
         from prestring.utils import LazyArgumentsAndKeywords
+
         m = self._makeOne()
         params = LazyArgumentsAndKeywords()
         with m.method("sum", params):

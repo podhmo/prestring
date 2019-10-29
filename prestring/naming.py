@@ -2,16 +2,22 @@ import re
 
 
 def snakecase(
-    name, rx0=re.compile('(.)([A-Z][a-z]+)'), rx1=re.compile('([a-z0-9])([A-Z])'), separator="_"
+    name,
+    rx0=re.compile("(.)([A-Z][a-z]+)"),
+    rx1=re.compile("([a-z0-9])([A-Z])"),
+    separator="_",
 ):
-    pattern = r'\1{}\2'.format(separator)
+    pattern = r"\1{}\2".format(separator)
     return rx1.sub(pattern, rx0.sub(pattern, name)).lower()
 
 
 def kebabcase(
-    name, rx0=re.compile('(.)([A-Z][a-z]+)'), rx1=re.compile('([a-z0-9])([A-Z])'), separator="-"
+    name,
+    rx0=re.compile("(.)([A-Z][a-z]+)"),
+    rx1=re.compile("([a-z0-9])([A-Z])"),
+    separator="-",
 ):
-    pattern = r'\1{}\2'.format(separator)
+    pattern = r"\1{}\2".format(separator)
     return rx1.sub(pattern, rx0.sub(pattern, name)).lower()
 
 

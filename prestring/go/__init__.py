@@ -2,14 +2,8 @@ import contextlib
 import logging
 import re
 from .. import Module as _Module
-from .. import (
-    INDENT,
-    UNINDENT,
-    NEWLINE,
-    LazyFormat,
-    LazyArguments,
-    LazyJoin,
-)
+from .. import INDENT, UNINDENT, NEWLINE, LazyFormat, LazyArguments, LazyJoin
+
 logger = logging.getLogger(__name__)
 
 
@@ -60,13 +54,17 @@ class GoModule(_Module):
 
     @contextlib.contextmanager
     def func(self, name, *args, return_=""):
-        with self.block(LazyFormat("func {}({}) {}", name, LazyArguments(args), return_)):
+        with self.block(
+            LazyFormat("func {}({}) {}", name, LazyArguments(args), return_)
+        ):
             yield
         self.sep()
 
     @contextlib.contextmanager
     def method(self, ob, name, *args, return_=""):
-        with self.block(LazyFormat("func ({}) {}({}) {}", ob, name, LazyArguments(args), return_)):
+        with self.block(
+            LazyFormat("func ({}) {}({}) {}", ob, name, LazyArguments(args), return_)
+        ):
             yield
         self.sep()
 
@@ -93,11 +91,11 @@ class GoModule(_Module):
             yield
 
     def select(self):
-        m = self.submodule('select', newline=False)
+        m = self.submodule("select", newline=False)
         return MultiBranchClause(m)
 
     def switch(self, cond):
-        m = self.submodule(LazyFormat('switch {}', cond), newline=False)
+        m = self.submodule(LazyFormat("switch {}", cond), newline=False)
         return MultiBranchClause(m)
 
     def import_group(self):
@@ -117,22 +115,22 @@ class MultiBranchClause(object):
         return getattr(self.m, name)
 
     def __enter__(self):
-        self.m.stmt(' {')
+        self.m.stmt(" {")
         return self
 
     @contextlib.contextmanager
     def case(self, value):
-        self.m.stmt('case {}:'.format(value))
+        self.m.stmt("case {}:".format(value))
         with self.m.scope():
             yield self.m
 
     def __exit__(self, *args, **kwargs):
-        self.m.stmt('}')
+        self.m.stmt("}")
         self.m.sep()
 
     @contextlib.contextmanager
     def default(self):
-        self.m.stmt('default:')
+        self.m.stmt("default:")
         with self.m.scope():
             yield self.m
 
@@ -147,7 +145,7 @@ class Group(object):
         return getattr(self.m, name)
 
     def __enter__(self):
-        self.m.stmt(' (')
+        self.m.stmt(" (")
         self.m.body.append(INDENT)
         self.submodule = self.m.submodule("", newline=False)
         return self
@@ -164,7 +162,7 @@ class Group(object):
 
     def __exit__(self, *args, **kwargs):
         self.m.body.append(UNINDENT)
-        self.m.stmt(')')
+        self.m.stmt(")")
         self.m.sep()
 
 
@@ -197,7 +195,7 @@ class NameFormatter:
         self,
         s,
         num_rx=re.compile("\d{2,}"),
-        exclude_rx=re.compile("[^a-z0-9]", re.IGNORECASE | re.MULTILINE)
+        exclude_rx=re.compile("[^a-z0-9]", re.IGNORECASE | re.MULTILINE),
     ):
         if not s:
             return ""
@@ -212,28 +210,60 @@ class NameFormatter:
         self,
         s,
         rx=re.compile("(?P<sep>^|[^a-zA-Z])(?P<frag>[a-z]+)", re.M),
-        rx2=re.compile("(?P<sep>[A-Z])(?P<frag>[a-z]+)", re.M)
+        rx2=re.compile("(?P<sep>[A-Z])(?P<frag>[a-z]+)", re.M),
     ):
         return rx2.sub(self._proper_repl2, rx.sub(self._proper_repl1, s))
 
     NUMBERS = {
-        '0': "Zero_",
-        '1': "One_",
-        '2': "Two_",
-        '3': "Three_",
-        '4': "Four_",
-        '5': "Five_",
-        '6': "Six_",
-        '7': "Seven_",
-        '8': "Eight_",
-        '9': "Nine_"
+        "0": "Zero_",
+        "1": "One_",
+        "2": "Two_",
+        "3": "Three_",
+        "4": "Four_",
+        "5": "Five_",
+        "6": "Six_",
+        "7": "Seven_",
+        "8": "Eight_",
+        "9": "Nine_",
     }
 
     # https://github.com/golang/lint/blob/39d15d55e9777df34cdffde4f406ab27fd2e60c0/lint.go#L695-L731
     COMMON_INITIALISMS = [
-        "API", "ASCII", "CPU", "CSS", "DNS", "EOF", "GUID", "HTML", "HTTP", "HTTPS", "ID", "IP",
-        "JSON", "LHS", "QPS", "RAM", "RHS", "RPC", "SLA", "SMTP", "SSH", "TCP", "TLS", "TTL", "UDP",
-        "UI", "UID", "UUID", "URI", "URL", "UTF8", "VM", "XML", "XSRF", "XSS"
+        "API",
+        "ASCII",
+        "CPU",
+        "CSS",
+        "DNS",
+        "EOF",
+        "GUID",
+        "HTML",
+        "HTTP",
+        "HTTPS",
+        "ID",
+        "IP",
+        "JSON",
+        "LHS",
+        "QPS",
+        "RAM",
+        "RHS",
+        "RPC",
+        "SLA",
+        "SMTP",
+        "SSH",
+        "TCP",
+        "TLS",
+        "TTL",
+        "UDP",
+        "UI",
+        "UID",
+        "UUID",
+        "URI",
+        "URL",
+        "UTF8",
+        "VM",
+        "XML",
+        "XSRF",
+        "XSS",
     ]
 
     def _proper_repl1(self, m):

@@ -2,33 +2,32 @@ import os
 import sys
 
 from setuptools import setup, find_packages
+
 here = os.path.abspath(os.path.dirname(__file__))
 try:
-    with open(os.path.join(here, 'README.rst')) as f:
+    with open(os.path.join(here, "README.rst")) as f:
         README = f.read()
-    with open(os.path.join(here, 'CHANGES.txt')) as f:
+    with open(os.path.join(here, "CHANGES.txt")) as f:
         CHANGES = f.read()
 except IOError:
-    README = CHANGES = ''
+    README = CHANGES = ""
 
 install_requires = []
-
+dev_extras = ["black", "flake8"]
 docs_extras = []
-
 tests_require = ["evilunit"]
-
 testing_extras = tests_require + []
 
 setup(
-    name='prestring',
-    version='0.5.4',
-    description='source code generation library (with overuse with-syntax)',
-    long_description=README + '\n\n' + CHANGES,
+    name="prestring",
+    version="0.5.4",
+    description="source code generation library (with overuse with-syntax)",
+    long_description=README + "\n\n" + CHANGES,
     classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: Implementation :: CPython",
     ],
-    keywords='prestring, srcgen, python',
+    keywords="prestring, srcgen, python",
     author="podhmo",
     author_email="ababjam61@gmail.com",
     url="https://github.com/podhmo/prestring",
@@ -36,12 +35,9 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=install_requires,
-    extras_require={
-        'testing': testing_extras,
-        'docs': docs_extras,
-    },
+    extras_require={"testing": testing_extras, "docs": docs_extras, "dev": dev_extras},
     tests_require=tests_require,
     test_suite="prestring.tests",
     entry_points="""
-"""
+""",
 )

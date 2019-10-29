@@ -61,7 +61,10 @@ class ModuleTests(unittest.TestCase):
         subm.stmt("import bar")
         subm.stmt("import boo")
         result = str(m).split("\n")
-        self.assertEqual(result, ["import foo", "import bar", "import boo", "@something", "@something"])
+        self.assertEqual(
+            result,
+            ["import foo", "import bar", "import boo", "@something", "@something"],
+        )
 
     def test_submodule__with_indent(self):
         m = self._makeOne(indent="@")
@@ -73,7 +76,10 @@ class ModuleTests(unittest.TestCase):
 
         subm.stmt("import boo")
         result = str(m).split("\n")
-        self.assertEqual(result, ['import foo', '@something', '@import bar', '@import boo', '@something'])
+        self.assertEqual(
+            result,
+            ["import foo", "@something", "@import bar", "@import boo", "@something"],
+        )
 
     def test_submodule__with_scope(self):
         m = self._makeOne(indent="@")
@@ -87,5 +93,12 @@ class ModuleTests(unittest.TestCase):
         with subm.scope():
             subm.submodule("print('boo')")
         result = str(m).split("\n")
-        expected = ['import foo', '@something', '@#--- TBD ---', '@def boo()', "@@print('boo')", '@something']
+        expected = [
+            "import foo",
+            "@something",
+            "@#--- TBD ---",
+            "@def boo()",
+            "@@print('boo')",
+            "@something",
+        ]
         self.assertEqual(result, expected)
