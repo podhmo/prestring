@@ -1,14 +1,11 @@
-from functools import partial
+from functools import partial, update_wrapper
 from collections import defaultdict
 
 
 class reify:
     def __init__(self, wrapped):
         self.wrapped = wrapped
-        try:
-            self.__doc__ = wrapped.__doc__
-        except:
-            pass
+        update_wrapper(self, wrapped)
 
     def __get__(self, inst, objtype=None):
         if inst is None:

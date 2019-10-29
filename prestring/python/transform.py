@@ -1,4 +1,4 @@
-from prestring.python import Module, NEWLINE
+from prestring.python import Module
 from prestring.utils import LazyJoin, LazyArgumentsAndKeywords as LParams, LKwargs
 import lib2to3.pgen2.token as token
 from prestring.python.parse import type_repr, StrictPyTreeVisitor

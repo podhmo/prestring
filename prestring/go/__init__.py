@@ -194,8 +194,8 @@ class NameFormatter:
     def format(
         self,
         s,
-        num_rx=re.compile("\d{2,}"),
-        exclude_rx=re.compile("[^a-z0-9]", re.IGNORECASE | re.MULTILINE),
+        num_rx=re.compile(r"\d{2,}"),
+        exclude_rx=re.compile(r"[^a-z0-9]", re.IGNORECASE | re.MULTILINE),
     ):
         if not s:
             return ""
@@ -209,8 +209,8 @@ class NameFormatter:
     def proper_acronym(
         self,
         s,
-        rx=re.compile("(?P<sep>^|[^a-zA-Z])(?P<frag>[a-z]+)", re.M),
-        rx2=re.compile("(?P<sep>[A-Z])(?P<frag>[a-z]+)", re.M),
+        rx=re.compile(r"(?P<sep>^|[^a-zA-Z])(?P<frag>[a-z]+)", re.M),
+        rx2=re.compile(r"(?P<sep>[A-Z])(?P<frag>[a-z]+)", re.M),
     ):
         return rx2.sub(self._proper_repl2, rx.sub(self._proper_repl1, s))
 

@@ -28,7 +28,7 @@ class LazyArgumentsTests(unittest.TestCase):
         target = self._makeOne(["x", "y", "*"], types={"x": int, "y": bool})
         self.assertEqual(str(target), "x: int, y: bool, *")
 
-    def test_with_actual_types(self):
+    def test_with_actual_types2(self):
         try:
             import typing as t
 

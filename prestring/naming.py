@@ -3,8 +3,8 @@ import re
 
 def snakecase(
     name,
-    rx0=re.compile("(.)([A-Z][a-z]+)"),
-    rx1=re.compile("([a-z0-9])([A-Z])"),
+    rx0=re.compile(r"(.)([A-Z][a-z]+)"),
+    rx1=re.compile(r"([a-z0-9])([A-Z])"),
     separator="_",
 ):
     pattern = r"\1{}\2".format(separator)
@@ -13,8 +13,8 @@ def snakecase(
 
 def kebabcase(
     name,
-    rx0=re.compile("(.)([A-Z][a-z]+)"),
-    rx1=re.compile("([a-z0-9])([A-Z])"),
+    rx0=re.compile(r"(.)([A-Z][a-z]+)"),
+    rx1=re.compile(r"([a-z0-9])([A-Z])"),
     separator="-",
 ):
     pattern = r"\1{}\2".format(separator)
@@ -25,7 +25,7 @@ def camelcase(name):
     return untitleize(pascalcase(name))
 
 
-def pascalcase(name, rx=re.compile("[\-_ ]")):
+def pascalcase(name, rx=re.compile(r"[\-_ ]")):
     return "".join(titleize(x) for x in rx.split(name))
 
 
