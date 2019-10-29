@@ -14,10 +14,10 @@ if PY3:  # pragma: no cover
     binary_type = bytes
     long = int
 else:
-    string_types = (basestring,)
+    string_types = (basestring,)  # noqa
     integer_types = (int, long)
     class_types = (type, types.ClassType)
-    text_type = unicode
+    text_type = unicode # noqa
     binary_type = str
     long = long
 
@@ -46,4 +46,4 @@ else:
 try:
     from StringIO import StringIO as NativeIO
 except ImportError:  # pragma: no cover
-    from io import StringIO as NativeIO
+    from io import StringIO as NativeIO  # noqa
