@@ -1,6 +1,4 @@
-
-
-def hello(name, *, message: str =  "hello world"):
+def hello(name, *, message: str = "hello world"):
     """
     greeting message
     """

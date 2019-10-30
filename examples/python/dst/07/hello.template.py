@@ -1,7 +1,6 @@
 from prestring.python import Module
 m = Module()  # noqa
 import textwrap
-m.sep()
 
 
 with m.def_('hello', 'name', '*', 'message: str =  "hello world"'):

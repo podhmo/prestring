@@ -396,7 +396,6 @@ def transform(node, *, m=None, is_whole=None):
     t.visit(node)
 
     if len(m.g.imported_set) > 0:
-        m.g.stmt("m.sep()")
         m.g.sep()
 
     if is_whole:
