@@ -228,7 +228,7 @@ class Evaluator(object):
             self.io.write(self.indent)
 
     def __str__(self):
-        return self.io.getvalue().rstrip()
+        return self.io.getvalue()
 
 
 class Module(object):
