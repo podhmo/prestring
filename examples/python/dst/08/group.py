@@ -1,6 +1,6 @@
 import typing as t
 import dataclasses
-import User
+from .user import User
 @dataclasses.dataclass
 class Group:
     name: str

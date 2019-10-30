@@ -140,10 +140,9 @@ class _ConsoleWriter:
         f.write(o)
         print(
             "  ",
-            o.getvalue().replace("\n", "\n  ").rstrip("  "),
+            o.getvalue().rstrip().replace("\n", "\n  ").rstrip("  "),
             file=self.stdout,
             sep="",
-            end="",
         )
         self.stdout.flush()
         print("----------------------------------------\n", file=self.stderr)
