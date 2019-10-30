@@ -1,15 +1,12 @@
 from prestring.python import Module
 m = Module()  # noqa
 import textwrap
-m.sep()
 
 
 with m.def_('hello', 'name', '*', 'message: str =  "hello world"'):
-    m.docstring(textwrap.dedent(
-    """
-        greeting message
-        """
-    ))
+    m.docstring(textwrap.dedent("""
+    greeting message
+    """).strip())
     m.stmt('print(f"{name}: {message}")')
 
 

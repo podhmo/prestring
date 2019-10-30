@@ -313,15 +313,19 @@ class Transformer(StrictPyTreeVisitor):  # hai
         if hasattr(children[0], "value") and children[0].value.startswith(
             ("'''", '"""')
         ):
-            docstring = "".join([snode.value for snode in children]).strip()
+            docstring = "".join([snode.value for snode in children])
             if "\n" not in docstring:
                 self.m.stmt("m.docstring({!r})", docstring.strip("\"'"))
             else:
+                quote_char = docstring[0]  # "'" or '"'
+                docstring = docstring.strip("""'"\n \t""")
+
                 self.m.g.import_("textwrap")
-                self.m.stmt("m.docstring(textwrap.dedent(")
+                self.m.stmt("m.docstring(textwrap.dedent({}", quote_char * 3)
                 for line in docstring.split("\n"):
                     self.m.stmt(line)
-                self.m.stmt("))")
+                self.m.append(quote_char * 3)
+                self.m.stmt(").strip())")
             return
 
         # from x import (y, z) ?
@@ -392,7 +396,6 @@ def transform(node, *, m=None, is_whole=None):
     t.visit(node)
 
     if len(m.g.imported_set) > 0:
-        m.g.stmt("m.sep()")
         m.g.sep()
 
     if is_whole:

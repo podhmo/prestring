@@ -5,6 +5,10 @@ example:
 	make -C examples/python default
 	make -C examples/go clean default
 
+ci:
+	$(MAKE) test example
+	git diff
+
 format:
 #	pip install -e .[dev]
 	black prestring setup.py

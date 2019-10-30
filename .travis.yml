@@ -3,8 +3,9 @@ sudo: false
 python:
   - "3.5"
   - "3.6"
-  - "3.7-dev" # 3.7 development branch
+  - "3.7"
+  - "3.8-dev" # 3.7 development branch
   - "nightly"
 install:
-  - pip install -e .[testing]
-script: make test
+  - pip install -e .[testing,dev]
+script: make ci
