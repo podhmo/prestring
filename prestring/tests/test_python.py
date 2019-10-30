@@ -60,7 +60,7 @@ def sum(x: int, y: int = 0) -> int:
     return x + y
         """.strip()
         result = str(m)
-        self.assertEqual(result, expected)
+        self.assertEqual(result.rstrip(), expected.rstrip())
 
     def test_def_empty_params(self):
         from prestring.utils import LazyArgumentsAndKeywords
@@ -74,7 +74,7 @@ def sum():
     return x + y
         """.strip()
         result = str(m)
-        self.assertEqual(result, expected)
+        self.assertEqual(result.rstrip(), expected.rstrip())
 
     def test_def_params__after_changed__added(self):
         from prestring.utils import LazyArgumentsAndKeywords
@@ -91,7 +91,7 @@ def sum(x):
         """.strip()
 
         result = str(m)
-        self.assertEqual(result, expected)
+        self.assertEqual(result.rstrip(), expected.rstrip())
 
     def test_method_empty_params(self):
         from prestring.utils import LazyArgumentsAndKeywords
@@ -105,7 +105,7 @@ def sum(self):
     return x + y
         """.strip()
         result = str(m)
-        self.assertEqual(result, expected)
+        self.assertEqual(result.rstrip(), expected.rstrip())
 
     def test_method_params__after_changed__added(self):
         from prestring.utils import LazyArgumentsAndKeywords
@@ -122,4 +122,4 @@ def sum(self, x):
         """.strip()
 
         result = str(m)
-        self.assertEqual(result, expected)
+        self.assertEqual(result.rstrip(), expected.rstrip())
