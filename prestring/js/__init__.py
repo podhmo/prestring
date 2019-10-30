@@ -10,6 +10,7 @@ from ..utils import (
     LazyArgumentsAndKeywords,
     UnRepr,
 )
+
 logger = logging.getLogger(__name__)
 
 
@@ -72,7 +73,9 @@ class JSModule(_Module):
           ...
         }
         """
-        return block_for_sematics(self, LazyFormat("while ({})", condition), end="}", semicolon="")
+        return block_for_sematics(
+            self, LazyFormat("while ({})", condition), end="}", semicolon=""
+        )
 
     def if_(self, condition):
         """
@@ -80,7 +83,9 @@ class JSModule(_Module):
           ...
         }
         """
-        return block_for_sematics(self, LazyFormat("if ({})", condition), end="}", semicolon="")
+        return block_for_sematics(
+            self, LazyFormat("if ({})", condition), end="}", semicolon=""
+        )
 
     def else_(self):
         """
@@ -117,7 +122,9 @@ class JSModule(_Module):
         }
         """
         self.unnewline()
-        return block_for_sematics(self, LazyFormat(" catch ({})", err), end="}", semicolon="")
+        return block_for_sematics(
+            self, LazyFormat(" catch ({})", err), end="}", semicolon=""
+        )
 
     def finally_(self):
         """
@@ -135,10 +142,15 @@ class JSModule(_Module):
         }
         """
         if extends is None:
-            return block_for_sematics(self, LazyFormat("class {}", name), end="}", semicolon="\n")
+            return block_for_sematics(
+                self, LazyFormat("class {}", name), end="}", semicolon="\n"
+            )
         else:
             return block_for_sematics(
-                self, LazyFormat("class {} extends {}", name, extends), end="}", semicolon="\n"
+                self,
+                LazyFormat("class {} extends {}", name, extends),
+                end="}",
+                semicolon="\n",
             )
 
     def method(self, name, *args, **kwargs):
@@ -148,7 +160,10 @@ class JSModule(_Module):
         }
         """
         return block_for_sematics(
-            self, LazyFormat("{}({})", name, make_params(args, kwargs)), end="}", semicolon="\n"
+            self,
+            LazyFormat("{}({})", name, make_params(args, kwargs)),
+            end="}",
+            semicolon="\n",
         )
 
     def function(self, name, *args, **kwargs):
@@ -161,7 +176,7 @@ class JSModule(_Module):
             self,
             LazyFormat("function {}({})", name, make_params(args, kwargs)),
             end="}",
-            semicolon="\n"
+            semicolon="\n",
         )
 
     def comment(self, comment):

@@ -192,7 +192,9 @@ class LazyJoin:
 
 def LazyCall(fmt, *args, trim_empty=True):
     args = [repr(x) if hasattr(x, "encode") else x for x in args]
-    return LazyFormat("{fmt}({{}})".format(fmt=fmt), LazyJoin(", ", args, trim_empty=trim_empty))
+    return LazyFormat(
+        "{fmt}({{}})".format(fmt=fmt), LazyJoin(", ", args, trim_empty=trim_empty)
+    )
 
 
 class LazyFormat:
