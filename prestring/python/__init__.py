@@ -220,9 +220,9 @@ class PythonModule(_Module):
             for sym in attrs:
                 from_stmt.append(sym)
         except KeyError:
-            self.from_map[modname] = self.submodule(
-                FromStatement(modname, attrs, unique=self.import_unique), newline=False
-            )
+            from_stmt = FromStatement(modname, attrs, unique=self.import_unique)
+            self.from_map[modname] = self.submodule(from_stmt, newline=False)
+        return from_stmt
 
     @contextlib.contextmanager
     def hugecall(self, name):
@@ -257,8 +257,10 @@ class FromStatement(object):
         self.symbols = list(symbols)
         self.unique = unique
 
-    def append(self, symbol):
+    def append(self, symbol):  # TODO: support as_
         self.symbols.append(symbol)
+
+    import_ = append  # alias
 
     def stmt(self, s):
         yield s
@@ -286,7 +288,10 @@ class FromStatement(object):
         yield from self.stmt(")")
 
     def as_token(self, lexer, tokens, sentence):
-        if len(self.symbols) <= 1:
+        if not self.symbols:
+            return Sentence()
+
+        if len(self.symbols) == 1:
             lexer.loop(tokens, sentence, self.iterator_for_one_symbol(sentence))
         else:
             lexer.loop(tokens, sentence, self.iterator_for_many_symbols(sentence))
