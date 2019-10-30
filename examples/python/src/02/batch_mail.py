@@ -1,7 +1,10 @@
-# -*- coding:utf-8 -*-
 import random
 from datetime import datetime
 from prestring import Module
+
+
+random.seed(1)
+now = lambda: datetime(2000, 1, 1)
 m = Module()
 
 m.stmt("========================================")
@@ -25,26 +28,26 @@ for i in range(10):
         m.progress.stmt(" S")
 
 m.header.append("[Success]" if status else "[Failure]")
-m.header.stmt(" batch script ({})".format(datetime.now()))
+m.header.stmt(" batch script ({})".format(now()))
 
 
 print(str(m))
 """
 ========================================
-[Failure] batch script (2015-10-20 15:40:42.208806)
+[Failure] batch script (2000-01-01 00:00:00)
 ========================================
 
 progress:
-task0: done (0.5611604727086437) S
-task1: done (0.6576818372636405) S
-task2: done (0.3459254985420931) S
-task3: done (0.3123168020519609) S
-task4: done (0.2264300461912806) S
-task5: done (0.3765172681605966) S
-task6: done (0.26508001623433797) S
-task7: done (0.7826309508687302) F
-task8: done (0.43771075231997414) S
-task9: done (0.8992100765193392) F
+task0: done (0.13436424411240122) S
+task1: done (0.8474337369372327) F
+task2: done (0.763774618976614) F
+task3: done (0.2550690257394217) S
+task4: done (0.49543508709194095) S
+task5: done (0.4494910647887381) S
+task6: done (0.651592972722763) S
+task7: done (0.7887233511355132) F
+task8: done (0.0938595867742349) S
+task9: done (0.02834747652200631) S
 ----------------------------------------
-7, 9,
+1, 2, 7,
 """

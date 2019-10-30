@@ -1,4 +1,4 @@
-default: 00 01 02 03 04 05 06 07
+default: 00 01 02 03 04 06 07  # skip 05
 
 00:
 	mkdir -p dst/$@
@@ -30,6 +30,7 @@ default: 00 01 02 03 04 05 06 07
 	@echo ---------------------------------------- > /dev/stderr
 	python dst/$@/hello.py foo
 	python src/$@/hello.py foo
+#	black src/$@/hello.py dst/$@/hello.py
 	diff -u src/$@/hello.py dst/$@/hello.py
 08:
 	python src/$@/gen.py -o dst
