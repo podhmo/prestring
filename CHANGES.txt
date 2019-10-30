@@ -1,3 +1,8 @@
+0.6.0
+
+- support only python3.6+
+- refactoring prestring.output
+
 0.5.3
 
 - rollback, python's import part output

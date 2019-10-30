@@ -23,12 +23,19 @@ testing_extras = tests_require + []
 
 setup(
     name="prestring",
-    version="0.5.4",
+    version=open(os.path.join(here, "VERSION")).read().strip(),
     description="source code generation library (with overuse with-syntax)",
     long_description=README + "\n\n" + CHANGES,
     classifiers=[
         "Programming Language :: Python",
-        "Programming Language :: Python :: Implementation :: CPython",
+        "Intended Audience :: Developers",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
     keywords="prestring, srcgen, python",
     author="podhmo",
