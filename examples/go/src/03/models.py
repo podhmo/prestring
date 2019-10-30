@@ -191,7 +191,7 @@ class Struct(object):
 
     def normalize(self):
         self.rawdata = copy.deepcopy(self.rawdata)
-        for k in list(self.data.keys()):
+        for k in self.data.keys():
             self.data[k.lower()] = self.data.pop(k)
 
 
