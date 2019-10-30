@@ -12,7 +12,10 @@ try:
 except IOError:
     README = CHANGES = ""
 
+
 install_requires = []
+if sys.version_info[:2] <= (3, 6):
+    install_requires.append("dataclasses")
 dev_extras = ["black", "flake8"]
 docs_extras = []
 tests_require = ["evilunit"]
