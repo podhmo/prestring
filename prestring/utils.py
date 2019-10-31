@@ -190,6 +190,13 @@ class LazyJoin:
         return self.value
 
 
+def LazyCall(fmt, *args, trim_empty=True):
+    args = [repr(x) if hasattr(x, "encode") else x for x in args]
+    return LazyFormat(
+        "{fmt}({{}})".format(fmt=fmt), LazyJoin(", ", args, trim_empty=trim_empty)
+    )
+
+
 class LazyFormat:
     def __init__(self, fmt, *args, **kwargs):
         self.fmt = fmt
@@ -199,7 +206,10 @@ class LazyFormat:
     def _string(self):
         args = map(str, self.args)
         kwargs = {k: str(v) for k, v in self.kwargs.items()}
-        return self.fmt.format(*args, **kwargs)
+        fmt = self.fmt
+        if hasattr(fmt, "_string"):
+            fmt = fmt._string()
+        return fmt.format(*args, **kwargs)
 
     @reify
     def value(self):
@@ -207,6 +217,31 @@ class LazyFormat:
 
     def __str__(self):
         return self.value
+
+
+class _LazyCallback:
+    def __init__(self, ob, callback):
+        self.ob = ob
+        self.callback = callback
+
+    def _string(self):
+        value = str(self.ob)
+        return self.callback(value)
+
+    @reify
+    def value(self):
+        return self._string()
+
+    def __str__(self):
+        return self.value
+
+
+def LazyRStrip(value, chars=None):
+    return _LazyCallback(value, lambda x: x.rstrip(chars))
+
+
+def LazyStrip(value, chars=None):
+    return _LazyCallback(value, lambda x: x.strip(chars))
 
 
 class NameStore:

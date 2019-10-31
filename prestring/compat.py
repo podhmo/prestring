@@ -17,7 +17,7 @@ else:
     string_types = (basestring,)  # noqa
     integer_types = (int, long)
     class_types = (type, types.ClassType)
-    text_type = unicode # noqa
+    text_type = unicode  # noqa
     binary_type = str
     long = long
 

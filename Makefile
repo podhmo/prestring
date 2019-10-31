@@ -4,6 +4,7 @@ test:
 example:
 	make -C examples/python default
 	make -C examples/go clean default
+	make -C examples/js default
 
 ci:
 	$(MAKE) test example
