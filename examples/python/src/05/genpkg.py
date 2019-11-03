@@ -1,8 +1,7 @@
 import sys
 import logging
-from os.path import join, exists
-from os import mkdir
 import dataclasses
+from prestring.output import output
 
 # prompt = "{varname} ({description})[{default!r}]:"
 @dataclasses.dataclass
@@ -21,21 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 def gen(rootpath: str, c: Config) -> None:
-    file0 = (
-        join(rootpath, "")
-        .replace("<<c.name>>", str(c.name))
-        .replace("<<c.version>>", str(c.version))
-    )
-    file1 = (
-        join(rootpath, "<<c.name>>")
-        .replace("<<c.name>>", str(c.name))
-        .replace("<<c.version>>", str(c.version))
-    )
-    file2 = (
-        join(rootpath, "<<c.name>>/.gitignore")
-        .replace("<<c.name>>", str(c.name))
-        .replace("<<c.version>>", str(c.version))
-    )
+    file2 = f"{c.name}/.gitignore"
     val0 = """# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -97,47 +82,18 @@ target/
     ).replace(
         "<<c.version>>", str(c.version)
     )
-    file3 = (
-        join(rootpath, "<<c.name>>/README.rst")
-        .replace("<<c.name>>", str(c.name))
-        .replace("<<c.version>>", str(c.version))
-    )
+    file3 = f"{c.name}/README.rst"
     val1 = """<<c.name>>========================================""".replace(
         "<<c.name>>", str(c.name)
     ).replace("<<c.version>>", str(c.version))
-    file4 = (
-        join(rootpath, "<<c.name>>/CHANGES.rst")
-        .replace("<<c.name>>", str(c.name))
-        .replace("<<c.version>>", str(c.version))
-    )
+
+    file4 = f"{c.name}/CHANGES.rst"
     val2 = """""".replace("<<c.name>>", str(c.name)).replace(
         "<<c.version>>", str(c.version)
     )
-    file5 = (
-        join(rootpath, "<<c.name>>/<<c.name>>")
-        .replace("<<c.name>>", str(c.name))
-        .replace("<<c.version>>", str(c.version))
-    )
-    file6 = (
-        join(rootpath, "<<c.name>>/<<c.name>>/__init__.py")
-        .replace("<<c.name>>", str(c.name))
-        .replace("<<c.version>>", str(c.version))
-    )
-    file7 = (
-        join(rootpath, "<<c.name>>/<<c.name>>/tests")
-        .replace("<<c.name>>", str(c.name))
-        .replace("<<c.version>>", str(c.version))
-    )
-    file8 = (
-        join(rootpath, "<<c.name>>/<<c.name>>/tests/__init__.py")
-        .replace("<<c.name>>", str(c.name))
-        .replace("<<c.version>>", str(c.version))
-    )
-    file9 = (
-        join(rootpath, "<<c.name>>/setup.py")
-        .replace("<<c.name>>", str(c.name))
-        .replace("<<c.version>>", str(c.version))
-    )
+    file6 = f"{c.name}/{c.name}/__init__.py"
+    file8 = f"{c.name}/{c.name}/tests/__init__.py"
+    file9 = f"{c.name}/setup.py"
     val3 = """import os
 from setuptools import(
     setup,
@@ -183,36 +139,19 @@ setup(
     ).replace(
         "<<c.version>>", str(c.version)
     )
-    if not (exists(file0)):
-        logger.info("[d] create: %s", file0)
-        mkdir(file0)
-    if not (exists(file1)):
-        logger.info("[d] create: %s", file1)
-        mkdir(file1)
-    logger.info("[f] create: %s", file2)
-    with open(file2, "w") as wf:
-        wf.write(val0)
-    logger.info("[f] create: %s", file3)
-    with open(file3, "w") as wf:
-        wf.write(val1)
-    logger.info("[f] create: %s", file4)
-    with open(file4, "w") as wf:
-        wf.write(val2)
-    if not (exists(file5)):
-        logger.info("[d] create: %s", file5)
-        mkdir(file5)
-    logger.info("[f] create: %s", file6)
-    with open(file6, "w") as wf:
-        wf.write(val2)
-    if not (exists(file7)):
-        logger.info("[d] create: %s", file7)
-        mkdir(file7)
-    logger.info("[f] create: %s", file8)
-    with open(file8, "w") as wf:
-        wf.write(val2)
-    logger.info("[f] create: %s", file9)
-    with open(file9, "w") as wf:
-        wf.write(val3)
+    with output(rootpath) as fs:
+        with fs.open(file2, "w") as wf:
+            wf.write(val0)
+        with fs.open(file3, "w") as wf:
+            wf.write(val1)
+        with fs.open(file4, "w") as wf:
+            wf.write(val2)
+        with fs.open(file6, "w") as wf:
+            wf.write(val2)
+        with fs.open(file8, "w") as wf:
+            wf.write(val2)
+        with fs.open(file9, "w") as wf:
+            wf.write(val3)
 
 
 if __name__ == "__main__":
