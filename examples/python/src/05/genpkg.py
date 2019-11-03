@@ -2,85 +2,39 @@ import sys
 import logging
 from os.path import join, exists
 from os import mkdir
+import dataclasses
+
+# prompt = "{varname} ({description})[{default!r}]:"
+@dataclasses.dataclass
+class Config:
+    name: str = dataclasses.field(
+        default="foo-bar", metadata={"description": "package name"}
+    )
+    version: str = dataclasses.field(
+        default="0.0.0", metadata={"description": "version"}
+    )
 
 
-class AskStringCache(object):
-    prompt = "{varname} ({description})[{default!r}]:"
-
-    def __init__(self, inp=sys.stdin, err=sys.stderr):
-        self.description_map = {}
-        self.default_map = {}
-        self.cache = {}
-        self.inp = inp
-        self.err = err
-        self.hooks = []
-
-    def __getitem__(self, name):
-        try:
-            return self.cache[name]
-        except KeyError:
-            return self.load(name)
-
-    def load(self, name):
-        description = self.description_map.get(name, "")
-        default = self.default_map.get(name)
-        self.err.write(
-            self.prompt.format(varname=name, description=description, default=default)
-        )
-        self.err.flush()
-        value = self.inp.readline().rstrip() or self.default_map.get(name, "")
-        self.cache[name] = value
-        return value
-
-    def add_description(self, name, description):
-        self.description_map[name] = description
-
-    def add_default(self, name, default):
-        self.default_map[name] = default
-
-
-_ask_string_cache = AskStringCache()
-
-
-def get_ask_string_cache():
-    global _ask_string_cache
-    return _ask_string_cache
-
-
-def set_ask_string_cache(cache):
-    global _ask_string_cache
-    _ask_string_cache = cache
-
-
-class AskString(object):
-    def __init__(self, name, description=None, default=None, cache=None):
-        self.cache = cache or get_ask_string_cache()
-        self.name = name
-        if description is not None:
-            self.cache.add_description(name, description)
-        if default is not None:
-            self.cache.add_default(name, default)
-
-    def __str__(self):
-        return self.cache[self.name]
-
-
-_G0 = AskString("package", description="package name", default="foo-bar")
-_G1 = AskString("version", description="version", default="0.0.0")
+# _G0 = AskString("package", description="package name", default="foo-bar")
+# c.version = AskString("version", description="version", default="0.0.0")
 logger = logging.getLogger(__name__)
 
 
-def gen(rootpath):
-    file0 = join(rootpath, "").replace("<<_G0>>", str(_G0)).replace("<<_G1>>", str(_G1))
+def gen(rootpath: str, c: Config) -> None:
+    file0 = (
+        join(rootpath, "")
+        .replace("<<c.name>>", str(c.name))
+        .replace("<<c.version>>", str(c.version))
+    )
     file1 = (
-        join(rootpath, "<<_G0>>")
-        .replace("<<_G0>>", str(_G0))
-        .replace("<<_G1>>", str(_G1))
+        join(rootpath, "<<c.name>>")
+        .replace("<<c.name>>", str(c.name))
+        .replace("<<c.version>>", str(c.version))
     )
     file2 = (
-        join(rootpath, "<<_G0>>/.gitignore")
-        .replace("<<_G0>>", str(_G0))
-        .replace("<<_G1>>", str(_G1))
+        join(rootpath, "<<c.name>>/.gitignore")
+        .replace("<<c.name>>", str(c.name))
+        .replace("<<c.version>>", str(c.version))
     )
     val0 = """# Byte-compiled / optimized / DLL files
 __pycache__/
@@ -139,48 +93,50 @@ docs/_build/
 # PyBuilder
 target/
 """.replace(
-        "<<_G0>>", str(_G0)
+        "<<c.name>>", str(c.name)
     ).replace(
-        "<<_G1>>", str(_G1)
+        "<<c.version>>", str(c.version)
     )
     file3 = (
-        join(rootpath, "<<_G0>>/README.rst")
-        .replace("<<_G0>>", str(_G0))
-        .replace("<<_G1>>", str(_G1))
+        join(rootpath, "<<c.name>>/README.rst")
+        .replace("<<c.name>>", str(c.name))
+        .replace("<<c.version>>", str(c.version))
     )
-    val1 = """<<_G0>>========================================""".replace(
-        "<<_G0>>", str(_G0)
-    ).replace("<<_G1>>", str(_G1))
+    val1 = """<<c.name>>========================================""".replace(
+        "<<c.name>>", str(c.name)
+    ).replace("<<c.version>>", str(c.version))
     file4 = (
-        join(rootpath, "<<_G0>>/CHANGES.rst")
-        .replace("<<_G0>>", str(_G0))
-        .replace("<<_G1>>", str(_G1))
+        join(rootpath, "<<c.name>>/CHANGES.rst")
+        .replace("<<c.name>>", str(c.name))
+        .replace("<<c.version>>", str(c.version))
     )
-    val2 = """""".replace("<<_G0>>", str(_G0)).replace("<<_G1>>", str(_G1))
+    val2 = """""".replace("<<c.name>>", str(c.name)).replace(
+        "<<c.version>>", str(c.version)
+    )
     file5 = (
-        join(rootpath, "<<_G0>>/<<_G0>>")
-        .replace("<<_G0>>", str(_G0))
-        .replace("<<_G1>>", str(_G1))
+        join(rootpath, "<<c.name>>/<<c.name>>")
+        .replace("<<c.name>>", str(c.name))
+        .replace("<<c.version>>", str(c.version))
     )
     file6 = (
-        join(rootpath, "<<_G0>>/<<_G0>>/__init__.py")
-        .replace("<<_G0>>", str(_G0))
-        .replace("<<_G1>>", str(_G1))
+        join(rootpath, "<<c.name>>/<<c.name>>/__init__.py")
+        .replace("<<c.name>>", str(c.name))
+        .replace("<<c.version>>", str(c.version))
     )
     file7 = (
-        join(rootpath, "<<_G0>>/<<_G0>>/tests")
-        .replace("<<_G0>>", str(_G0))
-        .replace("<<_G1>>", str(_G1))
+        join(rootpath, "<<c.name>>/<<c.name>>/tests")
+        .replace("<<c.name>>", str(c.name))
+        .replace("<<c.version>>", str(c.version))
     )
     file8 = (
-        join(rootpath, "<<_G0>>/<<_G0>>/tests/__init__.py")
-        .replace("<<_G0>>", str(_G0))
-        .replace("<<_G1>>", str(_G1))
+        join(rootpath, "<<c.name>>/<<c.name>>/tests/__init__.py")
+        .replace("<<c.name>>", str(c.name))
+        .replace("<<c.version>>", str(c.version))
     )
     file9 = (
-        join(rootpath, "<<_G0>>/setup.py")
-        .replace("<<_G0>>", str(_G0))
-        .replace("<<_G1>>", str(_G1))
+        join(rootpath, "<<c.name>>/setup.py")
+        .replace("<<c.name>>", str(c.name))
+        .replace("<<c.version>>", str(c.version))
     )
     val3 = """import os
 from setuptools import(
@@ -206,14 +162,14 @@ testing_extras = tests_requires + []
 
 
 setup(
-    name='<<_G0>>',
-    version='<<_G1>>',
+    name='<<c.name>>',
+    version='<<c.version>>',
     classifiers=['Programming Language :: Python', 'Programming Language :: Python :: Implementation :: CPython'],
     keywords='',
     author='',
     author_email='',
     url='',
-    packages=find_packages(exclude=['<<_G0>>.tests']),
+    packages=find_packages(exclude=['<<c.name>>.tests']),
     include_package_data=True,
     zip_safe=False,
     install_requires=install_requires,
@@ -221,11 +177,11 @@ setup(
    'testing': testing_extras,
    'docs': docs_extras},
     tests_require=tests_requires,
-    test_suite='<<_G0>>.tests',
+    test_suite='<<c.name>>.tests',
     entry_points='')""".replace(
-        "<<_G0>>", str(_G0)
+        "<<c.name>>", str(c.name)
     ).replace(
-        "<<_G1>>", str(_G1)
+        "<<c.version>>", str(c.version)
     )
     if not (exists(file0)):
         logger.info("[d] create: %s", file0)
@@ -261,4 +217,6 @@ setup(
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    gen(sys.argv[1])
+    root_path = sys.argv[1]
+    c = Config()
+    gen(root_path, c)
