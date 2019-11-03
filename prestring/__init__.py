@@ -16,17 +16,24 @@ from prestring.utils import (  # NOQA
 logger = logging.getLogger(__name__)
 
 
-class Newline(object):
-    pass
+class _Sentinel:
+    __slots__ = ("name", "kind")
+
+    def __init__(self, *, kind, name):
+        self.kind = kind
+        self.name = name
+
+    def __repr__(self):
+        return f"<{self.name}>"
 
 
-NEWLINE = Newline()
+NEWLINE = _Sentinel(name="NEWLINE", kind="sep")
 
-INDENT = object()
-UNINDENT = object()
+INDENT = _Sentinel(name="INDENT", kind="indent")
+UNINDENT = _Sentinel(name="UNINDENT", kind="indent")
 
 
-class PreString(object):
+class PreString:
     def __init__(self, value, other=None):
         self.body = [value]
         if other is not None:
@@ -56,7 +63,7 @@ class PreString(object):
         self.body.insert(0, value)
 
     def insert_after(self, value):
-        if isinstance(self.body[-1], Newline):
+        if getattr(self.body[-1], "kind", None) == "sep":
             self.body.pop()
             self.append(value)
             self.body.append(NEWLINE)
@@ -76,12 +83,12 @@ class PreString(object):
         return self.body[0]
 
 
-class Sentence(object):
+class Sentence:
     def __init__(self):
         self.body = []
         self.newline = None
 
-    def eat(self, v):
+    def append(self, v):
         self.body.append(v)
         return self
 
@@ -92,30 +99,14 @@ class Sentence(object):
         return "".join(map(str, self.body))
 
 
-class MultiSentence(object):
-    def __init__(self, *lines):
-        self.lines = lines
-
-    def iterator(self, sentence):
-        if not sentence.is_empty():
-            yield NEWLINE
-        for line in self.lines:
-            yield line
-            yield NEWLINE
-
-    def as_token(self, lexer, tokens, sentence):
-        lexer.loop(tokens, sentence, self.iterator(sentence))
-        return Sentence()
-
-
-class Lexer(object):
+class Lexer:
     def __init__(self, container_factory, sentence_factory):
         self.container_factory = container_factory or list
         self.sentence_factory = sentence_factory or Sentence
 
     def loop(self, tokens, sentence, iterator):
         for v in iterator:
-            if isinstance(v, Newline):
+            if getattr(v, "kind", None) == "sep":
                 sentence.newline = v
                 tokens.append(sentence)
                 sentence = self.sentence_factory()
@@ -124,7 +115,7 @@ class Lexer(object):
             elif v is INDENT or v is UNINDENT:
                 tokens.append(v)
             else:
-                sentence.eat(v)
+                sentence.append(v)
         return (tokens, sentence)
 
     def __call__(self, prestring):
@@ -137,7 +128,7 @@ class Lexer(object):
         return tokens
 
 
-class FrameList(object):
+class FrameList:
     def __init__(self):
         self.framelist = [[]]
         self.level = 0
@@ -167,7 +158,7 @@ class FrameList(object):
         return self.current
 
 
-class Parser(object):
+class Parser:
     def __init__(self, framelist_factory):
         self.framelist_factory = framelist_factory
 
@@ -184,7 +175,7 @@ class Parser(object):
         return framelist
 
 
-class Application(object):
+class Application:
     def __call__(self, framelist, evaluator):
         for frame in framelist[:-1]:
             evaluator.evaluate(frame)
@@ -193,7 +184,7 @@ class Application(object):
         return evaluator
 
 
-class Evaluator(object):
+class Evaluator:
     def __init__(self, io, indent="    ", newline="\n"):
         self.io = io
         self.indent = indent
@@ -231,7 +222,7 @@ class Evaluator(object):
         return self.io.getvalue().rstrip()
 
 
-class Module(object):
+class Module:
     def create_body(self, value, other=None):
         return PreString(value)
 

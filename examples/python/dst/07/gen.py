@@ -1,10 +1,10 @@
 from prestring.python import PythonModule
-import textwrap
 
 
 def gen(*, m=None, indent='    '):
     m = m or PythonModule(indent=indent)
 
+    import textwrap
     with m.def_('hello', 'name', '*', 'message: str =  "hello world"'):
         m.docstring(textwrap.dedent("""
         greeting message

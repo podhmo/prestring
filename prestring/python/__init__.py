@@ -3,7 +3,7 @@ import contextlib
 from io import StringIO
 from .. import Module as _Module
 from .. import (
-    Newline,
+    _Sentinel,
     NEWLINE,
     INDENT,
     UNINDENT,
@@ -15,10 +15,10 @@ from .. import (
     LazyFormat,
     LazyJoin,
 )
-from ..compat import PY3
+
 from ..utils import _type_value  # xxx
 
-PEPNEWLINE = Newline()
+PEPNEWLINE = _Sentinel(name="PEP-NEWLINE", kind="sep")
 
 
 class PythonEvaluator(Evaluator):
@@ -160,26 +160,17 @@ class PythonModule(_Module):
     # class definition
     @contextlib.contextmanager
     def class_(self, name, bases="", metaclass=None):
-        if bases is None:
-            if not PY3:
-                bases = "object"
         if not isinstance(bases, (list, tuple)):
             bases = [bases]
         args = [str(b) for b in bases if b]
-        if PY3:
-            if metaclass is not None:
-                args.append("metaclass={}".format(metaclass))
-            if args:
-                self.stmt("class {name}({args}):", name=name, args=", ".join(args))
-            else:
-                self.stmt("class {name}:", name=name)
-            with self.scope():
-                yield
-        else:
+        if metaclass is not None:
+            args.append("metaclass={}".format(metaclass))
+        if args:
             self.stmt("class {name}({args}):", name=name, args=", ".join(args))
-            with self.scope():
-                if metaclass is not None:
-                    self.stmt("__metaclass__ = {}".format(metaclass))
+        else:
+            self.stmt("class {name}:", name=name)
+        with self.scope():
+            yield
         self.sep()
 
     @contextlib.contextmanager
@@ -241,7 +232,7 @@ class PythonModule(_Module):
         self.stmt("pass")
 
 
-class Caller(object):
+class Caller:
     def __init__(self, name):
         self.name = name
         self.kwargs = LazyKeywords([])
@@ -251,7 +242,7 @@ class Caller(object):
             self.kwargs.kwargs[k] = v
 
 
-class FromStatement(object):
+class FromStatement:
     def __init__(self, modname, symbols, unique=False):
         self.modname = modname
         self.symbols = list(symbols)
@@ -298,7 +289,7 @@ class FromStatement(object):
         return Sentence()
 
 
-class MultiSentenceForCall(object):
+class MultiSentenceForCall:
     def __init__(self, name, *lines):
         self.name = name
         self.lines = lines
