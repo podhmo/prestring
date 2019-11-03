@@ -403,16 +403,16 @@ def transform(node, *, m=None, is_whole=None):
     return m
 
 
-def transform_string(source: str, *, m=None):
+def transform_string(source: str, *, m=None, is_whole=True):
     from prestring.python.parse import parse_string
 
     t = parse_string(source)
-    return transform(t, m=m)
+    return transform(t, m=m, is_whole=is_whole)
 
 
-def transform_file(fname: str, *, m=None):
+def transform_file(fname: str, *, m=None, is_whole=True):
     with open(fname) as rf:
-        return transform_string(rf.read(), m=m)
+        return transform_string(rf.read(), m=m, is_whole=is_whole)
 
 
 def main(argv=None):
@@ -421,7 +421,18 @@ def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("file")
     args = parser.parse_args(argv)
-    m = transform_file(args.file)
+
+    m = Module()
+    m.g = m.submodule()
+    m.g.from_("prestring.python", "Module")
+    m.g.stmt("m = Module()  # noqa")
+
+    with m.def_("gen", "*", "m=None"):
+        m.stmt("m = m or Module()")
+        m = transform_file(args.file, m=m)
+
+    with m.if_('__name__ == "__main__"'):
+        m.stmt("gen()")
     # import inspect
     # m = transform_string(inspect.getsource(main))
     print(str(m))
