@@ -24,9 +24,9 @@ default: 00 01 02 03 04 05 06 07 08
 07:
 	mkdir -p dst/$@
 	@echo ---------------------------------------- > /dev/stderr
-	python -m prestring.python.transform src/$@/hello.py | tee dst/$@/hello.template.py
+	python -m prestring.python.transform src/$@/hello.py | tee dst/$@/gen.py
 	@echo ---------------------------------------- > /dev/stderr
-	python dst/$@/hello.template.py | tee dst/$@/hello.py
+	python dst/$@/gen.py | tee dst/$@/hello.py
 	@echo ---------------------------------------- > /dev/stderr
 	python dst/$@/hello.py foo
 	python src/$@/hello.py foo
