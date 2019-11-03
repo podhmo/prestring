@@ -53,6 +53,7 @@ class output:
     @reify
     def writer(self):
         if self.fake:
+            setup_logging(level=logging.INFO)  # xxx
             return _ConsoleWriter(self)
         else:
             return _ActualWriter(self)
@@ -95,11 +96,11 @@ class _ActualWriter:
                 action = "no change"
                 os.remove(tmppath)
                 if self.output.verbose:
-                    logger.info("%s file path=%s", action, fullpath)
+                    logger.info("[F]\t%s\t%s", action, fullpath)
             else:
                 action = "update"
                 os.replace(tmppath, fullpath)
-                logger.info("%s file path=%s", action, fullpath)
+                logger.info("[F]\t%s\t%s", action, fullpath)
 
     def _write_without_check(self, name: str, file, *, action=None, _retry=False):
         fullpath = self.output.fullpath(name)
@@ -107,11 +108,11 @@ class _ActualWriter:
         try:
             with open(fullpath, "w") as wf:
                 file.write(wf)
-            logger.info("%s file path=%s", action, fullpath)
+            logger.info("[F]\t%s\t%s", action, fullpath)
         except FileNotFoundError:
             if _retry:
                 raise
-            logger.info("create directory path=%s", os.path.dirname(fullpath))
+            logger.info("[D]\tcreate\t%s", os.path.dirname(fullpath))
             os.makedirs(os.path.dirname(fullpath), exist_ok=True)
             self._write_without_check(name, file, action="create", _retry=True)
 
@@ -125,15 +126,13 @@ class _ConsoleWriter:
     def write(self, name, f, *, _retry=False):
         fullpath = self.output.fullpath(name)
         if not self.output.verbose:
-            print(
-                "{}: {}".format(self.output.guess_action(fullpath), fullpath),
-                file=self.stdout,
-            )
+            logger.info("[F]\t%s\t%s", self.output.guess_action(fullpath), fullpath)
             return
 
-        print("----------------------------------------", file=self.stderr)
-        print(fullpath, file=self.stderr)
-        print("----------------------------------------", file=self.stderr)
+        print(f"# {fullpath}", file=self.stdout)
+        print(
+            "\x1b[90m----------------------------------------\x1b[0m", file=self.stderr
+        )
         self.stderr.flush()
 
         o = StringIO()
@@ -145,5 +144,42 @@ class _ConsoleWriter:
             sep="",
         )
         self.stdout.flush()
-        print("----------------------------------------\n", file=self.stderr)
+        print("\n", file=self.stderr)
         self.stderr.flush()
+
+
+class _MarkdownWriter:
+    def __init__(self, output: output, *, stdout=sys.stdout, stderr=sys.stderr):
+        self.output = output
+        self.stdout = stdout
+        self.stderr = stderr
+
+    def write(self, name, f, *, _retry=False):
+        fullpath = self.output.fullpath(name)
+
+        o = StringIO()
+        f.write(o)
+        content = o.getvalue().strip()
+
+        print(f"## {fullpath}\n", file=self.stdout)
+        self.stdout.flush()
+        print("<details>\n", file=self.stderr)
+        self.stderr.flush()
+        print("```", file=self.stdout)
+        print(content, file=self.stdout)
+        print("```\n", file=self.stdout)
+        self.stdout.flush()
+        print("</details>\n", file=self.stderr)
+        self.stderr.flush()
+        self.stdout.flush()
+
+
+def setup_logging(*, _logger=None, level=logging.INFO):
+    _logger = _logger or logger
+    if _logger.handlers:
+        return
+    h = logging.StreamHandler(sys.stderr)
+    h.setFormatter(logging.Formatter(fmt="%(message)s"))
+    _logger.addHandler(h)
+    _logger.propagate = False
+    logging.basicConfig(level=level)

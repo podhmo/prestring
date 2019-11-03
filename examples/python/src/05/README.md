@@ -1,12 +1,12 @@
 ```console
 $ python genpkg.py dst --config config.json
-INFO:prestring.output:create directory path=dst/foo-bar
-INFO:prestring.output:create file path=dst/foo-bar/.gitignore
-INFO:prestring.output:create file path=dst/foo-bar/README.rst
-INFO:prestring.output:create file path=dst/foo-bar/CHANGES.rst
-INFO:prestring.output:create directory path=dst/foo-bar/foo_bar
-INFO:prestring.output:create file path=dst/foo-bar/foo_bar/__init__.py
-INFO:prestring.output:create directory path=dst/foo-bar/foo_bar/tests
-INFO:prestring.output:create file path=dst/foo-bar/foo_bar/tests/__init__.py
-INFO:prestring.output:create file path=dst/foo-bar/setup.py
+[D]	create	dst/foo-bar
+[F]	create	dst/foo-bar/.gitignore
+[F]	create	dst/foo-bar/README.rst
+[F]	create	dst/foo-bar/CHANGES.rst
+[D]	create	dst/foo-bar/foo_bar
+[F]	create	dst/foo-bar/foo_bar/__init__.py
+[D]	create	dst/foo-bar/foo_bar/tests
+[F]	create	dst/foo-bar/foo_bar/tests/__init__.py
+[F]	create	dst/foo-bar/setup.py
 ```
