@@ -34,16 +34,3 @@ def transform(source: str, *, indent, m=None):
         else:
             m.stmt("m.stmt({!r})", line)
     return m
-
-
-if __name__ == "__main__":
-    import sys
-    from prestring.cli import main_transform
-    from prestring.python import Module as PyModule
-
-    main_transform(
-        Module=PyModule,
-        OutModule=Module,
-        transform=transform,
-        argv=sys.argv[1:] or [__file__],
-    )

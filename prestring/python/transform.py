@@ -394,15 +394,3 @@ def transform(source: str, *, m=None, indent):
     t = Transformer(node, m=m)
     t.visit(node)
     return m
-
-
-if __name__ == "__main__":
-    import sys
-    from prestring.cli import main_transform
-
-    main_transform(
-        transform=transform,
-        Module=Module,
-        OutModule=Module,
-        argv=sys.argv[1:] or [__file__],
-    )
