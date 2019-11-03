@@ -22,7 +22,7 @@ class Context:
         return snakecase(self.name)
 
     def read_text(self, name: str) -> str:
-        with open(pathlib.Path(self.here).parent / "templates/gitignore") as rf:
+        with open(pathlib.Path(self.here).parent / name) as rf:
             return (
                 rf.read()
                 .replace("<<c.name>>", str(self.name))

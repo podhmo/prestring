@@ -1,56 +1,41 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
+import os
+from setuptools import setup, find_packages
 
-# C extensions
-*.so
+here = os.path.abspath(os.path.dirname(__file__))
 
-# Distribution / packaging
-.Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-*.egg-info/
-.installed.cfg
-*.egg
 
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
+try:
+    with open(os.path.join(here, "README.rst")) as f:
+        README = f.read()
+    with open(os.path.join(here, "CHANGES.rst")) as f:
+        CHANGES = f.read()
+except IOError:
+    README = CHANGES = ""
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
+install_requires = []
+docs_extras = []
+tests_requires = []
+testing_extras = tests_requires + []
 
-# Translations
-*.mo
-*.pot
 
-# Django stuff:
-*.log
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-target/
+setup(
+    name="foo-bar",
+    version="0.1.0",
+    classifiers=[
+        "Programming Language :: Python",
+        "Programming Language :: Python :: Implementation :: CPython",
+    ],
+    keywords="",
+    author="",
+    author_email="",
+    url="",
+    packages=find_packages(exclude=["foo_bar.tests"]),
+    include_package_data=True,
+    zip_safe=False,
+    install_requires=install_requires,
+    extras_require={"testing": testing_extras, "docs": docs_extras},
+    tests_require=tests_requires,
+    test_suite="foo_bar.tests",
+    entry_points="",
+)
