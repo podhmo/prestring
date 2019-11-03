@@ -2,6 +2,8 @@ import json
 import logging
 import dataclasses
 import pathlib
+from prestring.utils import reify
+from prestring.naming import snakecase
 from prestring.output import output
 
 
@@ -15,12 +17,17 @@ class Context:
     )
     here: str = __file__
 
+    @reify
+    def package_dirname(self):
+        return snakecase(self.name)
+
     def read_text(self, name: str) -> str:
         with open(pathlib.Path(self.here).parent / "templates/gitignore") as rf:
             return (
                 rf.read()
                 .replace("<<c.name>>", str(self.name))
                 .replace("<<c.version>>", str(self.version))
+                .replace("<<c.package_dirname>>", str(self.package_dirname))
             )
 
 
@@ -32,9 +39,9 @@ def gen(rootpath: str, c: Context) -> None:
             wf.write(f"""{c.name}\n========================================""")
         with fs.open("CHANGES.rst", "w") as wf:
             wf.write("")
-        with fs.open("__init__.py", "w") as wf:
+        with fs.open(f"{c.package_dirname}/__init__.py", "w") as wf:
             wf.write("")
-        with fs.open(f"{c.name}/tests/__init__.py", "w") as wf:
+        with fs.open(f"{c.package_dirname}/tests/__init__.py", "w") as wf:
             wf.write("")
         with fs.open("setup.py", "w") as wf:
             wf.write(c.read_text("templates/setup.py"))
