@@ -103,7 +103,7 @@ class _ActualWriter:
 
     def _write_without_check(self, name: str, file, *, action=None, _retry=False):
         fullpath = self.output.fullpath(name)
-        action = action or output.guess_action(fullpath)
+        action = action or self.output.guess_action(fullpath)
         try:
             with open(fullpath, "w") as wf:
                 file.write(wf)
