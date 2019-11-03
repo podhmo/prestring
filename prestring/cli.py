@@ -14,7 +14,7 @@ def main_transform(*, transform, Module, filename=None, name="gen", OutModule):
     indent = ("\t" if args.tab else " ") * args.indent
 
     m = run_transform(
-        filename or args.file,
+        args.file or filename,
         transform=transform,
         Module=Module,
         name=name,
