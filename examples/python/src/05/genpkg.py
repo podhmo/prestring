@@ -1,10 +1,9 @@
 import json
-import logging
 import dataclasses
 import pathlib
 from prestring.utils import reify
 from prestring.naming import snakecase
-from prestring.output import output
+from prestring.output import output, setup_logging
 
 
 @dataclasses.dataclass
@@ -51,7 +50,7 @@ def run(root_path: str, *, config: str) -> None:
     with open(config, "r") as rf:
         data = json.load(rf)
     c = Context(**data)
-    logging.basicConfig(level=logging.INFO)
+    setup_logging()
     gen(root_path, c)
 
 
