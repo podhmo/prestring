@@ -129,9 +129,10 @@ class _ConsoleWriter:
             logger.info("[F]\t%s\t%s", self.output.guess_action(fullpath), fullpath)
             return
 
-        print("----------------------------------------", file=self.stderr)
-        print(fullpath, file=self.stderr)
-        print("----------------------------------------", file=self.stderr)
+        print(f"# {fullpath}", file=self.stdout)
+        print(
+            "\x1b[90m----------------------------------------\x1b[0m", file=self.stderr
+        )
         self.stderr.flush()
 
         o = StringIO()
@@ -143,7 +144,7 @@ class _ConsoleWriter:
             sep="",
         )
         self.stdout.flush()
-        print("----------------------------------------\n", file=self.stderr)
+        print("\n", file=self.stderr)
         self.stderr.flush()
 
 
