@@ -382,43 +382,32 @@ class Transformer(StrictPyTreeVisitor):  # hai
             self.accessor.emit_stmt_multiline(self.m, "".join([str(x) for x in rest]))
 
 
-def transform(node, *, m=None, is_whole=None):
-    is_whole = is_whole or m is None
+def transform_string(source: str, *, m=None, indent):
+    from prestring.python.parse import parse_string
+
     if m is None:
-        m = Module()
+        m = Module(indent=indent)
         m.g = m.submodule()
 
-    if is_whole:
-        m.g.from_("prestring.python", "Module")
-        m.g.stmt("m = Module()  # noqa")
+    node = parse_string(source)
 
     t = Transformer(node, m=m)
     t.visit(node)
-
-    if len(m.g.imported_set) > 0:
-        m.g.sep()
-
-    if is_whole:
-        m.stmt("print(m)")
     return m
 
 
-def transform_string(source: str, *, m=None, is_whole=True):
-    from prestring.python.parse import parse_string
-
-    t = parse_string(source)
-    return transform(t, m=m, is_whole=is_whole)
-
-
-def transform_file(fname: str, *, m=None, is_whole=True):
+def transform_file(fname: str, *, indent: str, m=None):
     with open(fname) as rf:
-        return transform_string(rf.read(), m=m, is_whole=is_whole)
+        return transform_string(rf.read(), m=m, indent=indent)
 
 
 if __name__ == "__main__":
     import sys
-    from prestring._cli import transform_main
+    from prestring._cli import main_transform
 
-    transform_main(
-        transform_file=transform_file, Module=Module, argv=sys.argv[1:] or [__file__]
+    main_transform(
+        transform_file=transform_file,
+        Module=Module,
+        OutModule=Module,
+        argv=sys.argv[1:] or [__file__],
     )
