@@ -1,31 +1,42 @@
 from prestring.utils import LazyFormat
 
 
-def main_transform(*, transform, Module, argv=None, name="gen", OutModule):
+def main_transform(*, transform, Module, filename=None, name="gen", OutModule):
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("file")
     parser.add_argument("--tab", action="store_true")
+    parser.add_argument("--eval", action="store_true")
     parser.add_argument("--indent", default=4, type=int)
-    args = parser.parse_args(argv)
+    parser.add_argument("file", nargs="?")
+
+    args = parser.parse_args()
     indent = ("\t" if args.tab else " ") * args.indent
 
     m = run_transform(
-        args.file,
+        filename or args.file,
         transform=transform,
         Module=Module,
         name=name,
         OutModule=OutModule,
         indent=indent,
     )
-    print(str(m))
+    if not args.eval:
+        print(m)
+        return
+
+    import tempfile
+    import runpy
+
+    with tempfile.NamedTemporaryFile(mode="w", prefix="prestring", suffix=".py") as wf:
+        print(m, file=wf)
+        wf.flush()
+        runpy.run_path(wf.name, run_name="__main__")
 
 
 def run_transform(filename: str, *, transform, Module, name="gen", OutModule, indent):
     m = Module()
-    m.g = m.submodule()
-    m.g.stmt("from {} import {}", OutModule.__module__, OutModule.__name__)
+    m.stmt("from {} import {}", OutModule.__module__, OutModule.__name__)
     m.sep()
 
     with m.def_(name, "*", "m=None", LazyFormat("indent={!r}", indent)):

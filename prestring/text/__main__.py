@@ -9,5 +9,5 @@ if __name__ == "__main__":
         Module=PyModule,
         OutModule=Module,
         transform=transform,
-        argv=sys.argv[1:] or [sys.modules[transform.__module__].__file__],
+        filename=sys.modules[transform.__module__].__file__,
     )

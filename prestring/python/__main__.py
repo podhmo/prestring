@@ -8,5 +8,5 @@ if __name__ == "__main__":
         transform=transform,
         Module=Module,
         OutModule=Module,
-        argv=sys.argv[1:] or [sys.modules[transform.__module__].__file__],
+        filename=sys.modules[transform.__module__].__file__,
     )
