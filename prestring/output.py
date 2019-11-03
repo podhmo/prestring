@@ -95,11 +95,11 @@ class _ActualWriter:
                 action = "no change"
                 os.remove(tmppath)
                 if self.output.verbose:
-                    logger.info("%s file path=%s", action, os.path.dirname(fullpath))
+                    logger.info("%s file path=%s", action, fullpath)
             else:
                 action = "update"
                 os.replace(tmppath, fullpath)
-                logger.info("%s file path=%s", action, os.path.dirname(fullpath))
+                logger.info("%s file path=%s", action, fullpath)
 
     def _write_without_check(self, name: str, file, *, action=None, _retry=False):
         fullpath = self.output.fullpath(name)
@@ -107,7 +107,7 @@ class _ActualWriter:
         try:
             with open(fullpath, "w") as wf:
                 file.write(wf)
-            logger.info("%s file path=%s", action, os.path.dirname(fullpath))
+            logger.info("%s file path=%s", action, fullpath)
         except FileNotFoundError:
             if _retry:
                 raise
