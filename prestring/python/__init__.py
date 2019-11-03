@@ -232,7 +232,7 @@ class PythonModule(_Module):
         self.stmt("pass")
 
 
-class Caller(object):
+class Caller:
     def __init__(self, name):
         self.name = name
         self.kwargs = LazyKeywords([])
@@ -242,7 +242,7 @@ class Caller(object):
             self.kwargs.kwargs[k] = v
 
 
-class FromStatement(object):
+class FromStatement:
     def __init__(self, modname, symbols, unique=False):
         self.modname = modname
         self.symbols = list(symbols)
@@ -289,7 +289,7 @@ class FromStatement(object):
         return Sentence()
 
 
-class MultiSentenceForCall(object):
+class MultiSentenceForCall:
     def __init__(self, name, *lines):
         self.name = name
         self.lines = lines

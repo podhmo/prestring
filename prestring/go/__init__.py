@@ -107,7 +107,7 @@ class GoModule(_Module):
         return Group(m)
 
 
-class MultiBranchClause(object):
+class MultiBranchClause:
     def __init__(self, m):
         self.m = m
 
@@ -135,7 +135,7 @@ class MultiBranchClause(object):
             yield self.m
 
 
-class Group(object):
+class Group:
     def __init__(self, m):
         self.m = m
         self.submodule = None
