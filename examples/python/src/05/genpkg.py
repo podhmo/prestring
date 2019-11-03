@@ -3,7 +3,7 @@ import logging
 import dataclasses
 from prestring.output import output
 
-# prompt = "{varname} ({description})[{default!r}]:"
+
 @dataclasses.dataclass
 class Config:
     name: str = dataclasses.field(
@@ -12,11 +12,6 @@ class Config:
     version: str = dataclasses.field(
         default="0.0.0", metadata={"description": "version"}
     )
-
-
-# _G0 = AskString("package", description="package name", default="foo-bar")
-# c.version = AskString("version", description="version", default="0.0.0")
-logger = logging.getLogger(__name__)
 
 
 def gen(rootpath: str, c: Config) -> None:
