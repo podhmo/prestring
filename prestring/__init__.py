@@ -16,14 +16,21 @@ from prestring.utils import (  # NOQA
 logger = logging.getLogger(__name__)
 
 
-class Newline:
-    pass
+class _Sentinel:
+    __slots__ = ("name", "kind")
+
+    def __init__(self, *, kind, name):
+        self.kind = kind
+        self.name = name
+
+    def __repr__(self):
+        return f"<{self.name}>"
 
 
-NEWLINE = Newline()
+NEWLINE = _Sentinel(name="NEWLINE", kind="sep")
 
-INDENT = object()
-UNINDENT = object()
+INDENT = _Sentinel(name="INDENT", kind="indent")
+UNINDENT = _Sentinel(name="UNINDENT", kind="indent")
 
 
 class PreString:
@@ -56,7 +63,7 @@ class PreString:
         self.body.insert(0, value)
 
     def insert_after(self, value):
-        if isinstance(self.body[-1], Newline):
+        if getattr(self.body[-1], "kind", None) == "sep":
             self.body.pop()
             self.append(value)
             self.body.append(NEWLINE)
@@ -115,7 +122,7 @@ class Lexer:
 
     def loop(self, tokens, sentence, iterator):
         for v in iterator:
-            if isinstance(v, Newline):
+            if getattr(v, "kind", None) == "sep":
                 sentence.newline = v
                 tokens.append(sentence)
                 sentence = self.sentence_factory()

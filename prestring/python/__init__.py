@@ -3,7 +3,7 @@ import contextlib
 from io import StringIO
 from .. import Module as _Module
 from .. import (
-    Newline,
+    _Sentinel,
     NEWLINE,
     INDENT,
     UNINDENT,
@@ -18,7 +18,7 @@ from .. import (
 
 from ..utils import _type_value  # xxx
 
-PEPNEWLINE = Newline()
+PEPNEWLINE = _Sentinel(name="PEP-NEWLINE", kind="sep")
 
 
 class PythonEvaluator(Evaluator):
