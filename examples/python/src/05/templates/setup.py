@@ -20,8 +20,8 @@ testing_extras = tests_requires + []
 
 
 setup(
-    name="foo-bar",
-    version="0.1.0",
+    name="<<c.name>>",
+    version="<<c.version>>",
     classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: Implementation :: CPython",
@@ -30,12 +30,12 @@ setup(
     author="",
     author_email="",
     url="",
-    packages=find_packages(exclude=["foo_bar.tests"]),
+    packages=find_packages(exclude=["<<c.package_dirname>>.tests"]),
     include_package_data=True,
     zip_safe=False,
     install_requires=install_requires,
     extras_require={"testing": testing_extras, "docs": docs_extras},
     tests_require=tests_requires,
-    test_suite="foo_bar.tests",
+    test_suite="<<c.package_dirname>>.tests",
     entry_points="",
 )

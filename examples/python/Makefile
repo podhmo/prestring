@@ -1,4 +1,4 @@
-default: 00 01 02 03 04 06 07 08 # skip 05
+default: 00 01 02 03 04 05 06 07 08
 
 00:
 	mkdir -p dst/$@
@@ -17,7 +17,7 @@ default: 00 01 02 03 04 06 07 08 # skip 05
 	python src/$@/poormans_fizzbuzz.py > dst/$@/fizzbuzz.py
 05:
 	mkdir -p dst/$@
-	python src/$@/genpkg.py dst/$@
+	python src/$@/genpkg.py --config=src/$@/config.json dst/$@
 06:
 	mkdir -p dst/$@
 	python src/$@/typed.py > dst/$@/typed.py
