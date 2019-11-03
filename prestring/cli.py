@@ -11,6 +11,20 @@ def main_transform(*, transform_file, Module, argv=None, name="gen", OutModule):
     args = parser.parse_args(argv)
     indent = ("\t" if args.tab else " ") * args.indent
 
+    m = run_transform(
+        args.file,
+        transform_file=transform_file,
+        Module=Module,
+        name=name,
+        OutModule=OutModule,
+        indent=indent,
+    )
+    print(str(m))
+
+
+def run_transform(
+    filename: str, *, transform_file, Module, name="gen", OutModule, indent
+):
     m = Module()
     m.g = m.submodule()
     m.g.stmt("from {} import {}", OutModule.__module__, OutModule.__name__)
@@ -19,10 +33,11 @@ def main_transform(*, transform_file, Module, argv=None, name="gen", OutModule):
     with m.def_(name, "*", "m=None", LazyFormat("indent={!r}", indent)):
         m.stmt("""m = m or {}(indent=indent)""", OutModule.__name__)
         m.sep()
-        m = transform_file(args.file, m=m, indent=indent)
+        m = transform_file(filename, m=m, indent=indent)
         m.return_("m")
 
     with m.if_('__name__ == "__main__"'):
         m.stmt("m = {}(indent={!r})", name, indent)
         m.stmt("print(m)")
-    print(str(m))
+
+    return m

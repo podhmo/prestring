@@ -403,7 +403,7 @@ def transform_file(fname: str, *, indent: str, m=None):
 
 if __name__ == "__main__":
     import sys
-    from prestring._cli import main_transform
+    from prestring.cli import main_transform
 
     main_transform(
         transform_file=transform_file,
