@@ -1,4 +1,5 @@
 import typing as t
+import pathlib
 from ._glob import glob
 from ._flatten import flatten
 
@@ -49,8 +50,14 @@ class MiniFS(t.Generic[T]):
         self.container_factory = container_factory
 
     def open(
-        self, name: str, mode: str, content: t.Optional[t.Any] = None, *, opener=None
+        self,
+        name: t.Union[str, pathlib.Path],
+        mode: str,
+        content: t.Optional[t.Any] = None,
+        *,
+        opener=None,
     ) -> T:
+        name = str(name)
         if mode == "r":
             return _access(self._store, name, sep=self.sep)
         elif mode == "w":
