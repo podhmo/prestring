@@ -382,7 +382,7 @@ class Transformer(StrictPyTreeVisitor):  # hai
             self.accessor.emit_stmt_multiline(self.m, "".join([str(x) for x in rest]))
 
 
-def transform_string(source: str, *, m=None, indent):
+def transform(source: str, *, m=None, indent):
     from prestring.python.parse import parse_string
 
     if m is None:
@@ -396,17 +396,12 @@ def transform_string(source: str, *, m=None, indent):
     return m
 
 
-def transform_file(fname: str, *, indent: str, m=None):
-    with open(fname) as rf:
-        return transform_string(rf.read(), m=m, indent=indent)
-
-
 if __name__ == "__main__":
     import sys
     from prestring.cli import main_transform
 
     main_transform(
-        transform_file=transform_file,
+        transform=transform,
         Module=Module,
         OutModule=Module,
         argv=sys.argv[1:] or [__file__],

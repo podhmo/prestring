@@ -1,7 +1,7 @@
 from prestring.utils import LazyFormat
 
 
-def main_transform(*, transform_file, Module, argv=None, name="gen", OutModule):
+def main_transform(*, transform, Module, argv=None, name="gen", OutModule):
     import argparse
 
     parser = argparse.ArgumentParser()
@@ -13,7 +13,7 @@ def main_transform(*, transform_file, Module, argv=None, name="gen", OutModule):
 
     m = run_transform(
         args.file,
-        transform_file=transform_file,
+        transform=transform,
         Module=Module,
         name=name,
         OutModule=OutModule,
@@ -22,9 +22,7 @@ def main_transform(*, transform_file, Module, argv=None, name="gen", OutModule):
     print(str(m))
 
 
-def run_transform(
-    filename: str, *, transform_file, Module, name="gen", OutModule, indent
-):
+def run_transform(filename: str, *, transform, Module, name="gen", OutModule, indent):
     m = Module()
     m.g = m.submodule()
     m.g.stmt("from {} import {}", OutModule.__module__, OutModule.__name__)
@@ -33,7 +31,9 @@ def run_transform(
     with m.def_(name, "*", "m=None", LazyFormat("indent={!r}", indent)):
         m.stmt("""m = m or {}(indent=indent)""", OutModule.__name__)
         m.sep()
-        m = transform_file(filename, m=m, indent=indent)
+        with open(filename) as rf:
+            text = rf.read()
+        m = transform(text, m=m, indent=indent)
         m.return_("m")
 
     with m.if_('__name__ == "__main__"'):
