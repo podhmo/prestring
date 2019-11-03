@@ -1,39 +1,50 @@
 from prestring.utils import LazyFormat
 
 
-def main_transform(*, transform_file, Module, argv=None, name="gen", OutModule):
+def main_transform(*, transform, Module, filename=None, name="gen", OutModule):
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("file")
     parser.add_argument("--tab", action="store_true")
+    parser.add_argument("--eval", action="store_true")
     parser.add_argument("--indent", default=4, type=int)
-    args = parser.parse_args(argv)
+    parser.add_argument("file", nargs="?")
+
+    args = parser.parse_args()
     indent = ("\t" if args.tab else " ") * args.indent
 
     m = run_transform(
-        args.file,
-        transform_file=transform_file,
+        args.file or filename,
+        transform=transform,
         Module=Module,
         name=name,
         OutModule=OutModule,
         indent=indent,
     )
-    print(str(m))
+    if not args.eval:
+        print(m)
+        return
+
+    import tempfile
+    import runpy
+
+    with tempfile.NamedTemporaryFile(mode="w", prefix="prestring", suffix=".py") as wf:
+        print(m, file=wf)
+        wf.flush()
+        runpy.run_path(wf.name, run_name="__main__")
 
 
-def run_transform(
-    filename: str, *, transform_file, Module, name="gen", OutModule, indent
-):
+def run_transform(filename: str, *, transform, Module, name="gen", OutModule, indent):
     m = Module()
-    m.g = m.submodule()
-    m.g.stmt("from {} import {}", OutModule.__module__, OutModule.__name__)
+    m.stmt("from {} import {}", OutModule.__module__, OutModule.__name__)
     m.sep()
 
     with m.def_(name, "*", "m=None", LazyFormat("indent={!r}", indent)):
         m.stmt("""m = m or {}(indent=indent)""", OutModule.__name__)
         m.sep()
-        m = transform_file(filename, m=m, indent=indent)
+        with open(filename) as rf:
+            text = rf.read()
+        m = transform(text, m=m, indent=indent)
         m.return_("m")
 
     with m.if_('__name__ == "__main__"'):

@@ -2,7 +2,7 @@ from prestring import INDENT, UNINDENT
 from prestring.text import Module
 
 
-def transform_string(source: str, *, indent, m=None):
+def transform(source: str, *, indent, m=None):
     if m is None:
         m = Module(indent=indent)
         m.g = m.submodule()
@@ -33,22 +33,9 @@ def transform_string(source: str, *, indent, m=None):
             m.stmt("m.sep()")
         else:
             m.stmt("m.stmt({!r})", line)
+    lv = history[-1]
+
+    while lv > 0:
+        m.stmt(UNINDENT)
+        lv -= 1
     return m
-
-
-def transform_file(fname: str, *, indent: str, m=None):
-    with open(fname) as rf:
-        return transform_string(rf.read(), m=m, indent=indent)
-
-
-if __name__ == "__main__":
-    import sys
-    from prestring.cli import main_transform
-    from prestring.python import Module as PyModule
-
-    main_transform(
-        Module=PyModule,
-        OutModule=Module,
-        transform_file=transform_file,
-        argv=sys.argv[1:] or [__file__],
-    )
