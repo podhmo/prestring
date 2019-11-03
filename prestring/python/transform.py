@@ -417,7 +417,7 @@ def transform_file(fname: str, *, m=None, is_whole=True):
 
 if __name__ == "__main__":
     import sys
-    from prestring.cli import transform_main
+    from prestring._cli import transform_main
 
     transform_main(
         transform_file=transform_file, Module=Module, argv=sys.argv[1:] or [__file__]
