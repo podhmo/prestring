@@ -415,30 +415,10 @@ def transform_file(fname: str, *, m=None, is_whole=True):
         return transform_string(rf.read(), m=m, is_whole=is_whole)
 
 
-def main(argv=None):
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("file")
-    args = parser.parse_args(argv)
-
-    m = Module()
-    m.g = m.submodule()
-    m.g.from_("prestring.python", "Module")
-    m.g.stmt("m = Module()  # noqa")
-
-    with m.def_("gen", "*", "m=None"):
-        m.stmt("m = m or Module()")
-        m = transform_file(args.file, m=m)
-
-    with m.if_('__name__ == "__main__"'):
-        m.stmt("gen()")
-    # import inspect
-    # m = transform_string(inspect.getsource(main))
-    print(str(m))
-
-
 if __name__ == "__main__":
     import sys
+    from prestring.cli import transform_main
 
-    main(sys.argv[1:] or [__file__])
+    transform_main(
+        transform_file=transform_file, Module=Module, argv=sys.argv[1:] or [__file__]
+    )
