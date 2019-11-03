@@ -88,7 +88,7 @@ class Sentence:
         self.body = []
         self.newline = None
 
-    def eat(self, v):
+    def append(self, v):
         self.body.append(v)
         return self
 
@@ -131,7 +131,7 @@ class Lexer:
             elif v is INDENT or v is UNINDENT:
                 tokens.append(v)
             else:
-                sentence.eat(v)
+                sentence.append(v)
         return (tokens, sentence)
 
     def __call__(self, prestring):
