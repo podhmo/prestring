@@ -13,6 +13,7 @@ def transform_string(source: str, *, indent, m=None):
         if line == "":
             m.stmt("m.sep()")
             continue
+
         lv = 0
         while line.startswith(indent):
             lv += 1
@@ -27,7 +28,11 @@ def transform_string(source: str, *, indent, m=None):
         while prev_lv > lv:
             m.append(UNINDENT)
             lv += 1
-        m.stmt("m.stmt({!r})", line)
+
+        if line == "":
+            m.stmt("m.sep()")
+        else:
+            m.stmt("m.stmt({!r})", line)
     return m
 
 
