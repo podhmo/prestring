@@ -148,6 +148,32 @@ class _ConsoleWriter:
         self.stderr.flush()
 
 
+class _MarkdownWriter:
+    def __init__(self, output: output, *, stdout=sys.stdout, stderr=sys.stderr):
+        self.output = output
+        self.stdout = stdout
+        self.stderr = stderr
+
+    def write(self, name, f, *, _retry=False):
+        fullpath = self.output.fullpath(name)
+
+        o = StringIO()
+        f.write(o)
+        content = o.getvalue().strip()
+
+        print(f"## {fullpath}\n", file=self.stdout)
+        self.stdout.flush()
+        print("<details>\n", file=self.stderr)
+        self.stderr.flush()
+        print("```", file=self.stdout)
+        print(content, file=self.stdout)
+        print("```\n", file=self.stdout)
+        self.stdout.flush()
+        print("</details>\n", file=self.stderr)
+        self.stderr.flush()
+        self.stdout.flush()
+
+
 def setup_logging(*, _logger=None, level=logging.INFO):
     _logger = _logger or logger
     if _logger.handlers:
