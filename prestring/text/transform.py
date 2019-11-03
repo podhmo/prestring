@@ -33,4 +33,9 @@ def transform(source: str, *, indent, m=None):
             m.stmt("m.sep()")
         else:
             m.stmt("m.stmt({!r})", line)
+    lv = history[-1]
+
+    while lv > 0:
+        m.stmt(UNINDENT)
+        lv -= 1
     return m
