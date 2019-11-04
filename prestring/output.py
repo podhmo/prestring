@@ -32,7 +32,7 @@ class output:
 
     cleanup: t.Optional[str] = None
     verbose: bool = os.environ.get("VERBOSE", "") != ""
-    fake: bool = os.environ.get("FAKE", "") != ""
+    use_console: bool = os.environ.get("CONSOLE", "") != ""
     nocheck: bool = os.environ.get("NOCHECK", "") != ""
 
     def fullpath(self, name: str) -> str:
@@ -52,7 +52,7 @@ class output:
 
     @reify
     def writer(self):
-        if self.fake:
+        if self.use_console:
             setup_logging(level=logging.INFO)  # xxx
             return _ConsoleWriter(self)
         else:
@@ -63,7 +63,7 @@ class output:
 
     def __exit__(self, typ, val, tb):
         writer = self.writer
-        if not self.fake and self.cleanup is not None:
+        if not self.use_console and self.cleanup is not None:
             self.cleanup(self)
         for name, f in self.fs.walk():
             writer.write(name, f)
