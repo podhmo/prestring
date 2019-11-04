@@ -5,7 +5,7 @@ prestring
     :target: https://travis-ci.org/podhmo/prestring
 
 
-this is heavily inspired by `srcgen <https://github.com/tomerfiliba/srcgen>`_ .
+this package is heavily inspired by `srcgen <https://github.com/tomerfiliba/srcgen>`_ .
 
 (todo: gentle introduction)
 
@@ -110,7 +110,7 @@ prestring.output can write multiple files.
            with m.def_("hello"):
                m.stmt("print('hello')")
 
-Above code generates three files. if creating directory is needed, created automatically.
+Above code will generate three files. if creating directory is needed, if will be created automatically.
 
 .. code-block:: console
 
@@ -120,7 +120,7 @@ Above code generates three files. if creating directory is needed, created autom
    [F]	create	dst/projects/y.txt
    [F]	create	dst/projects/z.py
 
-On rerun, no messages are shown. And rerun with `VERBOSE=1` var env, more verbose output is shown.
+On rerun, no message is displayed. And rerun with `VERBOSE=1` var env to see more detailed output.
 
 .. code-block:: console
 
@@ -164,8 +164,8 @@ Running with `CONSOLE=1` varenv or calling with `use_console=True` option, doesn
 prestring.python.transform, prestring.text.transform
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Transform function means converting raw source code (or text) to prestring's code.
-And running `python -m prestring.python` (or running `python -m prestring.text`) can be used as CLI command, like below.
+the Transform function means converting raw source code (or text) to prestring's code.
+And you can use `python -m prestring.python` (or running `python -m prestring.text`) as a CLI command, as follows.
 
 .. code-block:: console
 
@@ -223,7 +223,7 @@ Of course, reversible.
 limitation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-prestring.python does not support all python grammer (e.g. async definition is not supported, yet). If you want to prestring's expression as first step, prestring.text can help you, maybe.
+prestring.python does not support all python grammers (e.g. async definition is not supported, yet). If you want to prestring's expression as first step, prestring.text is probably useful.
 
 .. code-block:: console
 
