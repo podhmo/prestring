@@ -1,9 +1,6 @@
-import logging
 import sys
 from prestring.python import Module
-from prestring.output import output, cleanup_all # noqa
-
-logging.basicConfig(level=logging.DEBUG)
+from prestring.output import output, cleanup_all  # noqa
 
 dst = sys.argv[1]
 with output(root=dst) as fs:
