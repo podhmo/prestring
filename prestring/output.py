@@ -52,8 +52,8 @@ class output:
 
     @reify
     def writer(self):
+        setup_logging(level=logging.INFO)  # xxx
         if self.use_console:
-            setup_logging(level=logging.INFO)  # xxx
             return _ConsoleWriter(self)
         else:
             return _ActualWriter(self)
