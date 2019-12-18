@@ -39,9 +39,9 @@ def make_params(args, kwargs):
 
 
 class PythonModule(_Module):
-    def __init__(self, *args, **kwargs):
-        self.width = kwargs.pop("width", 100)
-        self.import_unique = kwargs.pop("import_unique", False)
+    def __init__(self, *args, width=100, import_unique=False, **kwargs):
+        self.width = width
+        self.import_unique = import_unique
         super(PythonModule, self).__init__(*args, **kwargs)
         self.from_map = {}  # module -> PythonModule
         self.imported_set = set()
