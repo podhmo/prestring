@@ -1,3 +1,7 @@
+0.7.1
+
+- "python -m prestring.python" support typed function definition
+
 0.7.0
 
 - changes "python -m prestring.python.transform" to "python -m prestring.python"
