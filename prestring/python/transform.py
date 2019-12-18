@@ -74,6 +74,8 @@ class Accessor:
 
         if typ == "typedargslist":
             argslist = node.children
+        elif typ == "tname":  # leaf : leaf  # with type
+            argslist = [node]
         elif hasattr(node, "value"):  # leaf
             argslist = [node]
         else:
@@ -202,8 +204,15 @@ class Transformer(StrictPyTreeVisitor):  # hai
         assert children[0].value == "def"
         name = children[1].value.strip()
         params = self.accessor.to_arguments(children[2])
-        assert children[3].value == ":"
-        body = children[4]
+
+        if children[3].value == "->":
+            return_type = children[4]
+            assert children[5].value == ":", children[3].value
+            body = children[6]
+        else:
+            return_type = None
+            assert children[3].value == ":", children[3].value
+            body = children[4]
 
         # def foo(x:int, y:int=0) -> int:
         #    pass
@@ -217,7 +226,14 @@ class Transformer(StrictPyTreeVisitor):  # hai
         args.extend([repr(str(x)) for x in params.kwargs._args()])
         if params.tails is not None:
             args.extend([repr(str(x)) for x in params.tails._args()])
-        self.m.stmt("with m.def_({}):".format(LazyJoin(", ", args)))
+        if return_type is not None:
+            self.m.stmt(
+                "with m.def_({}, return_type={}):".format(
+                    LazyJoin(", ", args), str(return_type).lstrip(" ")
+                )
+            )
+        else:
+            self.m.stmt("with m.def_({}):".format(LazyJoin(", ", args)))
         self.visit_suite(body)
         self.m.sep()
         return True  # break
