@@ -1,3 +1,7 @@
+0.7.2
+
+- bug fix of 0.7.1
+
 0.7.1
 
 - "python -m prestring.python" support typed function definition

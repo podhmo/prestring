@@ -228,7 +228,7 @@ class Transformer(StrictPyTreeVisitor):  # hai
             args.extend([repr(str(x)) for x in params.tails._args()])
         if return_type is not None:
             self.m.stmt(
-                "with m.def_({}, return_type={}):".format(
+                "with m.def_({}, return_type={!r}):".format(
                     LazyJoin(", ", args), str(return_type).lstrip(" ")
                 )
             )
