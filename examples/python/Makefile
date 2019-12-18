@@ -1,4 +1,4 @@
-default: 00 01 02 03 04 05 06 07 08
+default: 00 01 02 03 04 05 06 07 08 09
 
 00:
 	mkdir -p dst/$@
@@ -33,7 +33,11 @@ default: 00 01 02 03 04 05 06 07 08
 	black src/$@/hello.py dst/$@/hello.py
 	diff -u src/$@/hello.py dst/$@/hello.py
 08:
+	mkdir -p dst/$@
 	python src/$@/gen.py -o dst/$@
-
+09:
+	mkdir -p dst/$@
+	python -m prestring.python src/$@/hello.py > dst/$@/hello.gen.py 2>&1
+	python -m prestring.python src/$@/hello-with-type.py > dst/$@/hello-with-type.gen.py 2>&1
 clean:
 	rm -rf dst
