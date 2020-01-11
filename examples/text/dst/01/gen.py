@@ -1,47 +1,54 @@
 from prestring.text import Module
 
 
-def gen(*, m=None, indent='    '):
+def gen(*, m=None, indent='\t'):
     m = m or Module(indent=indent)
 
     m.stmt('package main')
     m.sep()
     m.stmt('import (')
-    m.stmt('\t"fmt"')
-    m.stmt('\t"time"')
+    with m.scope():
+        m.stmt('"fmt"')
+        m.stmt('"time"')
     m.stmt(')')
     m.sep()
     m.stmt('func worker(id int, jobs <-chan int, results chan<- int) {')
-    m.stmt('\tfor j := range jobs {')
-    m.stmt('\t\tfmt.Println("worker", id, "started  job", j)')
-    m.stmt('\t\ttime.Sleep(time.Second)')
-    m.stmt('\t\tfmt.Println("worker", id, "finished job", j)')
-    m.stmt('\t\tresults <- j * 2')
-    m.stmt('\t}')
+    with m.scope():
+        m.stmt('for j := range jobs {')
+        with m.scope():
+            m.stmt('fmt.Println("worker", id, "started  job", j)')
+            m.stmt('time.Sleep(time.Second)')
+            m.stmt('fmt.Println("worker", id, "finished job", j)')
+            m.stmt('results <- j * 2')
+        m.stmt('}')
     m.stmt('}')
     m.sep()
     m.stmt('func main() {')
     m.sep()
-    m.stmt('\tconst numJobs = 5')
-    m.stmt('\tjobs := make(chan int, numJobs)')
-    m.stmt('\tresults := make(chan int, numJobs)')
-    m.sep()
-    m.stmt('\tfor w := 1; w <= 3; w++ {')
-    m.stmt('\t\tgo worker(w, jobs, results)')
-    m.stmt('\t}')
-    m.sep()
-    m.stmt('\tfor j := 1; j <= numJobs; j++ {')
-    m.stmt('\t\tjobs <- j')
-    m.stmt('\t}')
-    m.stmt('\tclose(jobs)')
-    m.sep()
-    m.stmt('\tfor a := 1; a <= numJobs; a++ {')
-    m.stmt('\t\t<-results')
-    m.stmt('\t}')
+    with m.scope():
+        m.stmt('const numJobs = 5')
+        m.stmt('jobs := make(chan int, numJobs)')
+        m.stmt('results := make(chan int, numJobs)')
+        m.sep()
+        m.stmt('for w := 1; w <= 3; w++ {')
+        with m.scope():
+            m.stmt('go worker(w, jobs, results)')
+        m.stmt('}')
+        m.sep()
+        m.stmt('for j := 1; j <= numJobs; j++ {')
+        with m.scope():
+            m.stmt('jobs <- j')
+        m.stmt('}')
+        m.stmt('close(jobs)')
+        m.sep()
+        m.stmt('for a := 1; a <= numJobs; a++ {')
+        with m.scope():
+            m.stmt('<-results')
+        m.stmt('}')
     m.stmt('}')
     return m
 
 
 if __name__ == "__main__":
-    m = gen(indent='    ')
+    m = gen(indent='\t')
     print(m)
