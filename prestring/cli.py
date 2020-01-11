@@ -7,10 +7,11 @@ def main_transform(*, transform, Module, filename=None, name="gen", OutModule):
     parser = argparse.ArgumentParser()
     parser.add_argument("--tab", action="store_true")
     parser.add_argument("--eval", action="store_true")
-    parser.add_argument("--indent", default=4, type=int)
+    parser.add_argument("--indent", default=None, type=int)
     parser.add_argument("file", nargs="?")
 
     args = parser.parse_args()
+    args.indent = args.indent or (1 if args.tab else 4)
     indent = ("\t" if args.tab else " ") * args.indent
 
     m = run_transform(
