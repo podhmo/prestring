@@ -80,7 +80,7 @@ class PyTreeVisitor:
             if getattr(self, method)(node):
                 return
 
-        elif hasattr(node, "value"):  # Leaf
+        if hasattr(node, "value"):  # Leaf
             self.default_leaf_visit(node)
         else:
             self.default_node_visit(node)
