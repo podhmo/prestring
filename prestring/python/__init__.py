@@ -143,9 +143,12 @@ class PythonModule(_Module):
             yield
 
     @contextlib.contextmanager
-    def except_(self, expr=None):
+    def except_(self, expr=None, as_=None):
         if expr:
-            self.stmt("except {expr}:", expr=expr)
+            if as_ is not None:
+                self.stmt("except {expr} as {as_}:", expr=expr, as_=as_)
+            else:
+                self.stmt("except {expr}:", expr=expr)
         else:
             self.stmt("except:")
         with self.scope():
