@@ -7,28 +7,28 @@ class _Sentinel:
     def __init__(self, name: str) -> None:
         self.name = name
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "<{self.name}>".format(self=self)
 
 
 # types
-Key = t.Union[int, str]
-Token = t.Union[_Sentinel, str, int, t.Callable[[str], bool]]
+Key = t.Union[int, str, _Sentinel]
+Token = t.Union[_Sentinel, str, int, t.Pattern[str]]
 
 # constants
 STAR = _Sentinel("*")
 DBSTAR = _Sentinel("**")
 
 
-def _parse(query: str, *, sep="/") -> t.Sequence[Token]:
-    r = []
+def _parse(query: str, *, sep: str = "/") -> t.Sequence[Token]:
+    r: t.List[Token] = []
     for tk in query.split(sep):  # todo: shlex?
         if tk == "**":
             r.append(DBSTAR)
         elif tk == "*":
             r.append(STAR)
         elif "*" in tk or "?" in tk:
-            r.append(re.compile(fnmatch.translate(tk)).match)
+            r.append(re.compile(fnmatch.translate(tk)))
         else:
             r.append(tk)
     if r:
@@ -38,16 +38,17 @@ def _parse(query: str, *, sep="/") -> t.Sequence[Token]:
 
 def _dig(
     d: t.Dict[t.Any, t.Any],
-    tokens: t.Sequence[t.Union[_Sentinel, str]],
+    tokens: t.Sequence[Token],
     *,
     path: t.Optional[t.List[Key]] = None,
 ) -> t.Iterable[t.Tuple[t.List[Key], t.Any, bool]]:  # (path, value, ok)
+    path = path or []
+
     if not tokens:
         yield path, d, True
         return
     if not d:
         return
-    path = path or []
     tk = tokens[0]
     rest_tks = tokens[1:]
 
@@ -75,10 +76,10 @@ def _dig_next(
             path.append(k)
             yield path, v, True
             path.pop()
-    elif callable(tk):
+    elif isinstance(tk, re.Pattern):
         exists = False
         for k, v in d.items():
-            if tk(k):
+            if tk.match(str(k)):
                 exists = True
                 path.append(k)
                 yield path, d[k], True
@@ -94,17 +95,21 @@ def _dig_next(
             yield path, d, False
 
 
-def _fix(rows):
+def _fix(
+    rows: t.List[t.Tuple[t.List[str], t.Any, bool]]
+) -> t.List[t.Tuple[t.List[str], t.Any, bool]]:
     return [(path[:], val, ok) for path, val, ok in rows]
 
 
-def glob(d: t.Dict[str, t.Any], pattern: str, *, sep: str = "/"):
+def glob(
+    d: t.Dict[str, t.Any], pattern: str, *, sep: str = "/"
+) -> t.Iterable[t.Tuple[str, t.Any]]:
     tokens = _parse(pattern, sep=sep)
-    seen = set()
+    seen: t.Set[str] = set()
     for path, sd, ok in _dig(d, tokens):
         if not ok:
             continue
-        name = sep.join(path[:])
+        name = sep.join(map(str, path))
         if name in seen:
             continue
         seen.add(name)
