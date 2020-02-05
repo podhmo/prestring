@@ -292,7 +292,7 @@ class Module:
         self.body.append(submodule.body)
         return submodule
 
-    def stmt(self, fmt: str, *args: t.Any, **kwargs: t.Any) -> Module:
+    def stmt(self, fmt: t.Union[str, _Sentinel], *args: t.Any, **kwargs: t.Any) -> Module:
         if args or kwargs:
             self.body.append(self.format(fmt, *args, **kwargs))  # lazy format
         else:
