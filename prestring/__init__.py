@@ -142,7 +142,7 @@ class FrameList:
         self.level = 0
         self.current: t.List[t.Any] = self.framelist[-1]
 
-    @t.overload
+    @t.overload  # noqa F811
     def __getitem__(self, k: int) -> t.List[t.Any]:
         ...
 

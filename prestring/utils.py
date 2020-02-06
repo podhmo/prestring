@@ -131,7 +131,7 @@ class LazyArguments:
     def __bool__(self) -> bool:
         return bool(self.args)
 
-    @t.overload
+    @t.overload  # noqa F811
     def __setitem__(self, k: int, v: t.Any) -> None:
         ...
 
@@ -144,7 +144,7 @@ class LazyArguments:
     ) -> None:
         self.args[k] = v
 
-    @t.overload
+    @t.overload  # noqa F811
     def __getitem__(self, k: int) -> t.Any:
         ...
 
