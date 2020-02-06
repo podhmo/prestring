@@ -16,7 +16,7 @@ except IOError:
 install_requires = []
 if sys.version_info[:2] <= (3, 6):
     install_requires.append("dataclasses")
-dev_extras = ["black", "flake8"]
+dev_extras = ["black", "flake8", "mypy"]
 docs_extras = []
 tests_require = ["evilunit"]
 testing_extras = tests_require + []
