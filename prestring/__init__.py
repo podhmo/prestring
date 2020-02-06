@@ -15,6 +15,7 @@ from prestring.utils import (  # NOQA
 )
 
 logger = logging.getLogger(__name__)
+ModuleT = t.TypeVar("ModuleT", bound="Module")
 
 
 class _Sentinel:
@@ -146,10 +147,10 @@ class FrameList:
         ...
 
     @t.overload
-    def __getitem__(self, k: slice) -> t.Iterable[t.List[t.Any]]:
+    def __getitem__(self, k: slice) -> t.Iterable[t.List[t.Any]]:  # noqa F811
         ...
 
-    def __getitem__(
+    def __getitem__(  # noqa F811
         self, k: t.Union[int, slice]
     ) -> t.Union[t.List[t.Any], t.Iterable[t.List[t.Any]]]:
         return self.framelist[k]
@@ -273,12 +274,12 @@ class Module:
 
     def submodule(
         self,
-        value: str = "",
+        value: t.Any = "",
         newline: bool = True,
-        factory: t.Optional[t.Callable[..., Module]] = None,
+        factory: t.Optional[t.Callable[..., ModuleT]] = None,
     ) -> Module:
-        factory = factory or self.__class__
-        submodule = factory(
+        factory_ = factory or self.__class__
+        submodule = factory_(
             indent=self.indent,
             newline=self.newline,
             lexer=self.lexer,
@@ -292,7 +293,9 @@ class Module:
         self.body.append(submodule.body)
         return submodule
 
-    def stmt(self, fmt: t.Union[str, _Sentinel], *args: t.Any, **kwargs: t.Any) -> Module:
+    def stmt(
+        self, fmt: t.Union[str, _Sentinel, LazyFormat], *args: t.Any, **kwargs: t.Any
+    ) -> Module:
         if args or kwargs:
             self.body.append(self.format(fmt, *args, **kwargs))  # lazy format
         else:

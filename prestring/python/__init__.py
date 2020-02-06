@@ -1,67 +1,97 @@
-# -*- coding:utf-8 -*-
+import typing as t
 import contextlib
 from io import StringIO
-from .. import Module as _Module
-from .. import (
+from prestring import Module as _Module
+from prestring import (
     _Sentinel,
     NEWLINE,
     INDENT,
     UNINDENT,
-    Evaluator,
-    Sentence,
+    Sentence as Sentence,
+    Evaluator as _Evaluator,
+    Lexer as _Lexer,
+    Parser as _Parser,
+    Application as _Application,
+)
+from prestring import ModuleT as _ModuleT
+from prestring.utils import (
     LazyArguments,
-    LazyKeywords,
-    LazyArgumentsAndKeywords,
     LazyFormat,
+    LazyArgumentsAndKeywords,
     LazyJoin,
 )
-
-from ..utils import _type_value  # xxx
+from prestring.utils import _type_value  # xxx
 
 PEPNEWLINE = _Sentinel(name="PEP-NEWLINE", kind="sep")
 
 
-class PythonEvaluator(Evaluator):
-    def evaluate_newframe(self):
+class PythonEvaluator(_Evaluator):
+    def evaluate_newframe(self) -> None:
         self.io.write(self.newline)
         self.io.write(self.newline)
 
-    def evaluate_newline(self, code, i):
+    def evaluate_newline(self, code: t.Any, i: int) -> None:
         self.io.write(self.newline)
         if i <= 0 and hasattr(code, "newline") and code.newline is PEPNEWLINE:
             self.io.write(self.newline)
 
 
-def make_params(args, kwargs):
+def make_params(
+    args: t.Sequence[t.Any], kwargs: t.Dict[str, t.Any]
+) -> LazyArgumentsAndKeywords:
     if not kwargs and len(args) == 1 and hasattr(args[0], "append_tail"):
-        return args[0]
-    return LazyArgumentsAndKeywords(args, kwargs)
+        # shortcut
+        return args[0]  # type:ignore
+    return LazyArgumentsAndKeywords(list(args), kwargs)
 
 
 class PythonModule(_Module):
-    def __init__(self, *args, width=100, import_unique=False, **kwargs):
+    def __init__(
+        self,
+        value: str = "",
+        newline: str = "\n",
+        indent: str = "    ",
+        lexer: t.Optional[_Lexer] = None,
+        parser: t.Optional[_Parser] = None,
+        application: t.Optional[_Application] = None,
+        width: int = 100,
+        import_unique: bool = False,
+        **kwargs: t.Any,
+    ) -> None:
         self.width = width
         self.import_unique = import_unique
-        super(PythonModule, self).__init__(*args, **kwargs)
-        self.from_map = {}  # module -> PythonModule
-        self.imported_set = set()
+        super().__init__(
+            value, newline, indent, lexer=lexer, parser=parser, application=application
+        )
+        self.from_map: t.Dict[str, PythonModule] = {}  # module -> PythonModule
+        self.imported_set: t.Set[str] = set()
 
-    def submodule(self, value="", newline=True, import_unique=None):
-        submodule = super(PythonModule, self).submodule(value=value, newline=newline)
+    def submodule(
+        self,
+        value: t.Any = "",  # str,FromStatement,...
+        newline: bool = True,
+        factory: t.Optional[t.Callable[..., _ModuleT]] = None,
+        *,
+        import_unique: t.Optional[bool] = None,
+    ) -> "PythonModule":
+        submodule = t.cast(
+            PythonModule,
+            super().submodule(value=value, newline=newline, factory=factory,),
+        )  # xxx
         submodule.width = self.width
         if import_unique is None:
             import_unique = self.import_unique
         submodule.import_unique = import_unique
         return submodule
 
-    def create_evaulator(self):
+    def create_evaulator(self) -> PythonEvaluator:
         return PythonEvaluator(StringIO(), newline=self.newline, indent=self.indent)
 
-    def sep(self):
+    def sep(self) -> None:
         self.body.append(PEPNEWLINE)
 
     @contextlib.contextmanager
-    def with_(self, expr, as_=None):
+    def with_(self, expr: t.Any, as_: t.Optional[t.Any] = None) -> t.Iterator[None]:
         if as_:
             self.stmt("with {} as {}:", expr, as_)
         else:
@@ -70,7 +100,13 @@ class PythonModule(_Module):
             yield
 
     @contextlib.contextmanager
-    def def_(self, name, *args, return_type=None, **kwargs):
+    def def_(
+        self,
+        name: str,
+        *args: t.Any,
+        return_type: t.Optional[t.Any] = None,
+        **kwargs: t.Any,
+    ) -> t.Iterator[None]:
         params = make_params(args, kwargs)
         if return_type is not None:
             self.stmt("def {}({}) -> {}:", name, params, _type_value(return_type))
@@ -81,7 +117,13 @@ class PythonModule(_Module):
         self.sep()
 
     @contextlib.contextmanager
-    def method(self, name, *args, return_type=None, **kwargs):
+    def method(
+        self,
+        name: str,
+        *args: t.Any,
+        return_type: t.Optional[t.Any] = None,
+        **kwargs: t.Any,
+    ) -> t.Iterator[None]:
         params = LazyJoin(", ", ["self", make_params(args, kwargs)], trim_empty=True)
         if return_type is not None:
             self.stmt("def {}({}) -> {}:", name, params, _type_value(return_type))
@@ -92,37 +134,37 @@ class PythonModule(_Module):
         self.sep()
 
     @contextlib.contextmanager
-    def if_(self, expr):
+    def if_(self, expr: t.Any) -> t.Iterator[None]:
         self.stmt("if {}:", expr)
         with self.scope():
             yield
 
-    def docstring(self, doc):
+    def docstring(self, doc: str) -> None:
         self.stmt('"""')
         for line in doc.split("\n"):
             self.stmt(line)
         self.stmt('"""')
 
     @contextlib.contextmanager
-    def unless(self, expr):
+    def unless(self, expr: t.Any) -> t.Iterator[None]:
         self.stmt("if not ({}):", expr)
         with self.scope():
             yield
 
     @contextlib.contextmanager
-    def elif_(self, expr):
+    def elif_(self, expr: t.Any) -> t.Iterator[None]:
         self.stmt("elif {}:", expr)
         with self.scope():
             yield
 
     @contextlib.contextmanager
-    def else_(self):
+    def else_(self) -> t.Iterator[None]:
         self.stmt("else:")
         with self.scope():
             yield
 
     @contextlib.contextmanager
-    def for_(self, var, iterator=None):
+    def for_(self, var: t.Any, iterator: t.Optional[t.Any] = None) -> t.Iterator[None]:
         if iterator is None:
             self.stmt("for {var}:", var=var)
         else:
@@ -131,19 +173,21 @@ class PythonModule(_Module):
             yield
 
     @contextlib.contextmanager
-    def while_(self, expr):
+    def while_(self, expr: t.Any) -> t.Iterator[None]:
         self.stmt("while {expr}:", expr=expr)
         with self.scope():
             yield
 
     @contextlib.contextmanager
-    def try_(self):
+    def try_(self) -> t.Iterator[None]:
         self.stmt("try:")
         with self.scope():
             yield
 
     @contextlib.contextmanager
-    def except_(self, expr=None, as_=None):
+    def except_(
+        self, expr: t.Optional[t.Any] = None, as_: t.Optional[t.Any] = None
+    ) -> t.Iterator[None]:
         if expr:
             if as_ is not None:
                 self.stmt("except {expr} as {as_}:", expr=expr, as_=as_)
@@ -155,14 +199,16 @@ class PythonModule(_Module):
             yield
 
     @contextlib.contextmanager
-    def finally_(self):
+    def finally_(self) -> t.Iterator[None]:
         self.stmt("finally:")
         with self.scope():
             yield
 
     # class definition
     @contextlib.contextmanager
-    def class_(self, name, bases="", metaclass=None):
+    def class_(
+        self, name: t.Any, bases: t.Any = "", metaclass: t.Optional[t.Any] = None
+    ) -> t.Iterator[None]:
         if not isinstance(bases, (list, tuple)):
             bases = [bases]
         args = [str(b) for b in bases if b]
@@ -177,27 +223,27 @@ class PythonModule(_Module):
         self.sep()
 
     @contextlib.contextmanager
-    def main(self):
+    def main(self) -> t.Iterator[None]:
         with self.if_('__name__ == "__main__"'):
             yield
 
     # sentence
-    def break_(self):
+    def break_(self) -> None:
         self.stmt("break")
 
-    def continue_(self):
+    def continue_(self) -> None:
         self.stmt("continue")
 
-    def return_(self, expr, *args):
+    def return_(self, expr: t.Any, *args: t.Any) -> None:
         self.stmt("return %s" % (expr,), *args)
 
-    def yield_(self, expr, *args):
+    def yield_(self, expr: t.Any, *args: t.Any) -> None:
         self.stmt("yield %s" % (expr,), *args)
 
-    def raise_(self, expr, *args):
+    def raise_(self, expr: t.Any, *args: t.Any) -> None:
         self.stmt("raise %s" % (expr,), *args)
 
-    def import_(self, modname, as_=None):
+    def import_(self, modname: t.Any, as_: t.Optional[t.Any] = None) -> None:
         if modname in self.imported_set:
             return
         self.imported_set.add(modname)
@@ -207,10 +253,10 @@ class PythonModule(_Module):
         else:
             self.stmt("import {} as {}", modname, as_)
 
-    def from_(self, modname, *attrs):
+    def from_(self, modname: t.Any, *attrs: t.Any) -> "FromStatement":
         try:
             self.imported_set.add(modname)
-            from_stmt = self.from_map[modname].body.tail()
+            from_stmt: FromStatement = self.from_map[modname].body.tail()
             for sym in attrs:
                 from_stmt.append(sym)
         except KeyError:
@@ -218,60 +264,46 @@ class PythonModule(_Module):
             self.from_map[modname] = self.submodule(from_stmt, newline=False)
         return from_stmt
 
-    @contextlib.contextmanager
-    def hugecall(self, name):
-        caller = Caller(name)
-        yield caller
-        self.call(caller.name, *caller.args)
-
-    def call(self, name_, *args):
-        oneline = LazyFormat("{}({})", name_, LazyArguments(args))
+    def call(self, name_: t.Any, *args: t.Any) -> None:
+        oneline = LazyFormat("{}({})", name_, LazyArguments(list(args)))
         if len(str(oneline._string())) <= self.width:
             self.stmt(oneline)
         else:
             self.body.append(MultiSentenceForCall(name_, *args))
 
-    def pass_(self):
+    def pass_(self) -> None:
         self.stmt("pass")
 
 
-class Caller:
-    def __init__(self, name):
-        self.name = name
-        self.kwargs = LazyKeywords([])
-
-    def add(self, **kwargs):
-        for k, v in kwargs.items():
-            self.kwargs.kwargs[k] = v
-
-
 class FromStatement:
-    def __init__(self, modname, symbols, unique=False):
+    def __init__(
+        self, modname: str, symbols: t.Sequence[str], unique: bool = False
+    ) -> None:
         self.modname = modname
         self.symbols = list(symbols)
         self.unique = unique
 
-    def append(self, symbol):  # TODO: support as_
+    def append(self, symbol: t.Any) -> None:  # TODO: support as_
         self.symbols.append(symbol)
 
     import_ = append  # alias
 
-    def stmt(self, s):
+    def stmt(self, s: str) -> t.Iterable[t.Any]:
         yield s
         yield NEWLINE
 
-    def iterator_for_one_symbol(self, sentence):
+    def iterator_for_one_symbol(self, sentence: Sentence) -> t.Iterable[t.Any]:
         if not sentence.is_empty():
             yield NEWLINE
         yield from self.stmt("from {} import {}".format(self.modname, self.symbols[0]))
 
-    def iterator_for_many_symbols(self, sentence):
+    def iterator_for_many_symbols(self, sentence: Sentence) -> t.Iterable[t.Any]:
         if not sentence.is_empty():
             yield NEWLINE
         yield from self.stmt("from {} import (".format(self.modname))
         yield INDENT
         if self.unique:
-            symbols = tuple(sorted(set(self.symbols)))
+            symbols = sorted(set(self.symbols))
         else:
             symbols = self.symbols
         for sym in symbols[:-1]:
@@ -281,7 +313,9 @@ class FromStatement:
         yield UNINDENT
         yield from self.stmt(")")
 
-    def as_token(self, lexer, tokens, sentence):
+    def as_token(
+        self, lexer: _Lexer, tokens: t.List[t.Any], sentence: Sentence
+    ) -> Sentence:
         if not self.symbols:
             return Sentence()
 
@@ -293,11 +327,11 @@ class FromStatement:
 
 
 class MultiSentenceForCall:
-    def __init__(self, name, *lines):
+    def __init__(self, name: str, *lines: str) -> None:
         self.name = name
         self.lines = lines
 
-    def iterator(self, sentence):
+    def iterator(self, sentence: Sentence) -> t.Iterator[t.Any]:
         if not sentence.is_empty():
             yield NEWLINE
         yield LazyFormat("{}(", self.name)
@@ -310,7 +344,9 @@ class MultiSentenceForCall:
         yield NEWLINE
         yield UNINDENT
 
-    def as_token(self, lexer, tokens, sentence):
+    def as_token(
+        self, lexer: _Lexer, tokens: t.List[str], sentence: Sentence
+    ) -> Sentence:
         lexer.loop(tokens, sentence, self.iterator(sentence))
         return Sentence()
 

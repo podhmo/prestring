@@ -136,10 +136,10 @@ class LazyArguments:
         ...
 
     @t.overload
-    def __setitem__(self, k: slice, v: t.Iterable[t.Any]) -> None:
+    def __setitem__(self, k: slice, v: t.Iterable[t.Any]) -> None:  # noqa F811
         ...
 
-    def __setitem__(
+    def __setitem__(  # noqa F811
         self, k: t.Union[int, slice], v: t.Union[t.Any, t.Iterable[t.Any]]
     ) -> None:
         self.args[k] = v
@@ -149,10 +149,12 @@ class LazyArguments:
         ...
 
     @t.overload
-    def __getitem__(self, k: slice) -> t.List[t.Any]:
+    def __getitem__(self, k: slice) -> t.List[t.Any]:  # noqa F811
         ...
 
-    def __getitem__(self, k: t.Union[int, slice]) -> t.Union[t.Any, t.List[t.Any]]:
+    def __getitem__(  # noqa F811
+        self, k: t.Union[int, slice]
+    ) -> t.Union[t.Any, t.List[t.Any]]:
         return self.args[k]
 
     def _args(self) -> t.List[str]:
@@ -246,7 +248,7 @@ class LazyJoin:
 
 
 class LazyFormat:
-    def __init__(self, fmt: str, *args: t.Any, **kwargs: t.Any) -> None:
+    def __init__(self, fmt: t.Any, *args: t.Any, **kwargs: t.Any) -> None:
         self.fmt = fmt
         self.args = args
         self.kwargs = kwargs
@@ -254,7 +256,7 @@ class LazyFormat:
     def _string(self) -> str:
         args = map(str, self.args)
         kwargs = {k: str(v) for k, v in self.kwargs.items()}
-        return self.fmt.format(*args, **kwargs)
+        return str(self.fmt).format(*args, **kwargs)
 
     @reify
     def value(self) -> str:
