@@ -13,7 +13,7 @@ except IOError:
     README = CHANGES = ""
 
 
-install_requires = []
+install_requires = ["typing_extensions"]
 if sys.version_info[:2] <= (3, 6):
     install_requires.append("dataclasses")
 dev_extras = ["black", "flake8", "mypy"]
