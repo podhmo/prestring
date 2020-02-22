@@ -11,7 +11,7 @@ def gen(*, m=None, indent='    '):
             m.stmt('return "fizz"')
         with m.elif_('n % 5 == 0'):
             m.stmt('return "buzz"')
-        with m.else_(''):
+        with m.else_():
             m.stmt('return str(n)')
 
     with m.if_('__name__ == "__main__"'):
