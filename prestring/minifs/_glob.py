@@ -76,7 +76,7 @@ def _dig_next(
             path.append(k)
             yield path, v, True
             path.pop()
-    elif isinstance(tk, re.Pattern):
+    elif isinstance(tk, t.Pattern):
         exists = False
         for k, v in d.items():
             if tk.match(str(k)):
