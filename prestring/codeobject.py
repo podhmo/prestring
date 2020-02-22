@@ -77,11 +77,13 @@ class Stringer(tx.Protocol):
         ...
 
 
-def as_value(val: t.Any) -> t.Union[t.Dict[str, t.Any], t.List[t.Any], str, UnRepr]:
+def as_value(
+    val: t.Any,
+) -> t.Union[t.Dict[str, t.Any], t.List[t.Any], t.Tuple[t.Any, ...], str, UnRepr]:
     if isinstance(val, dict):
         return {k: as_value(v) for k, v in val.items()}
     elif isinstance(val, (tuple, list)):
-        return [as_value(v) for v in val]
+        return val.__class__([as_value(v) for v in val])
     elif hasattr(val, "emit"):
         return UnRepr(val)
     elif callable(val) and hasattr(val, "__name__"):
