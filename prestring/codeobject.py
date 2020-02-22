@@ -5,7 +5,7 @@ from prestring import _Sentinel, ModuleT
 from prestring.utils import LazyFormat, LazyArgumentsAndKeywords, UnRepr
 
 
-class ModuleLike(tx.Protocol):
+class InternalModule(tx.Protocol):
     def stmt(
         self, fmt: t.Union[str, _Sentinel, LazyFormat], *args: t.Any, **kwargs: t.Any
     ) -> ModuleT:
@@ -22,7 +22,7 @@ class AssignOp(tx.Protocol):
     assign_op: str  # e.g. "="
 
 
-class CodeObjectModuleMixin(AssignOp, ModuleLike):
+class CodeObjectModuleMixin(AssignOp, InternalModule):
     assign_op: str = "="
 
     # need: stmt and import_
@@ -55,7 +55,7 @@ class CodeObjectModuleMixin(AssignOp, ModuleLike):
 
 
 class CodeObjectModule(CodeObjectModuleMixin):
-    def __init__(self, m: ModuleLike) -> None:
+    def __init__(self, m: InternalModule) -> None:
         self.m = m
 
     def stmt(
@@ -68,7 +68,7 @@ class CodeObjectModule(CodeObjectModuleMixin):
 
 
 class Emittable(tx.Protocol):
-    def emit(self, *, m: ModuleLike) -> ModuleLike:
+    def emit(self, *, m: InternalModule) -> InternalModule:
         ...
 
 
@@ -93,7 +93,7 @@ def as_value(
 
 
 class Object(Emittable):
-    def __init__(self, name: str, *, emit: t.Callable[..., ModuleLike]) -> None:
+    def __init__(self, name: str, *, emit: t.Callable[..., InternalModule]) -> None:
         self.name = name
         self._emit = emit
         self._use_count = 0
@@ -104,7 +104,7 @@ class Object(Emittable):
     def __call__(self, *args: t.Any, **kwargs: t.Any) -> "Call":
         return Call(name=self.name, co=self, args=args, kwargs=kwargs)
 
-    def emit(self, *, m: ModuleLike) -> ModuleLike:
+    def emit(self, *, m: InternalModule) -> InternalModule:
         return self._emit(m, name=self.name)
 
     def __getattr__(self, name: str) -> "Attr":
@@ -187,7 +187,9 @@ class Call:
 
 
 def codeobject(
-    emit: t.Callable[[ModuleLike, str], ModuleLike], *, name: t.Optional[str] = None,
+    emit: t.Callable[[InternalModule, str], InternalModule],
+    *,
+    name: t.Optional[str] = None,
 ) -> Object:
     name = name or emit.__name__
     ob = Object(name, emit=emit)
