@@ -1,4 +1,3 @@
-from __future__ import annotations
 import typing as t
 import logging
 import contextlib
@@ -44,11 +43,11 @@ class PreString:
     def clear(self) -> None:
         self.body.clear()
 
-    def __iadd__(self, value: t.Any) -> PreString:
+    def __iadd__(self, value: t.Any) -> "PreString":
         self.body.append(value)
         return self
 
-    def __add__(self, value: t.Any) -> PreString:
+    def __add__(self, value: t.Any) -> "PreString":
         return self.__class__(self, value)
 
     def __iter__(self) -> t.Iterator[t.Any]:
@@ -90,7 +89,7 @@ class Sentence:
         self.body: t.List[t.Any] = []
         self.newline = None
 
-    def append(self, v: t.Any) -> Sentence:
+    def append(self, v: t.Any) -> "Sentence":
         self.body.append(v)
         return self
 
@@ -194,7 +193,7 @@ class Parser:
 
 
 class Application:
-    def __call__(self, framelist: FrameList, evaluator: Evaluator) -> Evaluator:
+    def __call__(self, framelist: FrameList, evaluator: "Evaluator") -> "Evaluator":
         for frame in framelist[:-1]:
             evaluator.evaluate(frame)
             evaluator.evaluate_newframe()
@@ -295,7 +294,7 @@ class Module:
 
     def stmt(
         self, fmt: t.Union[str, _Sentinel, LazyFormat], *args: t.Any, **kwargs: t.Any
-    ) -> Module:
+    ) -> "Module":
         if args or kwargs:
             self.body.append(self.format(fmt, *args, **kwargs))  # lazy format
         else:

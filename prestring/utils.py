@@ -1,4 +1,3 @@
-from __future__ import annotations
 import typing as t
 from functools import partial, update_wrapper
 from collections import defaultdict
@@ -33,9 +32,9 @@ class Caller:
 
 
 class LazyArgumentsAndKeywords:
-    args: LazyArguments
-    kwargs: LazyKeywords
-    tails: t.Optional[LazyArguments]
+    args: "LazyArguments"
+    kwargs: "LazyKeywords"
+    tails: "t.Optional[LazyArguments]"
 
     def __init__(
         self,
