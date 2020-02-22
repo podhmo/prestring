@@ -1,62 +1,74 @@
 from functools import update_wrapper
 import typing as t
 import typing_extensions as tx
+from prestring import ModuleT
+from prestring.types import ModuleLike
 from prestring.utils import LazyArgumentsAndKeywords, UnRepr
 
-# note: internal package, move to prestring?
 
-
-class InternalModule(tx.Protocol):
-    def import_(self, module: str, as_: t.Optional[str] = ...) -> "Symbol":
-        ...
-
-    def stmt(
-        self,
-        fmt_or_emittable: t.Union[t.Any, "Emittable"],
-        *args: t.Any,
-        **kwargs: t.Any,
-    ) -> t.Any:
-        ...
-
-
-class CodeobjectModule:
-    def __init__(self, m: InternalModule, *, assign_op: str = "="):
-        self.m = m
-        self.assign_op = assign_op
-
-    def import_(self, module: str, as_: t.Optional[str] = None) -> "Symbol":
-        """like `import <name>`"""
-        return self.m.import_(module, as_=as_)
-
+class CodeObjectModuleLike(ModuleLike):
     def let(self, name: str, val: "Emittable") -> "Emittable":
         """like `<name> = ob`"""
-        self.m.stmt("{} {} {}", name, self.assign_op, val)
-        return Symbol(name)
+        ...
 
     def letN(
         self, names: t.Union[str, t.Tuple[str, ...]], val: "Emittable"
     ) -> t.List["Emittable"]:
         """like `<name> = ob`"""
-        self.m.stmt("{} {} {}", ", ".join(names), self.assign_op, val)
-        return [Symbol(name) for name in names]
+        ...
 
     def setattr(self, co: "Emittable", name: str, val: t.Any) -> None:
         """like `<ob>.<name> = <val>`"""
-        self.m.stmt("{}.{} = {}", co, name, as_value(val))
+        ...
 
     def getattr(self, ob: t.Any, name: str) -> "Attr":
         """like `<ob>.<name>`"""
-        return Attr(name, co=ob)
+        ...
 
     def symbol(self, ob: t.Union[str, t.Any]) -> "Symbol":
         """like `<ob>`"""
-        if isinstance(ob, str):
-            return Symbol(ob)
-        return Symbol(ob.__name__)
+        ...
+
+
+def create_module_factory(
+    Module: t.Type[ModuleT], *, assign_op: str = "="
+) -> t.Type[CodeObjectModuleLike]:
+    _assign_op = assign_op
+
+    class CodeobjectModule(Module):  # type:ignore
+        assign_op = _assign_op
+
+        def let(self, name: str, val: "Emittable") -> "Emittable":
+            """like `<name> = ob`"""
+            self.stmt("{} {} {}", name, self.assign_op, val)
+            return Symbol(name)
+
+        def letN(
+            self, names: t.Union[str, t.Tuple[str, ...]], val: "Emittable"
+        ) -> t.List["Emittable"]:
+            """like `<name> = ob`"""
+            self.stmt("{} {} {}", ", ".join(names), self.assign_op, val)
+            return [Symbol(name) for name in names]
+
+        def setattr(self, co: "Emittable", name: str, val: t.Any) -> None:
+            """like `<ob>.<name> = <val>`"""
+            self.stmt("{}.{} = {}", co, name, as_value(val))
+
+        def getattr(self, ob: t.Any, name: str) -> "Attr":
+            """like `<ob>.<name>`"""
+            return Attr(name, co=ob)
+
+        def symbol(self, ob: t.Union[str, t.Any]) -> "Symbol":
+            """like `<ob>`"""
+            if isinstance(ob, str):
+                return Symbol(ob)
+            return Symbol(ob.__name__)
+
+    return CodeobjectModule
 
 
 class Emittable(tx.Protocol):
-    def emit(self, *, m: InternalModule) -> InternalModule:
+    def emit(self, *, m: ModuleLike) -> ModuleLike:
         ...
 
 
@@ -79,7 +91,7 @@ def as_value(val: t.Any) -> t.Union[t.Dict[str, t.Any], t.List[t.Any], str, UnRe
 
 
 class Object(Emittable):
-    def __init__(self, name: str, *, emit: t.Callable[..., InternalModule]) -> None:
+    def __init__(self, name: str, *, emit: t.Callable[..., ModuleLike]) -> None:
         self.name = name
         self._emit = emit
         self._use_count = 0
@@ -90,7 +102,7 @@ class Object(Emittable):
     def __call__(self, *args: t.Any, **kwargs: t.Any) -> "Call":
         return Call(name=self.name, co=self, args=args, kwargs=kwargs)
 
-    def emit(self, *, m: InternalModule) -> InternalModule:
+    def emit(self, *, m: ModuleLike) -> ModuleLike:
         return self._emit(m, name=self.name)
 
     def __getattr__(self, name: str) -> "Attr":
@@ -173,9 +185,7 @@ class Call:
 
 
 def codeobject(
-    emit: t.Callable[[InternalModule, str], InternalModule],
-    *,
-    name: t.Optional[str] = None,
+    emit: t.Callable[[ModuleLike, str], ModuleLike], *, name: t.Optional[str] = None,
 ) -> Object:
     name = name or emit.__name__
     ob = Object(name, emit=emit)

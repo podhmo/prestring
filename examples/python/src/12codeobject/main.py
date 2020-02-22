@@ -1,13 +1,11 @@
-from prestring.python import Module
-from prestring.codeobject import CodeobjectModule
+from prestring.python.codeobject import Module
 
 m = Module()
-co = CodeobjectModule(m)
-re = co.import_("re")
-sys = co.import_("sys")
+re = m.import_("re")
+sys = m.import_("sys")
 
 m.sep()
-pattern = co.let(
+pattern = m.let(
     "pattern",
     re.compile(
         r"^(?P<label>DEBUG|INFO|WARNING|ERROR|CRITICAL):\s*(?P<message>\S+)",
@@ -17,7 +15,7 @@ pattern = co.let(
 
 
 with m.for_("line", sys.stdin):
-    matched = co.let("matched", pattern.search(co.symbol("line")))
+    matched = m.let("matched", pattern.search(m.symbol("line")))
     with m.if_(f"{matched} is not None"):
-        m.stmt(co.symbol("print")(matched.groupdict()))
+        m.stmt(m.symbol("print")(matched.groupdict()))
 print(m)
