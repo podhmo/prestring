@@ -254,7 +254,7 @@ class Transformer(StrictPyTreeVisitor):
         self.m.sep()
         return True  # break
 
-    def _visit_block_stmt(self, node: pytree.Node) -> None:
+    def _visit_block_stmt(self, node: pytree.Node, *, async_: bool = False) -> None:
         # output coment (prefix)
         self.accessor.emit_prefix_and_consuming(self.m, node)
 
@@ -270,11 +270,16 @@ class Transformer(StrictPyTreeVisitor):
                 st = i + 1
 
         for (name, expr, body) in blocks:
+            suffix = ""
+            if async_:
+                suffix = ", async_=True"
+
             if expr:
                 args = " ".join([str(x).strip() for x in expr]).lstrip()
-                self.m.stmt("with m.{}_({!r}):", name.value.lstrip(), args)  # type: ignore
+                self.m.stmt("with m.{}_({!r}{}):", name.value.lstrip(), args, suffix)  # type: ignore
             elif hasattr(name, "value"):  # Leaf
-                self.m.stmt("with m.{}_():", name.value.lstrip())  # type: ignore
+                args = " ".join([str(x).strip() for x in expr]).lstrip()
+                self.m.stmt("with m.{}_({!r}{}):", name.value.lstrip(), args, suffix)  # type: ignore
             else:
                 typ = type_repr(name.type)
                 if typ == "except_clause":
