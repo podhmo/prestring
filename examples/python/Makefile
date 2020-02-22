@@ -82,6 +82,12 @@ default: 00 01 02 03 04 05 06 07 08 09
 	python dst/$(notdir $(shell echo src/$@*))/main.transform.py | tee dst/$(notdir $(shell echo src/$@*))/main.transform.gen.py
 	diff -u dst/$(notdir $(shell echo src/$@*))/main.gen.py dst/$(notdir $(shell echo src/$@*))/main.transform.gen.py
 
+# codeobject
+12:
+	mkdir -p dst/$(notdir $(shell echo src/$@*))
+	python $(shell echo src/$@*/main.py) | tee dst/$(notdir $(shell echo src/$@*))/main.gen.py
+	cp $(shell echo src/$@*/messages.txt) dst/$(notdir $(shell echo src/$@*))/messages.txt
+	cat dst/$(notdir $(shell echo src/$@*))/messages.txt | python dst/$(notdir $(shell echo src/$@*))/main.gen.py | tee dst/$(notdir $(shell echo src/$@*))/output.txt
 
 clean:
 	rm -rf dst

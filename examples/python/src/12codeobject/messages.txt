@@ -1,0 +1,3 @@
+debug: hello
+info: hello world
+debug: bye
