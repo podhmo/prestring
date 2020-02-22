@@ -16,7 +16,7 @@ from prestring import (
 from prestring import ModuleT as _ModuleT
 from prestring.utils import LazyArgumentsAndKeywords
 from prestring.utils import _type_value  # xxx
-from ._codeobject import Symbol
+from prestring.codeobject import Symbol
 
 PEPNEWLINE = _Sentinel(name="PEP-NEWLINE", kind="sep")
 
