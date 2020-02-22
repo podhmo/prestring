@@ -14,12 +14,7 @@ from prestring import (
     Application as _Application,
 )
 from prestring import ModuleT as _ModuleT
-from prestring.utils import (
-    LazyArguments,
-    LazyFormat,
-    LazyArgumentsAndKeywords,
-    LazyJoin,
-)
+from prestring.utils import LazyArgumentsAndKeywords
 from prestring.utils import _type_value  # xxx
 
 PEPNEWLINE = _Sentinel(name="PEP-NEWLINE", kind="sep")
