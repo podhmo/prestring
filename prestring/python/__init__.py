@@ -232,25 +232,25 @@ class PythonModule(_Module):
         try:
             from_stmt: FromStatement = self.from_map[modname].body.tail()
             for sym in attrs:
-                from_stmt.append(sym)
+                from_stmt.import_(sym)
             return from_stmt
         except KeyError:
             from_stmt = FromStatement(modname)
             for sym in attrs:
-                from_stmt.append(sym)
+                from_stmt.import_(sym)
             self.from_map[modname] = self.submodule(from_stmt, newline=False)
             return from_stmt
 
 
 class FromStatement:
-    def __init__(self, modname: str, symbols: t.Sequence[str]) -> None:
+    def __init__(self, modname: str) -> None:
         self.modname = modname
-        self.symbols = list(symbols)
+        self.symbols: t.List[str] = []
 
     # TODO: return symbol
     def import_(
         self, symbol: t.Any, *, as_: t.Optional[str] = None
-    ) -> Symbol:  # TODO: support as_
+    ) -> None:  # TODO: support as_
         self.symbols.append(symbol)
 
     def stmt(self, s: str) -> t.Iterable[t.Any]:
@@ -269,7 +269,7 @@ class FromStatement:
         yield INDENT
 
         symbols = []
-        seen = set()
+        seen: t.Set[str] = set()
         for x in self.symbols:
             if x in seen:
                 continue
