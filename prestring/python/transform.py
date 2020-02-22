@@ -278,8 +278,7 @@ class Transformer(StrictPyTreeVisitor):
                 args = " ".join([str(x).strip() for x in expr]).lstrip()
                 self.m.stmt("with m.{}_({!r}{}):", name.value.lstrip(), args, suffix)  # type: ignore
             elif hasattr(name, "value"):  # Leaf
-                args = " ".join([str(x).strip() for x in expr]).lstrip()
-                self.m.stmt("with m.{}_({!r}{}):", name.value.lstrip(), args, suffix)  # type: ignore
+                self.m.stmt("with m.{}_({}):", name.value.lstrip(), suffix)  # type: ignore
             else:
                 typ = type_repr(name.type)
                 if typ == "except_clause":
