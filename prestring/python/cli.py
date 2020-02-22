@@ -1,7 +1,26 @@
+import typing as t
+import typing_extensions as tx
 from prestring.utils import LazyFormat
+from prestring import Module as BaseModule
+from prestring.python import Module as PyModule
+
+M = t.TypeVar("M", bound=PyModule)
+OM = t.TypeVar("OM", bound=BaseModule)
 
 
-def main_transform(*, transform, Module, filename=None, name="gen", OutModule):
+class TransformFunction(tx.Protocol[M]):
+    def __call__(self, source: str, *, m: t.Optional[M] = ..., indent: str) -> M:
+        ...
+
+
+def main_transform(
+    *,
+    transform: TransformFunction[M],
+    Module: t.Type[M],
+    filename: str,
+    name: str = "gen",
+    OutModule: OM,
+) -> None:
     import argparse
 
     parser = argparse.ArgumentParser()
@@ -35,7 +54,15 @@ def main_transform(*, transform, Module, filename=None, name="gen", OutModule):
         runpy.run_path(wf.name, run_name="__main__")
 
 
-def run_transform(filename: str, *, transform, Module, name="gen", OutModule, indent):
+def run_transform(
+    filename: str,
+    *,
+    transform: TransformFunction[M],
+    Module: t.Type[M],
+    name: str = "gen",
+    OutModule: t.Type[M],
+    indent: str,
+) -> M:
     m = Module()
     m.stmt("from {} import {}", OutModule.__module__, OutModule.__name__)
     m.sep()
