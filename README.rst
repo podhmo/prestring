@@ -110,7 +110,7 @@ prestring.output can write multiple files.
            with m.def_("hello"):
                m.stmt("print('hello')")
 
-Above code will generate three files. if creating directory is needed, if will be created automatically.
+Above code will generate three files. if creating directory is needed, it will be created automatically.
 
 .. code-block:: console
 
@@ -223,32 +223,50 @@ Of course, reversible.
 limitation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-prestring.python does not support all python grammers (e.g. async definition is not supported, yet). If you want to prestring's expression as first step, prestring.text is probably useful.
+If you want to prestring's expression as first step, in other language, prestring.text is probably useful.
 
 .. code-block:: console
 
-   $ python -m prestring.text hello.py
+   $ python -m prestring.text --tab hello.go
    from prestring.text import Module
 
 
-   def gen(*, m=None, indent='    '):
+   def gen(*, m=None, indent='\t'):
        m = m or Module(indent=indent)
 
-       m.stmt('def hello(name, *, message: str = "hello world"):')
+       m.stmt('package main')
+       m.sep()
+       m.stmt('import (')
        with m.scope():
-           m.stmt('"""')
-           m.stmt('greeting message')
-           m.stmt('"""')
-           m.stmt('print(f"{name}: {message}")')
-           m.sep()
-           m.sep()
-       m.stmt('if __name__ == "__main__":')
+           m.stmt('"fmt"')
+           m.stmt('"os"')
+       m.stmt(')')
+       m.sep()
+       m.stmt('// Hello is print Hello')
+       m.stmt('func Hello(name string)  {')
        with m.scope():
-           m.stmt('hello("foo")')
-
+           m.stmt('fmt.Printf("%s: Hello", name)')
+       m.stmt('}')
+       m.sep()
+       m.stmt('func main()  {')
+       with m.scope():
+           m.stmt('var name string')
+           m.stmt('if len(os.Args) > 1  {')
+           with m.scope():
+               m.stmt('name = os.Args[1]')
+           m.stmt('} else  {')
+           with m.scope():
+               m.stmt('name = "foo"')
+           m.stmt('}')
+           m.stmt('// with block')
+           m.stmt('{')
+           with m.scope():
+               m.stmt('Hello(name)')
+           m.stmt('}')
+       m.stmt('}')
        return m
 
 
    if __name__ == "__main__":
-       m = gen(indent='    ')
+       m = gen(indent='\t')
        print(m)
