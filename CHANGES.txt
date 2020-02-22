@@ -1,3 +1,7 @@
+0.8.0
+
+- typing (but this is not completely strict)
+
 0.7.3
 
 - In prestring.text, use tab default indent 1 (#47)
