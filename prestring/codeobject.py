@@ -1,70 +1,51 @@
 from functools import update_wrapper
 import typing as t
 import typing_extensions as tx
-from prestring import ModuleT
+from prestring import _Sentinel, ModuleT
 from prestring.types import ModuleLike
-from prestring.utils import LazyArgumentsAndKeywords, UnRepr
+from prestring.utils import LazyFormat, LazyArgumentsAndKeywords, UnRepr
 
 
-class CodeObjectModuleLike(ModuleLike):
+class CodeObjectModuleMixin:
+    assign_op = "="
+
+    # NOTE: need stmt()
+
     def let(self, name: str, val: "Emittable") -> "Emittable":
         """like `<name> = ob`"""
-        ...
+        self.stmt("{} {} {}", name, self.assign_op, val)
+        return Symbol(name)
 
     def letN(
         self, names: t.Union[str, t.Tuple[str, ...]], val: "Emittable"
     ) -> t.List["Emittable"]:
         """like `<name> = ob`"""
-        ...
+        self.stmt("{} {} {}", ", ".join(names), self.assign_op, val)
+        return [Symbol(name) for name in names]
 
     def setattr(self, co: "Emittable", name: str, val: t.Any) -> None:
         """like `<ob>.<name> = <val>`"""
-        ...
+        self.stmt("{}.{} = {}", co, name, as_value(val))
 
     def getattr(self, ob: t.Any, name: str) -> "Attr":
         """like `<ob>.<name>`"""
-        ...
+        return Attr(name, co=ob)
 
     def symbol(self, ob: t.Union[str, t.Any]) -> "Symbol":
         """like `<ob>`"""
-        ...
+        if isinstance(ob, str):
+            return Symbol(ob)
+        return Symbol(ob.__name__)
 
 
-def create_module_factory(
-    Module: t.Type[ModuleT], *, assign_op: str = "="
-) -> t.Type[CodeObjectModuleLike]:
-    _assign_op = assign_op
+class CodeObjectModule(CodeObjectModuleMixin):
+    def __init__(self, m: ModuleLike) -> None:
+        self.m = m
 
-    class CodeobjectModule(Module):  # type:ignore
-        assign_op = _assign_op
-
-        def let(self, name: str, val: "Emittable") -> "Emittable":
-            """like `<name> = ob`"""
-            self.stmt("{} {} {}", name, self.assign_op, val)
-            return Symbol(name)
-
-        def letN(
-            self, names: t.Union[str, t.Tuple[str, ...]], val: "Emittable"
-        ) -> t.List["Emittable"]:
-            """like `<name> = ob`"""
-            self.stmt("{} {} {}", ", ".join(names), self.assign_op, val)
-            return [Symbol(name) for name in names]
-
-        def setattr(self, co: "Emittable", name: str, val: t.Any) -> None:
-            """like `<ob>.<name> = <val>`"""
-            self.stmt("{}.{} = {}", co, name, as_value(val))
-
-        def getattr(self, ob: t.Any, name: str) -> "Attr":
-            """like `<ob>.<name>`"""
-            return Attr(name, co=ob)
-
-        def symbol(self, ob: t.Union[str, t.Any]) -> "Symbol":
-            """like `<ob>`"""
-            if isinstance(ob, str):
-                return Symbol(ob)
-            return Symbol(ob.__name__)
-
-    return CodeobjectModule
+    def stmt(
+        self, fmt: t.Union[str, _Sentinel, LazyFormat], *args: t.Any, **kwargs: t.Any
+    ) -> ModuleT:
+        return self.m.stmt(fmt, *args, **kwargs)
 
 
 class Emittable(tx.Protocol):
