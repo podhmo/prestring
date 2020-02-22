@@ -7,15 +7,19 @@ from prestring.utils import LazyArgumentsAndKeywords, UnRepr
 
 
 class InternalModule(tx.Protocol):
-    def import_(self, module: str, as_: t.Optional[str] = ...) -> None:
+    def import_(self, module: str, as_: t.Optional[str] = ...) -> "Symbol":
         ...
 
-    def stmt(self, fmt: str, *args: t.Any, **kwargs: t.Any) -> t.Any:
+    def stmt(
+        self,
+        fmt_or_emittable: t.Union[t.Any, "Emittable"],
+        *args: t.Any,
+        **kwargs: t.Any,
+    ) -> t.Any:
         ...
 
 
-# TODO: typed prestring module
-class CodeobjectModule:  # type: ignore
+class CodeobjectModule:
     def __init__(self, m: InternalModule):
         self.m = m
 
@@ -55,11 +59,11 @@ class CodeobjectModule:  # type: ignore
         self.stmt("{} := {}", ", ".join(names), val)
         return [Symbol(name) for name in names]
 
-    def setattr(self, co: "Emittable", name: str, val: t.Any):
+    def setattr(self, co: "Emittable", name: str, val: t.Any) -> None:
         """like `<ob>.<name> = <val>`"""
-        self.stmt("{}.{} = {}", co, name, as_string(val))
+        self.stmt("{}.{} = {}", co, name, as_value(val))
 
-    def getattr(self, ob: t.Any, name: str) -> t.Optional[str]:
+    def getattr(self, ob: t.Any, name: str) -> "Attr":
         """like `<ob>.<name>`"""
         return Attr(name, co=ob)
 
@@ -80,15 +84,15 @@ class Stringer(tx.Protocol):
         ...
 
 
-def as_string(val: t.Any) -> t.Union[t.Dict[str, t.Any], t.List[t.Any], str, UnRepr]:
+def as_value(val: t.Any) -> t.Union[t.Dict[str, t.Any], t.List[t.Any], str, UnRepr]:
     if isinstance(val, dict):
-        return {k: as_string(v) for k, v in val.items()}
+        return {k: as_value(v) for k, v in val.items()}
     elif isinstance(val, (tuple, list)):
-        return val.__class__([as_string(v) for v in val])
+        return [as_value(v) for v in val]
     elif hasattr(val, "emit"):
         return UnRepr(val)
     elif callable(val) and hasattr(val, "__name__"):
-        return val.__name__  # todo: fullname
+        return val.__name__  # type: ignore # todo: fullname
     else:
         return repr(val)
 
@@ -170,8 +174,8 @@ class Call:
         self._kwargs = kwargs
 
     def __str__(self) -> str:
-        args = as_string(self._args)
-        kwargs = as_string(self._kwargs)
+        args = [as_value(v) for v in self._args]
+        kwargs = {k: as_value(v) for k, v in self._kwargs.items()}
         lparams = LazyArgumentsAndKeywords(args, kwargs)
         return f"{self._co}({lparams})"
 
