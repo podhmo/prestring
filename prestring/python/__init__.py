@@ -245,16 +245,6 @@ class PythonModule(_Module):
             self.from_map[modname] = self.submodule(from_stmt, newline=False)
         return from_stmt
 
-    def call(self, name_: t.Any, *args: t.Any) -> None:
-        oneline = LazyFormat("{}({})", name_, LazyArguments(list(args)))
-        if len(str(oneline._string())) <= self.width:
-            self.stmt(oneline)
-        else:
-            self.body.append(MultiSentenceForCall(name_, *args))
-
-    def pass_(self) -> None:
-        self.stmt("pass")
-
 
 class FromStatement:
     def __init__(
@@ -304,31 +294,6 @@ class FromStatement:
             lexer.loop(tokens, sentence, self.iterator_for_one_symbol(sentence))
         else:
             lexer.loop(tokens, sentence, self.iterator_for_many_symbols(sentence))
-        return Sentence()
-
-
-class MultiSentenceForCall:
-    def __init__(self, name: str, *lines: str) -> None:
-        self.name = name
-        self.lines = lines
-
-    def iterator(self, sentence: Sentence) -> t.Iterator[t.Any]:
-        if not sentence.is_empty():
-            yield NEWLINE
-        yield LazyFormat("{}(", self.name)
-        yield NEWLINE
-        yield INDENT
-        for line in self.lines[:-1]:
-            yield LazyFormat("{},", line)
-            yield NEWLINE
-        yield LazyFormat("{})", self.lines[-1])
-        yield NEWLINE
-        yield UNINDENT
-
-    def as_token(
-        self, lexer: _Lexer, tokens: t.List[str], sentence: Sentence
-    ) -> Sentence:
-        lexer.loop(tokens, sentence, self.iterator(sentence))
         return Sentence()
 
 
