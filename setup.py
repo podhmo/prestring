@@ -13,10 +13,10 @@ except IOError:
     README = CHANGES = ""
 
 
-install_requires = []
+install_requires = ["typing_extensions"]
 if sys.version_info[:2] <= (3, 6):
     install_requires.append("dataclasses")
-dev_extras = ["black", "flake8"]
+dev_extras = ["black", "flake8", "mypy"]
 docs_extras = []
 tests_require = ["evilunit"]
 testing_extras = tests_require + []
@@ -43,7 +43,7 @@ setup(
     url="https://github.com/podhmo/prestring",
     packages=find_packages(exclude=["prestring.tests"]),
     include_package_data=True,
-    zip_safe=False,
+    package_data={"prestring": ["py.typed"],},
     install_requires=install_requires,
     extras_require={"testing": testing_extras, "docs": docs_extras, "dev": dev_extras},
     tests_require=tests_require,

@@ -1,4 +1,4 @@
-# -*- coding:utf-8 -*-
+# type: ignore
 import unittest
 from evilunit import test_target
 

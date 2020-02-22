@@ -2,5 +2,5 @@ from prestring import Module as _Module
 
 
 class Module(_Module):
-    def sep(self):
+    def sep(self) -> None:
         self.stmt("")

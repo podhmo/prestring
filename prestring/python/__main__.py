@@ -1,6 +1,6 @@
 if __name__ == "__main__":
     import sys
-    from prestring.cli import main_transform
+    from prestring.python.cli import main_transform
     from prestring.python import Module
     from prestring.python.transform import transform
 

@@ -1,11 +1,12 @@
+import typing as t
 from prestring import INDENT, UNINDENT
 from prestring.text import Module
 
 
-def transform(source: str, *, indent, m=None):
+def transform(source: str, *, indent: str, m: t.Optional[Module] = None) -> Module:
     if m is None:
         m = Module(indent=indent)
-        m.g = m.submodule()
+        m.g = m.submodule()  # type:ignore
 
     history = [0]
 

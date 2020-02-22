@@ -1,17 +1,24 @@
 import typing as t
+import typing_extensions as tx
 import sys
 import logging
 import os.path
 import dataclasses
 import filecmp
 from io import StringIO
-from .minifs import MiniFS
+from .minifs import MiniFS, File
 from .utils import reify
 
 logger = logging.getLogger(__name__)
+ActionType = tx.Literal["update", "create"]
 
 
-def cleanup_all(output: "output"):
+class Writer(tx.Protocol):
+    def write(self, name: str, file: File, *, _retry: bool = False) -> None:
+        ...
+
+
+def cleanup_all(output: "output") -> None:
     import shutil
 
     logger.info("cleanup %s", output.root)
@@ -30,7 +37,7 @@ class output:
     sep: str = "/"
     store: t.Dict[str, t.Any] = dataclasses.field(default_factory=dict)
 
-    cleanup: t.Optional[str] = None
+    cleanup: t.Optional[t.Callable[["output"], None]] = None
     verbose: bool = os.environ.get("VERBOSE", "") != ""
     use_console: bool = os.environ.get("CONSOLE", "") != ""
     nocheck: bool = os.environ.get("NOCHECK", "") != ""
@@ -40,32 +47,39 @@ class output:
         fname = "{}{}{}".format(self.prefix, basename, self.suffix)
         return os.path.join(self.root, os.path.join(dirname, fname))
 
-    def guess_action(self, fullpath: str) -> str:
+    def guess_action(self, fullpath: str) -> ActionType:
         if os.path.exists(fullpath):
             return "update"
         else:
             return "create"
 
     @reify
-    def fs(self):
+    def fs(self) -> MiniFS:
         return MiniFS(opener=self.opener, sep=self.sep)
 
     @reify
-    def writer(self):
+    def writer(self) -> Writer:
         setup_logging(level=logging.INFO)  # xxx
         if self.use_console:
             return _ConsoleWriter(self)
         else:
             return _ActualWriter(self)
 
-    def __enter__(self):
+    def __enter__(self) -> MiniFS:
         return self.fs
 
-    def __exit__(self, typ, val, tb):
+    def __exit__(
+        self,
+        exc: t.Optional[t.Type[BaseException]],
+        value: t.Optional[BaseException],
+        tb: t.Any,
+    ) -> None:
         writer = self.writer
         if not self.use_console and self.cleanup is not None:
             self.cleanup(self)
         for name, f in self.fs.walk():
+            if name is None:
+                raise RuntimeError("something wrong, name is None")
             writer.write(name, f)
 
 
@@ -75,13 +89,13 @@ class _ActualWriter:
     def __init__(self, output: output):
         self.output = output
 
-    def write(self, name, file):
+    def write(self, name: str, file: File, *, _retry: bool = False) -> None:
         if self.output.nocheck:
             self._write_without_check(name, file)
         else:
             self._write_with_check(name, file)
 
-    def _write_with_check(self, name: str, file):
+    def _write_with_check(self, name: str, file: File) -> None:
         fullpath = self.output.fullpath(name)
         if not os.path.exists(fullpath):
             self._write_without_check(name, file, action="create")
@@ -102,7 +116,14 @@ class _ActualWriter:
                 os.replace(tmppath, fullpath)
                 logger.info("[F]\t%s\t%s", action, fullpath)
 
-    def _write_without_check(self, name: str, file, *, action=None, _retry=False):
+    def _write_without_check(
+        self,
+        name: str,
+        file: File,
+        *,
+        action: t.Optional[ActionType] = None,
+        _retry: bool = False,
+    ) -> None:
         fullpath = self.output.fullpath(name)
         action = action or self.output.guess_action(fullpath)
         try:
@@ -118,12 +139,18 @@ class _ActualWriter:
 
 
 class _ConsoleWriter:
-    def __init__(self, output: output, *, stdout=sys.stdout, stderr=sys.stderr):
+    def __init__(
+        self,
+        output: output,
+        *,
+        stdout: t.IO[str] = sys.stdout,
+        stderr: t.IO[str] = sys.stderr,
+    ) -> None:
         self.output = output
         self.stdout = stdout
         self.stderr = stderr
 
-    def write(self, name, f, *, _retry=False):
+    def write(self, name: str, f: File, *, _retry: bool = False) -> None:
         fullpath = self.output.fullpath(name)
         if not self.output.verbose:
             logger.info("[F]\t%s\t%s", self.output.guess_action(fullpath), fullpath)
@@ -149,12 +176,18 @@ class _ConsoleWriter:
 
 
 class _MarkdownWriter:
-    def __init__(self, output: output, *, stdout=sys.stdout, stderr=sys.stderr):
+    def __init__(
+        self,
+        output: output,
+        *,
+        stdout: t.IO[str] = sys.stdout,
+        stderr: t.IO[str] = sys.stderr,
+    ) -> None:
         self.output = output
         self.stdout = stdout
         self.stderr = stderr
 
-    def write(self, name, f, *, _retry=False):
+    def write(self, name: str, f: File, *, _retry: bool = False) -> None:
         fullpath = self.output.fullpath(name)
 
         o = StringIO()
@@ -174,7 +207,9 @@ class _MarkdownWriter:
         self.stdout.flush()
 
 
-def setup_logging(*, _logger=None, level=logging.INFO):
+def setup_logging(
+    *, _logger: t.Optional[logging.Logger] = None, level: int = logging.INFO
+) -> None:
     _logger = _logger or logger
     if _logger.handlers:
         return

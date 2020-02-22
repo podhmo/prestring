@@ -7,7 +7,7 @@ example:
 	make -C examples/text default
 
 ci:
-	$(MAKE) test example
+	$(MAKE) lint typing test example
 	git diff
 
 format:
