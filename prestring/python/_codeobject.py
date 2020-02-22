@@ -25,9 +25,7 @@ class CodeobjectModule:
 
     def import_(self, module: str, as_: t.Optional[str] = None) -> "Symbol":
         """like `import <name>`"""
-        sym = Symbol(module, as_=as_)
-        self.m.import_(module, as_=as_)
-        return sym
+        return self.m.import_(module, as_=as_)
 
     def stmt(
         self,
@@ -41,11 +39,6 @@ class CodeobjectModule:
             assert not kwargs
             return fmt_or_emittable.emit(m=self)
         return self.m.stmt(str(fmt_or_emittable), *args, **kwargs)  # type: ignore
-
-    def assign(self, fmt: str, name: str, val: "Emittable") -> "Emittable":
-        """like `<name> = ob`"""
-        self.stmt(fmt, name, val)
-        return Symbol(name)
 
     def let(self, name: str, val: "Emittable") -> "Emittable":
         """like `<name> = ob`"""
