@@ -146,7 +146,7 @@ class FrameList:
     def __getitem__(self, k: int) -> t.List[t.Any]:
         ...
 
-    @t.overload
+    @t.overload  # noqa F811
     def __getitem__(self, k: slice) -> t.Iterable[t.List[t.Any]]:  # noqa F811
         ...
 

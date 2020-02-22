@@ -135,7 +135,7 @@ class LazyArguments:
     def __setitem__(self, k: int, v: t.Any) -> None:
         ...
 
-    @t.overload
+    @t.overload  # noqa F811
     def __setitem__(self, k: slice, v: t.Iterable[t.Any]) -> None:  # noqa F811
         ...
 
@@ -148,7 +148,7 @@ class LazyArguments:
     def __getitem__(self, k: int) -> t.Any:
         ...
 
-    @t.overload
+    @t.overload  # noqa F811
     def __getitem__(self, k: slice) -> t.List[t.Any]:  # noqa F811
         ...
 
