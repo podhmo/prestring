@@ -14,12 +14,7 @@ from prestring import (
     Application as _Application,
 )
 from prestring import ModuleT as _ModuleT
-from prestring.utils import (
-    LazyArguments,
-    LazyFormat,
-    LazyArgumentsAndKeywords,
-    LazyJoin,
-)
+from prestring.utils import LazyArgumentsAndKeywords
 from prestring.utils import _type_value  # xxx
 
 PEPNEWLINE = _Sentinel(name="PEP-NEWLINE", kind="sep")
@@ -125,23 +120,6 @@ class PythonModule(_Module):
         self.sep()
 
     @contextlib.contextmanager
-    def method(
-        self,
-        name: str,
-        *args: t.Any,
-        return_type: t.Optional[t.Any] = None,
-        **kwargs: t.Any,
-    ) -> t.Iterator[None]:
-        params = LazyJoin(", ", ["self", make_params(args, kwargs)], trim_empty=True)
-        if return_type is not None:
-            self.stmt("def {}({}) -> {}:", name, params, _type_value(return_type))
-        else:
-            self.stmt("def {}({}):", name, params)
-        with self.scope():
-            yield
-        self.sep()
-
-    @contextlib.contextmanager
     def if_(self, expr: t.Any) -> t.Iterator[None]:
         self.stmt("if {}:", expr)
         with self.scope():
@@ -238,26 +216,8 @@ class PythonModule(_Module):
             yield
         self.sep()
 
-    @contextlib.contextmanager
-    def main(self) -> t.Iterator[None]:
-        with self.if_('__name__ == "__main__"'):
-            yield
-
-    # sentence
-    def break_(self) -> None:
-        self.stmt("break")
-
-    def continue_(self) -> None:
-        self.stmt("continue")
-
     def return_(self, expr: t.Any, *args: t.Any) -> None:
         self.stmt("return %s" % (expr,), *args)
-
-    def yield_(self, expr: t.Any, *args: t.Any) -> None:
-        self.stmt("yield %s" % (expr,), *args)
-
-    def raise_(self, expr: t.Any, *args: t.Any) -> None:
-        self.stmt("raise %s" % (expr,), *args)
 
     def import_(self, modname: t.Any, as_: t.Optional[t.Any] = None) -> None:
         if modname in self.imported_set:
@@ -279,16 +239,6 @@ class PythonModule(_Module):
             from_stmt = FromStatement(modname, attrs, unique=self.import_unique)
             self.from_map[modname] = self.submodule(from_stmt, newline=False)
         return from_stmt
-
-    def call(self, name_: t.Any, *args: t.Any) -> None:
-        oneline = LazyFormat("{}({})", name_, LazyArguments(list(args)))
-        if len(str(oneline._string())) <= self.width:
-            self.stmt(oneline)
-        else:
-            self.body.append(MultiSentenceForCall(name_, *args))
-
-    def pass_(self) -> None:
-        self.stmt("pass")
 
 
 class FromStatement:
@@ -339,31 +289,6 @@ class FromStatement:
             lexer.loop(tokens, sentence, self.iterator_for_one_symbol(sentence))
         else:
             lexer.loop(tokens, sentence, self.iterator_for_many_symbols(sentence))
-        return Sentence()
-
-
-class MultiSentenceForCall:
-    def __init__(self, name: str, *lines: str) -> None:
-        self.name = name
-        self.lines = lines
-
-    def iterator(self, sentence: Sentence) -> t.Iterator[t.Any]:
-        if not sentence.is_empty():
-            yield NEWLINE
-        yield LazyFormat("{}(", self.name)
-        yield NEWLINE
-        yield INDENT
-        for line in self.lines[:-1]:
-            yield LazyFormat("{},", line)
-            yield NEWLINE
-        yield LazyFormat("{})", self.lines[-1])
-        yield NEWLINE
-        yield UNINDENT
-
-    def as_token(
-        self, lexer: _Lexer, tokens: t.List[str], sentence: Sentence
-    ) -> Sentence:
-        lexer.loop(tokens, sentence, self.iterator(sentence))
         return Sentence()
 
 
