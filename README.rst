@@ -220,7 +220,7 @@ Of course, reversible.
    if __name__ == "__main__":
        hello("foo")
 
-limitation
+prestring.text
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you want to prestring's expression as first step, in other language, prestring.text is probably useful.
