@@ -221,26 +221,8 @@ class PythonModule(_Module):
             yield
         self.sep()
 
-    @contextlib.contextmanager
-    def main(self) -> t.Iterator[None]:
-        with self.if_('__name__ == "__main__"'):
-            yield
-
-    # sentence
-    def break_(self) -> None:
-        self.stmt("break")
-
-    def continue_(self) -> None:
-        self.stmt("continue")
-
     def return_(self, expr: t.Any, *args: t.Any) -> None:
         self.stmt("return %s" % (expr,), *args)
-
-    def yield_(self, expr: t.Any, *args: t.Any) -> None:
-        self.stmt("yield %s" % (expr,), *args)
-
-    def raise_(self, expr: t.Any, *args: t.Any) -> None:
-        self.stmt("raise %s" % (expr,), *args)
 
     def import_(self, modname: t.Any, as_: t.Optional[t.Any] = None) -> None:
         if modname in self.imported_set:
