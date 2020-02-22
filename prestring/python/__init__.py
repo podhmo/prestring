@@ -51,11 +51,9 @@ class PythonModule(_Module):
         parser: t.Optional[_Parser] = None,
         application: t.Optional[_Application] = None,
         width: int = 100,
-        import_unique: bool = False,
         **kwargs: t.Any,
     ) -> None:
         self.width = width
-        self.import_unique = import_unique
         super().__init__(
             value, newline, indent, lexer=lexer, parser=parser, application=application
         )
@@ -68,17 +66,12 @@ class PythonModule(_Module):
         value: t.Any = "",  # str,FromStatement,...
         newline: bool = True,
         factory: t.Optional[t.Callable[..., _ModuleT]] = None,
-        *,
-        import_unique: t.Optional[bool] = None,
     ) -> _ModuleT:
         submodule = t.cast(
             PythonModule,
             super().submodule(value=value, newline=newline, factory=factory,),
         )  # xxx
         submodule.width = self.width
-        if import_unique is None:
-            import_unique = self.import_unique
-        submodule.import_unique = import_unique
         return submodule  # type:ignore
 
     def create_evaulator(self) -> PythonEvaluator:
@@ -246,18 +239,15 @@ class PythonModule(_Module):
             for sym in attrs:
                 from_stmt.append(sym)
         except KeyError:
-            from_stmt = FromStatement(modname, attrs, unique=self.import_unique)
+            from_stmt = FromStatement(modname, attrs)
             self.from_map[modname] = self.submodule(from_stmt, newline=False)
         return from_stmt
 
 
 class FromStatement:
-    def __init__(
-        self, modname: str, symbols: t.Sequence[str], unique: bool = False
-    ) -> None:
+    def __init__(self, modname: str, symbols: t.Sequence[str]) -> None:
         self.modname = modname
         self.symbols = list(symbols)
-        self.unique = unique
 
     def append(self, symbol: t.Any) -> None:  # TODO: support as_
         self.symbols.append(symbol)
@@ -278,10 +268,15 @@ class FromStatement:
             yield NEWLINE
         yield from self.stmt("from {} import (".format(self.modname))
         yield INDENT
-        if self.unique:
-            symbols = sorted(set(self.symbols))
-        else:
-            symbols = self.symbols
+
+        symbols = []
+        seen = set()
+        for x in self.symbols:
+            if x in seen:
+                continue
+            seen.add(x)
+            symbols.append(x)
+
         for sym in symbols[:-1]:
             yield from self.stmt("{},".format(sym))
         if symbols:
