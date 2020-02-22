@@ -73,7 +73,7 @@ class PythonModule(_Module):
         factory: t.Optional[t.Callable[..., _ModuleT]] = None,
         *,
         import_unique: t.Optional[bool] = None,
-    ) -> "PythonModule":
+    ) -> _ModuleT:
         submodule = t.cast(
             PythonModule,
             super().submodule(value=value, newline=newline, factory=factory,),
@@ -82,7 +82,7 @@ class PythonModule(_Module):
         if import_unique is None:
             import_unique = self.import_unique
         submodule.import_unique = import_unique
-        return submodule
+        return submodule  # type:ignore
 
     def create_evaulator(self) -> PythonEvaluator:
         return PythonEvaluator(StringIO(), newline=self.newline, indent=self.indent)

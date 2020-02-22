@@ -277,7 +277,7 @@ class Module:
         value: t.Any = "",
         newline: bool = True,
         factory: t.Optional[t.Callable[..., ModuleT]] = None,
-    ) -> Module:
+    ) -> ModuleT:
         factory_ = factory or self.__class__
         submodule = factory_(
             indent=self.indent,
