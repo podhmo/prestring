@@ -117,23 +117,6 @@ class PythonModule(_Module):
         self.sep()
 
     @contextlib.contextmanager
-    def method(
-        self,
-        name: str,
-        *args: t.Any,
-        return_type: t.Optional[t.Any] = None,
-        **kwargs: t.Any,
-    ) -> t.Iterator[None]:
-        params = LazyJoin(", ", ["self", make_params(args, kwargs)], trim_empty=True)
-        if return_type is not None:
-            self.stmt("def {}({}) -> {}:", name, params, _type_value(return_type))
-        else:
-            self.stmt("def {}({}):", name, params)
-        with self.scope():
-            yield
-        self.sep()
-
-    @contextlib.contextmanager
     def if_(self, expr: t.Any) -> t.Iterator[None]:
         self.stmt("if {}:", expr)
         with self.scope():
