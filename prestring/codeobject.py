@@ -11,6 +11,9 @@ class ModuleLike(tx.Protocol):
     ) -> ModuleT:
         ...
 
+    def import_(self, modname: str, as_: t.Optional[str] = None) -> "Symbol":
+        ...
+
     def __str__(self) -> str:
         ...
 
@@ -21,6 +24,8 @@ class AssignOp(tx.Protocol):
 
 class CodeObjectModuleMixin(AssignOp, ModuleLike):
     assign_op: str = "="
+
+    # need: stmt and import_
 
     def let(self, name: str, val: "Emittable") -> "Emittable":
         """like `<name> = ob`"""
@@ -57,6 +62,9 @@ class CodeObjectModule(CodeObjectModuleMixin):
         self, fmt: t.Union[str, _Sentinel, LazyFormat], *args: t.Any, **kwargs: t.Any
     ) -> ModuleT:
         return self.m.stmt(fmt, *args, **kwargs)
+
+    def import_(self, modname: str, as_: t.Optional[str] = None) -> "Symbol":
+        return self.m.import_(modname, as_=as_)
 
 
 class Emittable(tx.Protocol):

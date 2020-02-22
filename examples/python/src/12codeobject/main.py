@@ -3,8 +3,8 @@ from prestring.codeobject import CodeObjectModule
 
 m = Module()
 co = CodeObjectModule(m)
-re = m.import_("re")
-sys = m.import_("sys")
+re = co.import_("re")
+sys = co.import_("sys")
 
 m.sep()
 pattern = co.let(
