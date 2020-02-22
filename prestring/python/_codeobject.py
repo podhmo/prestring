@@ -25,7 +25,7 @@ class CodeobjectModule:
 
     def import_(self, module: str, as_: t.Optional[str] = None) -> "Symbol":
         """like `import <name>`"""
-        sym = Symbol(as_ or module)
+        sym = Symbol(module, as_=as_)
         self.m.import_(module, as_=as_)
         return sym
 
@@ -121,16 +121,17 @@ class Object(Emittable):
 
 class Symbol:
     emit = None  # for stmt
-    __slots__ = ("name",)
+    __slots__ = ("name", "as_")
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, as_: t.Optional[str] = None):
         self.name = name
+        self.as_ = as_
 
     def __str__(self) -> str:
-        return self.name
+        return self.as_ or self.name
 
     def __call__(self, *args: t.Any, **kwargs: t.Any) -> "Call":
-        return Call(self.name, co=self, args=args, kwargs=kwargs)
+        return Call(self.as_ or self.name, co=self, args=args, kwargs=kwargs)
 
     def __getattr__(self, name: str) -> "Attr":
         # if name == "emit":

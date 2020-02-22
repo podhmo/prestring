@@ -213,7 +213,7 @@ class PythonModule(_Module):
     def return_(self, expr: t.Any, *args: t.Any) -> None:
         self.stmt("return %s" % (expr,), *args)
 
-    def import_(self, modname: t.Any, as_: t.Optional[t.Any] = None) -> Symbol:
+    def import_(self, modname: str, as_: t.Optional[str] = None) -> Symbol:
         name = as_ or modname
         try:
             sym = self.imported_map[name]
@@ -225,10 +225,10 @@ class PythonModule(_Module):
                 suffix = "{} as {}".format(suffix, as_)
 
             self.stmt("import {}{}", modname, suffix)
-            sym = self.imported_map[name] = Symbol(name)
+            sym = self.imported_map[name] = Symbol(modname, as_=as_)
             return sym
 
-    def from_(self, modname: t.Any, *attrs: t.Any) -> "FromStatement":
+    def from_(self, modname: str, *attrs: str) -> "FromStatement":
         try:
             from_stmt: FromStatement = self.from_map[modname].body.tail()
             for sym in attrs:
@@ -245,43 +245,44 @@ class PythonModule(_Module):
 class FromStatement:
     def __init__(self, modname: str) -> None:
         self.modname = modname
-        self.symbols: t.List[str] = []
+        self.symbols: t.Dict[str, Symbol] = {}
 
-    # TODO: return symbol
-    def import_(
-        self, symbol: t.Any, *, as_: t.Optional[str] = None
-    ) -> None:  # TODO: support as_
-        self.symbols.append(symbol)
-
-    def stmt(self, s: str) -> t.Iterable[t.Any]:
-        yield s
-        yield NEWLINE
+    def import_(self, name: str, *, as_: t.Optional[str] = None) -> Symbol:
+        sym = self.symbols.get(as_ or name)
+        if sym is not None:
+            return sym
+        sym = self.symbols[as_ or name] = Symbol(name, as_=as_)
+        return sym
 
     def iterator_for_one_symbol(self, sentence: Sentence) -> t.Iterable[t.Any]:
         if not sentence.is_empty():
             yield NEWLINE
-        yield from self.stmt("from {} import {}".format(self.modname, self.symbols[0]))
+        sym = next(iter(self.symbols.values()))
+        suffix = ""
+        if sym.as_ is not None:
+            suffix = " as {}".format(sym.as_)
+        yield "from {} import {}{}".format(self.modname, sym.name, suffix)
+        yield NEWLINE
 
     def iterator_for_many_symbols(self, sentence: Sentence) -> t.Iterable[t.Any]:
         if not sentence.is_empty():
             yield NEWLINE
-        yield from self.stmt("from {} import (".format(self.modname))
+        yield "from {} import (".format(self.modname)
+        yield NEWLINE
+
         yield INDENT
 
-        symbols = []
-        seen: t.Set[str] = set()
-        for x in self.symbols:
-            if x in seen:
-                continue
-            seen.add(x)
-            symbols.append(x)
+        for sym in self.symbols.values():
+            suffix = ""
+            if sym.as_ is not None:
+                suffix = " as {}".format(sym.as_)
+            yield "{}{},".format(sym.name, suffix)
+            yield NEWLINE
 
-        for sym in symbols[:-1]:
-            yield from self.stmt("{},".format(sym))
-        if symbols:
-            yield from self.stmt("{}".format(symbols[-1]))
         yield UNINDENT
-        yield from self.stmt(")")
+
+        yield ")"
+        yield NEWLINE
 
     def as_token(
         self, lexer: _Lexer, tokens: t.List[t.Any], sentence: Sentence
