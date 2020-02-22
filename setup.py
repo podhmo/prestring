@@ -43,7 +43,7 @@ setup(
     url="https://github.com/podhmo/prestring",
     packages=find_packages(exclude=["prestring.tests"]),
     include_package_data=True,
-    zip_safe=False,
+    package_data={"prestring": ["py.typed"],},
     install_requires=install_requires,
     extras_require={"testing": testing_extras, "docs": docs_extras, "dev": dev_extras},
     tests_require=tests_require,
