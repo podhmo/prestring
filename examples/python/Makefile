@@ -39,5 +39,11 @@ default: 00 01 02 03 04 05 06 07 08 09
 	mkdir -p dst/$@
 	python -m prestring.python src/$@/hello.py > dst/$@/hello.gen.py 2>&1
 	python -m prestring.python src/$@/hello-with-type.py > dst/$@/hello-with-type.gen.py 2>&1
+10:
+	mkdir -p dst/$(notdir $(shell echo src/$@*))
+	python $(shell echo src/$@*/main.py) | tee dst/$(notdir $(shell echo src/$@*))/main.gen.py
+	python dst/$(notdir $(shell echo src/$@*))/main.gen.py 2>&1 | tee dst/$(notdir $(shell echo src/$@*))/output.txt
+
+
 clean:
 	rm -rf dst
