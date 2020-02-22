@@ -121,6 +121,7 @@ class Object(Emittable):
 
 class Symbol:
     emit = None  # for stmt
+    __slots__ = ("name",)
 
     def __init__(self, name: str):
         self.name = name
