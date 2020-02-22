@@ -16,6 +16,7 @@ from prestring import (
 from prestring import ModuleT as _ModuleT
 from prestring.utils import LazyArgumentsAndKeywords
 from prestring.utils import _type_value  # xxx
+from ._codeobject import Symbol
 
 PEPNEWLINE = _Sentinel(name="PEP-NEWLINE", kind="sep")
 
@@ -59,7 +60,8 @@ class PythonModule(_Module):
             value, newline, indent, lexer=lexer, parser=parser, application=application
         )
         self.from_map: t.Dict[str, PythonModule] = {}  # module -> PythonModule
-        self.imported_set: t.Set[str] = set()
+        self.imported_set: t.Set[str] = set()  # TODO: remove
+        self.imported_map: t.Dict[str, Symbol] = {}
 
     def submodule(
         self,
@@ -219,15 +221,23 @@ class PythonModule(_Module):
     def return_(self, expr: t.Any, *args: t.Any) -> None:
         self.stmt("return %s" % (expr,), *args)
 
-    def import_(self, modname: t.Any, as_: t.Optional[t.Any] = None) -> None:
-        if modname in self.imported_set:
-            return
-        self.imported_set.add(modname)
+    def import_(self, modname: t.Any, as_: t.Optional[t.Any] = None) -> Symbol:
+        name = as_ or modname
+        sym = self.imported_map.get(name)
+
+        if sym is not None:
+            return sym
+
+        self.imported_set.add(modname)  # TODO: remove it
+
         # todo: considering self.import_unique
-        if as_ is None:
-            self.stmt("import {}", modname)
-        else:
-            self.stmt("import {} as {}", modname, as_)
+        suffix = ""
+        if as_ is not None:
+            suffix = "{} as {}".format(suffix, as_)
+
+        self.stmt("import {}{}", modname, suffix)
+        sym = self.imported_map[name] = Symbol(name)
+        return sym
 
     def from_(self, modname: t.Any, *attrs: t.Any) -> "FromStatement":
         try:
