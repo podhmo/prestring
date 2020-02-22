@@ -58,7 +58,6 @@ class PythonModule(_Module):
             value, newline, indent, lexer=lexer, parser=parser, application=application
         )
         self.from_map: t.Dict[str, PythonModule] = {}  # module -> PythonModule
-        self.imported_set: t.Set[str] = set()  # TODO: remove
         self.imported_map: t.Dict[str, Symbol] = {}
 
     def submodule(
@@ -216,32 +215,31 @@ class PythonModule(_Module):
 
     def import_(self, modname: t.Any, as_: t.Optional[t.Any] = None) -> Symbol:
         name = as_ or modname
-        sym = self.imported_map.get(name)
-
-        if sym is not None:
+        try:
+            sym = self.imported_map[name]
             return sym
+        except KeyError:
+            # todo: considering self.import_unique
+            suffix = ""
+            if as_ is not None:
+                suffix = "{} as {}".format(suffix, as_)
 
-        self.imported_set.add(modname)  # TODO: remove it
-
-        # todo: considering self.import_unique
-        suffix = ""
-        if as_ is not None:
-            suffix = "{} as {}".format(suffix, as_)
-
-        self.stmt("import {}{}", modname, suffix)
-        sym = self.imported_map[name] = Symbol(name)
-        return sym
+            self.stmt("import {}{}", modname, suffix)
+            sym = self.imported_map[name] = Symbol(name)
+            return sym
 
     def from_(self, modname: t.Any, *attrs: t.Any) -> "FromStatement":
         try:
-            self.imported_set.add(modname)
             from_stmt: FromStatement = self.from_map[modname].body.tail()
             for sym in attrs:
                 from_stmt.append(sym)
+            return from_stmt
         except KeyError:
-            from_stmt = FromStatement(modname, attrs)
+            from_stmt = FromStatement(modname)
+            for sym in attrs:
+                from_stmt.append(sym)
             self.from_map[modname] = self.submodule(from_stmt, newline=False)
-        return from_stmt
+            return from_stmt
 
 
 class FromStatement:
@@ -249,10 +247,11 @@ class FromStatement:
         self.modname = modname
         self.symbols = list(symbols)
 
-    def append(self, symbol: t.Any) -> None:  # TODO: support as_
+    # TODO: return symbol
+    def import_(
+        self, symbol: t.Any, *, as_: t.Optional[str] = None
+    ) -> Symbol:  # TODO: support as_
         self.symbols.append(symbol)
-
-    import_ = append  # alias
 
     def stmt(self, s: str) -> t.Iterable[t.Any]:
         yield s
