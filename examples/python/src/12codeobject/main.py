@@ -1,8 +1,8 @@
 from prestring.python import Module
-from prestring.codeobject import CodeobjectModule
+from prestring.codeobject import CodeObjectModule
 
 m = Module()
-co = CodeobjectModule(m)
+co = CodeObjectModule(m)
 re = co.import_("re")
 sys = co.import_("sys")
 

@@ -1,48 +1,47 @@
 from functools import update_wrapper
 import typing as t
 import typing_extensions as tx
-from prestring.utils import LazyArgumentsAndKeywords, UnRepr
-
-# note: internal package, move to prestring?
+from prestring import _Sentinel, ModuleT
+from prestring.utils import LazyFormat, LazyArgumentsAndKeywords, UnRepr
 
 
 class InternalModule(tx.Protocol):
-    def import_(self, module: str, as_: t.Optional[str] = ...) -> "Symbol":
-        ...
-
     def stmt(
-        self,
-        fmt_or_emittable: t.Union[t.Any, "Emittable"],
-        *args: t.Any,
-        **kwargs: t.Any,
-    ) -> t.Any:
+        self, fmt: t.Union[str, _Sentinel, LazyFormat], *args: t.Any, **kwargs: t.Any
+    ) -> ModuleT:
+        ...
+
+    def import_(self, modname: str, as_: t.Optional[str] = None) -> "Symbol":
+        ...
+
+    def __str__(self) -> str:
         ...
 
 
-class CodeobjectModule:
-    def __init__(self, m: InternalModule, *, assign_op: str = "="):
-        self.m = m
-        self.assign_op = assign_op
+class AssignOp(tx.Protocol):
+    assign_op: str  # e.g. "="
 
-    def import_(self, module: str, as_: t.Optional[str] = None) -> "Symbol":
-        """like `import <name>`"""
-        return self.m.import_(module, as_=as_)
+
+class CodeObjectModuleMixin(AssignOp, InternalModule):
+    assign_op: str = "="
+
+    # need: stmt and import_
 
     def let(self, name: str, val: "Emittable") -> "Emittable":
         """like `<name> = ob`"""
-        self.m.stmt("{} {} {}", name, self.assign_op, val)
+        self.stmt("{} {} {}", name, self.assign_op, val)
         return Symbol(name)
 
     def letN(
         self, names: t.Union[str, t.Tuple[str, ...]], val: "Emittable"
     ) -> t.List["Emittable"]:
         """like `<name> = ob`"""
-        self.m.stmt("{} {} {}", ", ".join(names), self.assign_op, val)
+        self.stmt("{} {} {}", ", ".join(names), self.assign_op, val)
         return [Symbol(name) for name in names]
 
     def setattr(self, co: "Emittable", name: str, val: t.Any) -> None:
         """like `<ob>.<name> = <val>`"""
-        self.m.stmt("{}.{} = {}", co, name, as_value(val))
+        self.stmt("{}.{} = {}", co, name, as_value(val))
 
     def getattr(self, ob: t.Any, name: str) -> "Attr":
         """like `<ob>.<name>`"""
@@ -55,6 +54,19 @@ class CodeobjectModule:
         return Symbol(ob.__name__)
 
 
+class CodeObjectModule(CodeObjectModuleMixin):
+    def __init__(self, m: InternalModule) -> None:
+        self.m = m
+
+    def stmt(
+        self, fmt: t.Union[str, _Sentinel, LazyFormat], *args: t.Any, **kwargs: t.Any
+    ) -> ModuleT:
+        return self.m.stmt(fmt, *args, **kwargs)
+
+    def import_(self, modname: str, as_: t.Optional[str] = None) -> "Symbol":
+        return self.m.import_(modname, as_=as_)
+
+
 class Emittable(tx.Protocol):
     def emit(self, *, m: InternalModule) -> InternalModule:
         ...
@@ -65,11 +77,13 @@ class Stringer(tx.Protocol):
         ...
 
 
-def as_value(val: t.Any) -> t.Union[t.Dict[str, t.Any], t.List[t.Any], str, UnRepr]:
+def as_value(
+    val: t.Any,
+) -> t.Union[t.Dict[str, t.Any], t.List[t.Any], t.Tuple[t.Any, ...], str, UnRepr]:
     if isinstance(val, dict):
         return {k: as_value(v) for k, v in val.items()}
     elif isinstance(val, (tuple, list)):
-        return [as_value(v) for v in val]
+        return val.__class__([as_value(v) for v in val])
     elif hasattr(val, "emit"):
         return UnRepr(val)
     elif callable(val) and hasattr(val, "__name__"):
