@@ -21,17 +21,19 @@ default: 00 01 02 03 04 05 06 07 08 09
 06:
 	mkdir -p dst/$@
 	python src/$@/typed.py > dst/$@/typed.py
+
+# transform by python -m prestring.python
 07:
 	mkdir -p dst/$@
 	@echo ---------------------------------------- > /dev/stderr
-	python -m prestring.python src/$@/hello.py | tee dst/$@/gen.py
+	python -m prestring.python src/$@/fizzbuzz.py | tee dst/$@/gen.py
 	@echo ---------------------------------------- > /dev/stderr
-	python dst/$@/gen.py | tee dst/$@/hello.py
+	python dst/$@/gen.py | tee dst/$@/fizzbuzz.py
 	@echo ---------------------------------------- > /dev/stderr
-	python dst/$@/hello.py foo
-	python src/$@/hello.py foo
-	black src/$@/hello.py dst/$@/hello.py
-	diff -u src/$@/hello.py dst/$@/hello.py
+	python dst/$@/fizzbuzz.py foo
+	python src/$@/fizzbuzz.py foo
+	black src/$@/fizzbuzz.py dst/$@/fizzbuzz.py
+	diff -u src/$@/fizzbuzz.py dst/$@/fizzbuzz.py
 08:
 	mkdir -p dst/$@
 	python src/$@/gen.py -o dst/$@
