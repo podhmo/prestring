@@ -105,13 +105,18 @@ class PythonModule(_Module):
         name: str,
         *args: t.Any,
         return_type: t.Optional[t.Any] = None,
+        async_: bool = False,
         **kwargs: t.Any,
     ) -> t.Iterator[None]:
         params = make_params(args, kwargs)
+
+        prefix = f"{'async ' if async_ else ''}def"
         if return_type is not None:
-            self.stmt("def {}({}) -> {}:", name, params, _type_value(return_type))
+            self.stmt(
+                "{} {}({}) -> {}:", prefix, name, params, _type_value(return_type)
+            )
         else:
-            self.stmt("def {}({}):", name, params)
+            self.stmt("{} {}({}):", prefix, name, params)
         with self.scope():
             yield
         self.sep()
