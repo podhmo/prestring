@@ -91,11 +91,14 @@ class PythonModule(_Module):
         self.body.append(PEPNEWLINE)
 
     @contextlib.contextmanager
-    def with_(self, expr: t.Any, as_: t.Optional[t.Any] = None) -> t.Iterator[None]:
+    def with_(
+        self, expr: t.Any, *, as_: t.Optional[t.Any] = None, async_: bool = False
+    ) -> t.Iterator[None]:
+        prefix = f"{'async ' if async_ else ''}with"
         if as_:
-            self.stmt("with {} as {}:", expr, as_)
+            self.stmt("{} {} as {}:", prefix, expr, as_)
         else:
-            self.stmt("with {}:", expr)
+            self.stmt("{} {}:", prefix, expr)
         with self.scope():
             yield
 
@@ -105,13 +108,18 @@ class PythonModule(_Module):
         name: str,
         *args: t.Any,
         return_type: t.Optional[t.Any] = None,
+        async_: bool = False,
         **kwargs: t.Any,
     ) -> t.Iterator[None]:
         params = make_params(args, kwargs)
+
+        prefix = f"{'async ' if async_ else ''}def"
         if return_type is not None:
-            self.stmt("def {}({}) -> {}:", name, params, _type_value(return_type))
+            self.stmt(
+                "{} {}({}) -> {}:", prefix, name, params, _type_value(return_type)
+            )
         else:
-            self.stmt("def {}({}):", name, params)
+            self.stmt("{} {}({}):", prefix, name, params)
         with self.scope():
             yield
         self.sep()
@@ -164,11 +172,19 @@ class PythonModule(_Module):
             yield
 
     @contextlib.contextmanager
-    def for_(self, var: t.Any, iterator: t.Optional[t.Any] = None) -> t.Iterator[None]:
+    def for_(
+        self, var: t.Any, iterator: t.Optional[t.Any] = None, *, async_: bool = False
+    ) -> t.Iterator[None]:
+        prefix = f"{'async ' if async_ else ''}for"
         if iterator is None:
-            self.stmt("for {var}:", var=var)
+            self.stmt("{prefix} {var}:", prefix=prefix, var=var)
         else:
-            self.stmt("for {var} in {iterator}:", var=var, iterator=iterator)
+            self.stmt(
+                "{prefix} {var} in {iterator}:",
+                prefix=prefix,
+                var=var,
+                iterator=iterator,
+            )
         with self.scope():
             yield
 
