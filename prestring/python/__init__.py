@@ -189,9 +189,8 @@ class PythonModule(_Module):
             yield
 
     @contextlib.contextmanager
-    def while_(self, expr: t.Any, *, async_: bool = False) -> t.Iterator[None]:
-        prefix = f"{'async ' if async_ else ''}while"
-        self.stmt("{prefix} {expr}:", prefix=prefix, expr=expr)
+    def while_(self, expr: t.Any) -> t.Iterator[None]:
+        self.stmt("while {expr}:", expr=expr)
         with self.scope():
             yield
 
