@@ -5,7 +5,6 @@ m.import_("typing", as_="t")
 m.import_("asyncio")
 m.from_("functools").import_("partial")
 
-
 with m.class_("AExecutor"):
     with m.def_("__init__", "self"):
         m.stmt("self.q = asyncio.Queue()")

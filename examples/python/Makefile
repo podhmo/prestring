@@ -57,6 +57,11 @@ default: 00 01 02 03 04 05 06 07 08 09
 	mkdir -p dst/$(notdir $(shell echo src/$@*))
 	python $(shell echo src/$@*/main.py) | tee dst/$(notdir $(shell echo src/$@*))/main.gen.py
 	python dst/$(notdir $(shell echo src/$@*))/main.gen.py 2>&1 | tee dst/$(notdir $(shell echo src/$@*))/output.txt
+	# transform
+	python -m prestring.python dst/$(notdir $(shell echo src/$@*))/main.gen.py | tee dst/$(notdir $(shell echo src/$@*))/main.transform.py
+	# run transform
+	python dst/$(notdir $(shell echo src/$@*))/main.transform.py | tee dst/$(notdir $(shell echo src/$@*))/main.transform.gen.py
+	diff -u dst/$(notdir $(shell echo src/$@*))/main.gen.py dst/$(notdir $(shell echo src/$@*))/main.transform.gen.py
 
 
 clean:
