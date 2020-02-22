@@ -20,8 +20,9 @@ class InternalModule(tx.Protocol):
 
 
 class CodeobjectModule:
-    def __init__(self, m: InternalModule):
+    def __init__(self, m: InternalModule, *, assign_op: str = "="):
         self.m = m
+        self.assign_op = assign_op
 
     def import_(self, module: str, as_: t.Optional[str] = None) -> "Symbol":
         """like `import <name>`"""
@@ -42,14 +43,14 @@ class CodeobjectModule:
 
     def let(self, name: str, val: "Emittable") -> "Emittable":
         """like `<name> = ob`"""
-        self.stmt("{} = {}", name, val)
+        self.stmt("{} {} {}", name, self.assign_op, val)
         return Symbol(name)
 
     def letN(
         self, names: t.Union[str, t.Tuple[str, ...]], val: "Emittable"
     ) -> t.List["Emittable"]:
         """like `<name> = ob`"""
-        self.stmt("{} := {}", ", ".join(names), val)
+        self.stmt("{} {} {}", ", ".join(names), self.assign_op, val)
         return [Symbol(name) for name in names]
 
     def setattr(self, co: "Emittable", name: str, val: t.Any) -> None:
