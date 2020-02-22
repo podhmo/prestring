@@ -8,18 +8,18 @@ M = t.TypeVar("M", bound=PyModule)
 OM = t.TypeVar("OM", bound=BaseModule)
 
 
-class TransformFunction(tx.Protocol[M]):
-    def __call__(self, source: str, *, m: t.Optional[M] = ..., indent: str) -> M:
+class TransformFunction(tx.Protocol[OM]):
+    def __call__(self, source: str, *, indent: str, m: t.Optional[OM] = ...) -> OM:
         ...
 
 
 def main_transform(
     *,
-    transform: TransformFunction[M],
+    transform: TransformFunction[OM],
     Module: t.Type[M],
     filename: str,
     name: str = "gen",
-    OutModule: OM,
+    OutModule: t.Type[OM],
 ) -> None:
     import argparse
 
@@ -57,10 +57,10 @@ def main_transform(
 def run_transform(
     filename: str,
     *,
-    transform: TransformFunction[M],
+    transform: TransformFunction[OM],
     Module: t.Type[M],
     name: str = "gen",
-    OutModule: t.Type[M],
+    OutModule: t.Type[OM],
     indent: str,
 ) -> M:
     m = Module()
@@ -72,7 +72,7 @@ def run_transform(
         m.sep()
         with open(filename) as rf:
             text = rf.read()
-        m = transform(text, m=m, indent=indent)
+        m = transform(text, m=m, indent=indent)  # type:ignore # xxx
         m.return_("m")
 
     with m.if_('__name__ == "__main__"'):

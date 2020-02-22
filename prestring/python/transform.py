@@ -416,7 +416,7 @@ class Transformer(StrictPyTreeVisitor):
         return None
 
 
-def transform(source: str, *, m: t.Optional[Module] = None, indent: str) -> Module:
+def transform(source: str, *, indent: str, m: t.Optional[Module] = None) -> Module:
     from prestring.python.parse import parse_string
 
     if m is None:

@@ -291,7 +291,7 @@ class Module:
         else:
             submodule.stmt(value)
         self.body.append(submodule.body)
-        return submodule
+        return submodule  # type: ignore
 
     def stmt(
         self, fmt: t.Union[str, _Sentinel, LazyFormat], *args: t.Any, **kwargs: t.Any
