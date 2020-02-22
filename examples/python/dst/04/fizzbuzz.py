@@ -203,6 +203,6 @@ def fizzbuzz(n):
         raise NotImplementedError('hmm')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import sys
     print(fizzbuzz(int(sys.argv[1])))

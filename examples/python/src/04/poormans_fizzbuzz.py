@@ -24,10 +24,10 @@ def genfizzbuzz(m, beg, end):
                     m.return_(repr(fizzbuzz(i)))
 
             with m.else_():
-                m.raise_("NotImplementedError('hmm')")
+                m.stmt("raise NotImplementedError('hmm')")
 
     def genmain():
-        with m.main():
+        with m.if_("__name__ == '__main__'"):
             m.import_("sys")
             m.stmt("print(fizzbuzz(int(sys.argv[1])))")
 
