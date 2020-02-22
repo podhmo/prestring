@@ -28,34 +28,21 @@ class CodeobjectModule:
         """like `import <name>`"""
         return self.m.import_(module, as_=as_)
 
-    def stmt(
-        self,
-        fmt_or_emittable: t.Union[t.Any, "Emittable"],
-        *args: t.Any,
-        **kwargs: t.Any,
-    ) -> InternalModule:
-        """capture code"""
-        if getattr(fmt_or_emittable, "emit", None) is not None:  # Emittable
-            assert not args
-            assert not kwargs
-            return fmt_or_emittable.emit(m=self)
-        return self.m.stmt(str(fmt_or_emittable), *args, **kwargs)  # type: ignore
-
     def let(self, name: str, val: "Emittable") -> "Emittable":
         """like `<name> = ob`"""
-        self.stmt("{} {} {}", name, self.assign_op, val)
+        self.m.stmt("{} {} {}", name, self.assign_op, val)
         return Symbol(name)
 
     def letN(
         self, names: t.Union[str, t.Tuple[str, ...]], val: "Emittable"
     ) -> t.List["Emittable"]:
         """like `<name> = ob`"""
-        self.stmt("{} {} {}", ", ".join(names), self.assign_op, val)
+        self.m.stmt("{} {} {}", ", ".join(names), self.assign_op, val)
         return [Symbol(name) for name in names]
 
     def setattr(self, co: "Emittable", name: str, val: t.Any) -> None:
         """like `<ob>.<name> = <val>`"""
-        self.stmt("{}.{} = {}", co, name, as_value(val))
+        self.m.stmt("{}.{} = {}", co, name, as_value(val))
 
     def getattr(self, ob: t.Any, name: str) -> "Attr":
         """like `<ob>.<name>`"""
