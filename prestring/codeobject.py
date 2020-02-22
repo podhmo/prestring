@@ -2,14 +2,25 @@ from functools import update_wrapper
 import typing as t
 import typing_extensions as tx
 from prestring import _Sentinel, ModuleT
-from prestring.types import ModuleLike
 from prestring.utils import LazyFormat, LazyArgumentsAndKeywords, UnRepr
 
 
-class CodeObjectModuleMixin:
-    assign_op = "="
+class ModuleLike(tx.Protocol):
+    def stmt(
+        self, fmt: t.Union[str, _Sentinel, LazyFormat], *args: t.Any, **kwargs: t.Any
+    ) -> ModuleT:
+        ...
 
-    # NOTE: need stmt()
+    def __str__(self) -> str:
+        ...
+
+
+class AssignOp(tx.Protocol):
+    assign_op: str  # e.g. "="
+
+
+class CodeObjectModuleMixin(AssignOp, ModuleLike):
+    assign_op: str = "="
 
     def let(self, name: str, val: "Emittable") -> "Emittable":
         """like `<name> = ob`"""
