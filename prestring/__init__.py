@@ -299,7 +299,7 @@ class Module:
             if getattr(fmt, "emit", None) is not None:  # Emittable
                 assert not args
                 assert not kwargs
-                return fmt.emit(m=self)
+                return fmt.emit(m=self)  # type: ignore
             else:
                 fmt = str(fmt)
 
