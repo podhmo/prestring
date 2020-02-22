@@ -164,7 +164,7 @@ class LazyArguments:
             if typ is not None:
                 arg = "{}: {}".format(arg, _type_value(typ))
             args.append(arg)
-        return self.args.__class__(args)
+        return args
 
     @reify
     def value(self) -> str:
