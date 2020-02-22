@@ -152,3 +152,14 @@ def dump_tree(
 ) -> None:
     dumper = PyTreeDumper(target_stream=stream, tostring=tostring)
     dumper.visit(tree)
+
+
+if __name__ == "__main__":
+    import sys
+
+    if len(sys.argv) <= 1:
+        print("python -m prestring.python.parse <file>", file=sys.stderr)
+        sys.exit(1)
+
+    tree = parse_file(sys.argv[1])
+    dump_tree(tree)

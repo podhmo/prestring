@@ -3,7 +3,7 @@ from prestring.python import Module
 from prestring.utils import LazyJoin, LazyArgumentsAndKeywords as LParams
 from lib2to3 import pytree
 import lib2to3.pgen2.token as token
-from prestring.python.parse import type_repr, StrictPyTreeVisitor
+from prestring.python.parse import type_repr, StrictPyTreeVisitor, node_name
 
 # todo: comment after ':'
 
@@ -211,7 +211,7 @@ class Transformer(StrictPyTreeVisitor):
         self.m.sep()
         return True  # break
 
-    def visit_funcdef(self, node: Node) -> t.Optional[bool]:
+    def visit_funcdef(self, node: Node, *, async_: bool = False) -> t.Optional[bool]:
         # output coment (prefix)
         self.accessor.emit_prefix_and_consuming(self.m, node)
         # main process
@@ -242,19 +242,19 @@ class Transformer(StrictPyTreeVisitor):
         args.extend([repr(str(x)) for x in params.kwargs._args()])
         if params.tails is not None:
             args.extend([repr(str(x)) for x in params.tails._args()])
+
+        suffix = ""
         if return_type is not None:
-            self.m.stmt(
-                "with m.def_({}, return_type={!r}):".format(
-                    LazyJoin(", ", args), str(return_type).lstrip(" ")
-                )
-            )
-        else:
-            self.m.stmt("with m.def_({}):".format(LazyJoin(", ", args)))
+            suffix = ", return_type={!r}".format(str(return_type).lstrip(" "))
+        if async_:
+            suffix = "{}, async_=True".format(suffix)
+        self.m.stmt("with m.def_({}{}):".format(LazyJoin(", ", args), suffix))
+
         self.visit_suite(body)
         self.m.sep()
         return True  # break
 
-    def _visit_block_stmt(self, node: pytree.Node) -> None:
+    def _visit_block_stmt(self, node: pytree.Node, *, async_: bool = False) -> None:
         # output coment (prefix)
         self.accessor.emit_prefix_and_consuming(self.m, node)
 
@@ -270,11 +270,16 @@ class Transformer(StrictPyTreeVisitor):
                 st = i + 1
 
         for (name, expr, body) in blocks:
+            suffix = ""
+            if async_:
+                suffix = ", async_=True"
+
             if expr:
                 args = " ".join([str(x).strip() for x in expr]).lstrip()
-                self.m.stmt("with m.{}_({!r}):", name.value.lstrip(), args)  # type: ignore
+                self.m.stmt("with m.{}_({!r}{}):", name.value.lstrip(), args, suffix)  # type: ignore
             elif hasattr(name, "value"):  # Leaf
-                self.m.stmt("with m.{}_():", name.value.lstrip())  # type: ignore
+                args = " ".join([str(x).strip() for x in expr]).lstrip()
+                self.m.stmt("with m.{}_({!r}{}):", name.value.lstrip(), args, suffix)  # type: ignore
             else:
                 typ = type_repr(name.type)
                 if typ == "except_clause":
@@ -414,6 +419,13 @@ class Transformer(StrictPyTreeVisitor):
         if rest:
             self.accessor.emit_stmt_multiline(self.m, "".join([str(x) for x in rest]))
         return None
+
+    def visit_async_stmt(self, node: Node) -> t.Optional[bool]:
+        # ASYNC <node>
+        assert len(node.children) == 2
+        method = "visit_{0}".format(node_name(node.children[1]))
+        getattr(self, method)(node.children[1], async_=True)
+        return True  # break
 
 
 def transform(source: str, *, indent: str, m: t.Optional[Module] = None) -> Module:
