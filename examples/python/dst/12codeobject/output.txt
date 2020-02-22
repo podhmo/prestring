@@ -1,0 +1,3 @@
+{'label': 'debug', 'message': 'hello'}
+{'label': 'info', 'message': 'hello'}
+{'label': 'debug', 'message': 'bye'}

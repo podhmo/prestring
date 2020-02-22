@@ -1,46 +1,63 @@
 default: 00 01 02 03 04 05 06 07 08 09
 
+# readme (class)
 00:
-	mkdir -p dst/$@
-	python src/$@/readme.py > dst/$@/readme.py
+	mkdir -p dst/$(notdir $(shell echo src/$@*))
+	python $(shell echo src/$@*)/readme.py > dst/$(notdir $(shell echo src/$@*))/readme.py
+
+# readme (submodule)
 01:
-	mkdir -p dst/$@
-	python src/$@/submodule_sample.py > dst/$@/submodule_sample.py
+	mkdir -p dst/$(notdir $(shell echo src/$@*))
+	python $(shell echo src/$@*)/readme.py > dst/$(notdir $(shell echo src/$@*))/readme.py
+
+# batch mail
 02:
-	mkdir -p dst/$@
-	python src/$@/batch_mail.py > dst/$@/batch_mail.output
+	mkdir -p dst/$(notdir $(shell echo src/$@*))
+	python $(shell echo src/$@*)/main.py > dst/$(notdir $(shell echo src/$@*))/main.py
+
+# cross product
 03:
-	mkdir -p dst/$@
-	python src/$@/cross_product.py > dst/$@/cross_product.py
+	mkdir -p dst/$(notdir $(shell echo src/$@*))
+	python $(shell echo src/$@*)/main.py > dst/$(notdir $(shell echo src/$@*))/main.py
+
+# poorman's fizzbuzz
 04:
-	mkdir -p dst/$@
-	python src/$@/poormans_fizzbuzz.py > dst/$@/fizzbuzz.py
+	mkdir -p dst/$(notdir $(shell echo src/$@*))
+	python $(shell echo src/$@*)/main.py > dst/$(notdir $(shell echo src/$@*))/main.py
+
+# genpkg
 05:
-	mkdir -p dst/$@
-	python src/$@/genpkg.py --config=src/$@/config.json dst/$@
+	mkdir -p dst/$(notdir $(shell echo src/$@*))
+	python $(shell echo src/$@*)/main.py --config=$(shell echo src/$@*)/config.json dst/$(notdir $(shell echo src/$@*))
+
+# typed codegen
 06:
-	mkdir -p dst/$@
-	python src/$@/typed.py > dst/$@/typed.py
+	mkdir -p dst/$(notdir $(shell echo src/$@*))
+	python $(shell echo src/$@*)/main.py > dst/$(notdir $(shell echo src/$@*))/main.py
 
 # transform by python -m prestring.python
 07:
-	mkdir -p dst/$@
+	mkdir -p dst/$(notdir $(shell echo src/$@*))
 	@echo ---------------------------------------- > /dev/stderr
-	python -m prestring.python src/$@/fizzbuzz.py | tee dst/$@/gen.py
+	python -m prestring.python $(shell echo src/$@*)/main.py | tee dst/$(notdir $(shell echo src/$@*))/gen.py
 	@echo ---------------------------------------- > /dev/stderr
-	python dst/$@/gen.py | tee dst/$@/fizzbuzz.py
+	python dst/$(notdir $(shell echo src/$@*))/gen.py | tee dst/$(notdir $(shell echo src/$@*))/main.py
 	@echo ---------------------------------------- > /dev/stderr
-	python dst/$@/fizzbuzz.py foo
-	python src/$@/fizzbuzz.py foo
-	black src/$@/fizzbuzz.py dst/$@/fizzbuzz.py
-	diff -u src/$@/fizzbuzz.py dst/$@/fizzbuzz.py
+	python dst/$(notdir $(shell echo $(shell echo src/$@*)*))/main.py foo
+	python $(shell echo src/$@*)/main.py foo
+	black $(shell echo src/$@*)/main.py dst/$(notdir $(shell echo $(shell echo src/$@*)*))/main.py
+	diff -u $(shell echo src/$@*)/main.py dst/$(notdir $(shell echo $(shell echo src/$@*)*))/main.py
+
+# prestring.output
 08:
-	mkdir -p dst/$@
-	python src/$@/gen.py -o dst/$@
+	mkdir -p dst/$(notdir $(shell echo src/$@*))
+	python $(shell echo src/$@*)/main.py -o dst/$(notdir $(shell echo src/$@*))
+
+# prestring.python
 09:
-	mkdir -p dst/$@
-	python -m prestring.python src/$@/hello.py > dst/$@/hello.gen.py 2>&1
-	python -m prestring.python src/$@/hello-with-type.py > dst/$@/hello-with-type.gen.py 2>&1
+	mkdir -p dst/$(notdir $(shell echo src/$@*))
+	python -m prestring.python $(shell echo src/$@*)/hello.py > dst/$(notdir $(shell echo src/$@*))/hello.gen.py 2>&1
+	python -m prestring.python $(shell echo src/$@*)/hello-with-type.py > dst/$(notdir $(shell echo src/$@*))/hello-with-type.gen.py 2>&1
 
 # async support
 10:
@@ -65,6 +82,12 @@ default: 00 01 02 03 04 05 06 07 08 09
 	python dst/$(notdir $(shell echo src/$@*))/main.transform.py | tee dst/$(notdir $(shell echo src/$@*))/main.transform.gen.py
 	diff -u dst/$(notdir $(shell echo src/$@*))/main.gen.py dst/$(notdir $(shell echo src/$@*))/main.transform.gen.py
 
+# codeobject
+12:
+	mkdir -p dst/$(notdir $(shell echo src/$@*))
+	python $(shell echo src/$@*/main.py) | tee dst/$(notdir $(shell echo src/$@*))/main.gen.py
+	cp $(shell echo src/$@*/messages.txt) dst/$(notdir $(shell echo src/$@*))/messages.txt
+	cat dst/$(notdir $(shell echo src/$@*))/messages.txt | python dst/$(notdir $(shell echo src/$@*))/main.gen.py | tee dst/$(notdir $(shell echo src/$@*))/output.txt
 
 clean:
 	rm -rf dst

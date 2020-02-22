@@ -295,6 +295,14 @@ class Module:
     def stmt(
         self, fmt: t.Union[str, _Sentinel, LazyFormat], *args: t.Any, **kwargs: t.Any
     ) -> "Module":
+        if hasattr(fmt, "emit"):
+            if getattr(fmt, "emit", None) is not None:  # Emittable
+                assert not args
+                assert not kwargs
+                return fmt.emit(m=self)  # type: ignore
+            else:
+                fmt = str(fmt)
+
         if args or kwargs:
             self.body.append(self.format(fmt, *args, **kwargs))  # lazy format
         else:

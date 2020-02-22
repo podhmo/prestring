@@ -16,6 +16,7 @@ from prestring import (
 from prestring import ModuleT as _ModuleT
 from prestring.utils import LazyArgumentsAndKeywords
 from prestring.utils import _type_value  # xxx
+from prestring.codeobject import Symbol
 
 PEPNEWLINE = _Sentinel(name="PEP-NEWLINE", kind="sep")
 
@@ -50,33 +51,26 @@ class PythonModule(_Module):
         parser: t.Optional[_Parser] = None,
         application: t.Optional[_Application] = None,
         width: int = 100,
-        import_unique: bool = False,
         **kwargs: t.Any,
     ) -> None:
         self.width = width
-        self.import_unique = import_unique
         super().__init__(
             value, newline, indent, lexer=lexer, parser=parser, application=application
         )
         self.from_map: t.Dict[str, PythonModule] = {}  # module -> PythonModule
-        self.imported_set: t.Set[str] = set()
+        self.imported_map: t.Dict[str, Symbol] = {}
 
     def submodule(
         self,
         value: t.Any = "",  # str,FromStatement,...
         newline: bool = True,
         factory: t.Optional[t.Callable[..., _ModuleT]] = None,
-        *,
-        import_unique: t.Optional[bool] = None,
     ) -> _ModuleT:
         submodule = t.cast(
             PythonModule,
             super().submodule(value=value, newline=newline, factory=factory,),
         )  # xxx
         submodule.width = self.width
-        if import_unique is None:
-            import_unique = self.import_unique
-        submodule.import_unique = import_unique
         return submodule  # type:ignore
 
     def create_evaulator(self) -> PythonEvaluator:
@@ -219,65 +213,76 @@ class PythonModule(_Module):
     def return_(self, expr: t.Any, *args: t.Any) -> None:
         self.stmt("return %s" % (expr,), *args)
 
-    def import_(self, modname: t.Any, as_: t.Optional[t.Any] = None) -> None:
-        if modname in self.imported_set:
-            return
-        self.imported_set.add(modname)
-        # todo: considering self.import_unique
-        if as_ is None:
-            self.stmt("import {}", modname)
-        else:
-            self.stmt("import {} as {}", modname, as_)
-
-    def from_(self, modname: t.Any, *attrs: t.Any) -> "FromStatement":
+    def import_(self, modname: str, as_: t.Optional[str] = None) -> Symbol:
+        name = as_ or modname
         try:
-            self.imported_set.add(modname)
+            sym = self.imported_map[name]
+            return sym
+        except KeyError:
+            # todo: considering self.import_unique
+            suffix = ""
+            if as_ is not None:
+                suffix = "{} as {}".format(suffix, as_)
+
+            self.stmt("import {}{}", modname, suffix)
+            sym = self.imported_map[name] = Symbol(modname, as_=as_)
+            return sym
+
+    def from_(self, modname: str, *attrs: str) -> "FromStatement":
+        try:
             from_stmt: FromStatement = self.from_map[modname].body.tail()
             for sym in attrs:
-                from_stmt.append(sym)
+                from_stmt.import_(sym)
+            return from_stmt
         except KeyError:
-            from_stmt = FromStatement(modname, attrs, unique=self.import_unique)
+            from_stmt = FromStatement(modname)
+            for sym in attrs:
+                from_stmt.import_(sym)
             self.from_map[modname] = self.submodule(from_stmt, newline=False)
-        return from_stmt
+            return from_stmt
 
 
 class FromStatement:
-    def __init__(
-        self, modname: str, symbols: t.Sequence[str], unique: bool = False
-    ) -> None:
+    def __init__(self, modname: str) -> None:
         self.modname = modname
-        self.symbols = list(symbols)
-        self.unique = unique
+        self.symbols: t.Dict[str, Symbol] = {}
 
-    def append(self, symbol: t.Any) -> None:  # TODO: support as_
-        self.symbols.append(symbol)
-
-    import_ = append  # alias
-
-    def stmt(self, s: str) -> t.Iterable[t.Any]:
-        yield s
-        yield NEWLINE
+    def import_(self, name: str, *, as_: t.Optional[str] = None) -> Symbol:
+        sym = self.symbols.get(as_ or name)
+        if sym is not None:
+            return sym
+        sym = self.symbols[as_ or name] = Symbol(name, as_=as_)
+        return sym
 
     def iterator_for_one_symbol(self, sentence: Sentence) -> t.Iterable[t.Any]:
         if not sentence.is_empty():
             yield NEWLINE
-        yield from self.stmt("from {} import {}".format(self.modname, self.symbols[0]))
+        sym = next(iter(self.symbols.values()))
+        suffix = ""
+        if sym.as_ is not None:
+            suffix = " as {}".format(sym.as_)
+        yield "from {} import {}{}".format(self.modname, sym.name, suffix)
+        yield NEWLINE
 
     def iterator_for_many_symbols(self, sentence: Sentence) -> t.Iterable[t.Any]:
         if not sentence.is_empty():
             yield NEWLINE
-        yield from self.stmt("from {} import (".format(self.modname))
+        yield "from {} import (".format(self.modname)
+        yield NEWLINE
+
         yield INDENT
-        if self.unique:
-            symbols = sorted(set(self.symbols))
-        else:
-            symbols = self.symbols
-        for sym in symbols[:-1]:
-            yield from self.stmt("{},".format(sym))
-        if symbols:
-            yield from self.stmt("{}".format(symbols[-1]))
+
+        for sym in self.symbols.values():
+            suffix = ""
+            if sym.as_ is not None:
+                suffix = " as {}".format(sym.as_)
+            yield "{}{},".format(sym.name, suffix)
+            yield NEWLINE
+
         yield UNINDENT
-        yield from self.stmt(")")
+
+        yield ")"
+        yield NEWLINE
 
     def as_token(
         self, lexer: _Lexer, tokens: t.List[t.Any], sentence: Sentence
