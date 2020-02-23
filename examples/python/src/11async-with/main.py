@@ -20,7 +20,7 @@ with m.class_("AExecutor"):
                 with m.if_("afn is None"):
                     m.stmt("self.q.task_done()")
                     m.stmt("break")
-                m.stmt("await afn()")
+                m.stmt("afn()", await_=True)
                 m.stmt("self.q.task_done()")
 
         m.stmt("asyncio.ensure_future(loop())")
@@ -35,14 +35,14 @@ with m.class_("AExecutor"):
         return_type=None,
         async_=True,
     ):
-        m.stmt("await self.q.put(None)")
-        m.stmt("await self.q.join()")
+        m.stmt("self.q.put(None)", await_=True)
+        m.stmt("self.q.join()", await_=True)
 
 
 with m.def_("arange", "n: int", async_=True, return_type="t.AsyncIterator[int]"):
     with m.for_("i", "range(n)"):
         m.stmt("yield i")
-        m.stmt("await asyncio.sleep(0.1)")
+        m.stmt("asyncio.sleep(0.1)", await_=True)
 
 
 with m.def_("run", async_=True):
@@ -51,8 +51,8 @@ with m.def_("run", async_=True):
             with m.for_("i", "arange(3)", async_=True):
                 m.stmt("print(tag, i)")
 
-        m.stmt("await submit(partial(task, 'x'))")
-        m.stmt("await submit(partial(task, 'y'))")
+        m.stmt("submit(partial(task, 'x'))", await_=True)
+        m.stmt("submit(partial(task, 'y'))", await_=True)
 
 
 with m.def_("main"):

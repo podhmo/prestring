@@ -293,8 +293,11 @@ class Module:
         return submodule  # type: ignore
 
     def stmt(
-        self, fmt: t.Union[str, _Sentinel, LazyFormat], *args: t.Any, **kwargs: t.Any
-    ) -> "Module":
+        self: ModuleT,
+        fmt: t.Union[str, _Sentinel, LazyFormat],
+        *args: t.Any,
+        **kwargs: t.Any,
+    ) -> ModuleT:
         if hasattr(fmt, "emit"):
             if getattr(fmt, "emit", None) is not None:  # Emittable
                 assert not args
