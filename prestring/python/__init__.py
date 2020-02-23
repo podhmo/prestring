@@ -99,7 +99,7 @@ class PythonModule(_Module):
         return_type: t.Optional[t.Any] = None,
         async_: bool = False,
         **kwargs: t.Any,
-    ) -> t.Iterator[None]:
+    ) -> t.Iterator[Symbol]:
         params = make_params(args, kwargs)
 
         prefix = f"{'async ' if async_ else ''}def"
@@ -110,7 +110,7 @@ class PythonModule(_Module):
         else:
             self.stmt("{} {}({}):", prefix, name, params)
         with self.scope():
-            yield
+            yield Symbol(name)
         self.sep()
 
     @contextlib.contextmanager
@@ -146,7 +146,7 @@ class PythonModule(_Module):
     @contextlib.contextmanager
     def for_(
         self, var: t.Any, iterator: t.Optional[t.Any] = None, *, async_: bool = False
-    ) -> t.Iterator[None]:
+    ) -> t.Iterator[Symbol]:
         prefix = f"{'async ' if async_ else ''}for"
         if iterator is None:
             self.stmt("{prefix} {var}:", prefix=prefix, var=var)
@@ -158,7 +158,7 @@ class PythonModule(_Module):
                 iterator=iterator,
             )
         with self.scope():
-            yield
+            yield Symbol(var)
 
     @contextlib.contextmanager
     def while_(self, expr: t.Any) -> t.Iterator[None]:
@@ -196,7 +196,7 @@ class PythonModule(_Module):
     @contextlib.contextmanager
     def class_(
         self, name: t.Any, bases: t.Any = "", metaclass: t.Optional[t.Any] = None
-    ) -> t.Iterator[None]:
+    ) -> t.Iterator[Symbol]:
         if not isinstance(bases, (list, tuple)):
             bases = [bases]
         args = [str(b) for b in bases if b]
@@ -207,7 +207,7 @@ class PythonModule(_Module):
         else:
             self.stmt("class {name}:", name=name)
         with self.scope():
-            yield
+            yield Symbol(name)
         self.sep()
 
     def return_(self, expr: t.Any, *args: t.Any) -> None:
