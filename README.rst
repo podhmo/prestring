@@ -170,7 +170,7 @@ And you can use `python -m prestring.python` (or running `python -m prestring.te
 .. code-block:: console
 
    $ cat hello.py
-   def hello(name, *, message: str = "hello world"):
+   def hello(name: str, *, message: str = "hello world"):
        """
        greeting message
        """
@@ -189,7 +189,7 @@ And you can use `python -m prestring.python` (or running `python -m prestring.te
        m = m or PythonModule(indent=indent)
 
        import textwrap
-       with m.def_('hello', 'name', '*', 'message: str =  "hello world"'):
+       with m.def_('hello', 'name: str', '*', 'message: str =  "hello world"'):
            m.docstring(textwrap.dedent("""
            greeting message
            """).strip())
@@ -208,9 +208,8 @@ Of course, reversible.
 
 .. code-block:: console
 
-   $ python -m prestring.python hello.py > /tmp/gen_hello.py
-   $ python /tmp/gen_hello.py
-   def hello(name, *, message: str =  "hello world"):
+   $ python <(python -m prestring.python hello.py)
+   def hello(name: str, *, message: str =  "hello world"):
        """
        greeting message
        """
@@ -219,6 +218,12 @@ Of course, reversible.
 
    if __name__ == "__main__":
        hello("foo")
+
+   $ python hello.py
+   foo: hello world
+   $ python <(python <(python -m prestring.python hello.py))
+   foo: hello world
+
 
 prestring.text
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
