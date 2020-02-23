@@ -55,8 +55,9 @@ class CodeObjectModuleMixin(AssignOp, InternalModule):
 
 
 class CodeObjectModule(CodeObjectModuleMixin):
-    def __init__(self, m: InternalModule) -> None:
+    def __init__(self, m: InternalModule, *, assign_op: str = "=") -> None:
         self.m = m
+        self.assign_op = assign_op
 
     def stmt(
         self, fmt: t.Union[str, _Sentinel, LazyFormat], *args: t.Any, **kwargs: t.Any
