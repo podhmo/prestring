@@ -14,7 +14,7 @@ from prestring import (
     Application as _Application,
 )
 from prestring import ModuleT as _ModuleT
-from prestring.utils import LazyArgumentsAndKeywords
+from prestring.utils import LazyArgumentsAndKeywords, LazyFormat
 from prestring.utils import _type_value  # xxx
 from prestring.codeobject import Symbol
 
@@ -209,6 +209,17 @@ class PythonModule(_Module):
         with self.scope():
             yield Symbol(name)
         self.sep()
+
+    def stmt(
+        self,
+        fmt: t.Union[str, _Sentinel, LazyFormat],
+        *args: t.Any,
+        await_: bool = False,
+        **kwargs: t.Any,
+    ) -> _ModuleT:
+        if not await_:
+            return super().stmt(fmt, *args, **kwargs)
+        return super().stmt(LazyFormat("await {}", fmt), *args, **kwargs)
 
     def return_(self, expr: t.Any, *args: t.Any, await_: bool = False) -> None:
         prefix = f"return {'await ' if await_ else ''}"
