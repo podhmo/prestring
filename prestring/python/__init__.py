@@ -210,8 +210,9 @@ class PythonModule(_Module):
             yield Symbol(name)
         self.sep()
 
-    def return_(self, expr: t.Any, *args: t.Any) -> None:
-        self.stmt("return %s" % (expr,), *args)
+    def return_(self, expr: t.Any, *args: t.Any, await_: bool = False) -> None:
+        prefix = f"return {'await ' if await_ else ''}"
+        self.stmt("{}{}", prefix, str(expr).format(*args))
 
     def import_(self, modname: str, as_: t.Optional[str] = None) -> Symbol:
         name = as_ or modname
