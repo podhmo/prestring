@@ -15,9 +15,9 @@ pattern = co.let(
     ),
 )
 
-
-with m.for_("line", sys.stdin):
-    matched = co.let("matched", pattern.search(co.symbol("line")))
+print_ = co.symbol("print")
+with m.for_("line", sys.stdin) as line:
+    matched = co.let("matched", pattern.search(line))
     with m.if_(f"{matched} is not None"):
-        m.stmt(co.symbol("print")(matched.groupdict()))
+        m.stmt(print_(matched.groupdict()))
 print(m)
