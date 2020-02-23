@@ -55,6 +55,22 @@ def sum(x):
         result = str(m)
         self.assertEqual(result, expected)
 
+    def test_def_symbol(self):
+        m = self._makeOne()
+
+        with m.def_("hello", "name: str", return_type="None") as hello:
+            m.stmt("print(f'hello {name}')")
+
+        self.assertEqual(
+            str(m),
+            """\
+def hello(name: str) -> None:
+    print(f'hello {name}')""",
+        )
+
+        self.assertEqual(str(hello("foo")), "hello('foo')")
+        self.assertEqual(str(hello("bar")), "hello('bar')")
+
     def test_import(self):
         m = self._makeOne()
 
