@@ -8,3 +8,4 @@ with m.class_("Point", metaclass="InterfaceMeta"):
 
     with m.def_("__str__", "self"):
         m.return_("self.value")
+print(m)
