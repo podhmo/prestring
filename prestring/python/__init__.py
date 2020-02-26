@@ -216,7 +216,7 @@ class PythonModule(_Module):
         *args: t.Any,
         await_: bool = False,
         **kwargs: t.Any,
-    ) -> _ModuleT:
+    ) -> "PythonModule":
         if not await_:
             return super().stmt(fmt, *args, **kwargs)
         return super().stmt(LazyFormat("await {}", fmt), *args, **kwargs)
