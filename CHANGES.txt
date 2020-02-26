@@ -1,3 +1,8 @@
+0.8.2
+
+- add codeobject module, PythonModule.import_() returns symbol object
+- remove unused methods
+
 0.8.1
 
 - prestring.python, async/await support
