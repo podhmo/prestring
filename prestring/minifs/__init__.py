@@ -5,7 +5,7 @@ from ._glob import glob
 from ._flatten import flatten
 
 T = t.TypeVar("T")
-Leaf = t.Union[str, "File"]  # the value, stored by nested dict
+Leaf = t.Union["File"]  # the value, stored by nested dict
 Content = t.Union[t.Any, t.IO[str]]
 
 
@@ -80,7 +80,7 @@ class MiniFS:
         content: t.Optional[t.Any] = None,
         *,
         opener: t.Optional[t.Callable[[], t.Any]] = None,
-    ) -> t.Optional[Leaf]:
+    ) -> Leaf:
         name = str(name)
         if mode == "r":
             return _access(self._store, name, sep=self.sep)
@@ -107,7 +107,7 @@ def _touch(
     d: NestedDict,
     filename: str,
     *,
-    content: Leaf = "",
+    content: Leaf,
     sep: str = "/",
     force_create: bool = False,
 ) -> None:
@@ -124,7 +124,7 @@ def _touch(
     target[path[-1]] = content
 
 
-def _access(d: NestedDict, filename: str, *, sep: str = "/") -> t.Optional[Leaf]:
+def _access(d: NestedDict, filename: str, *, sep: str = "/") -> Leaf:
     path = filename.split(sep)
     target = d
     try:
