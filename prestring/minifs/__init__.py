@@ -77,7 +77,6 @@ class MiniFS:
         self,
         name: t.Union[str, pathlib.Path],
         mode: str,
-        content: t.Optional[t.Any] = None,
         *,
         opener: t.Optional[t.Callable[[], t.Any]] = None,
     ) -> Leaf:
@@ -86,7 +85,7 @@ class MiniFS:
             return _access(self._store, name, sep=self.sep)
         elif mode == "w":
             opener = opener or self.opener
-            content = self.container_factory(name, content or opener())
+            content = self.container_factory(name, opener())
             _touch(self._store, name, content=content, force_create=True, sep=self.sep)
             return content
         else:
