@@ -11,10 +11,12 @@ from prestring.utils import (  # NOQA
     LazyKeywordsRepr,
     LazyArgumentsAndKeywords,
     NameStore,
+    Stringer,
 )
 
 logger = logging.getLogger(__name__)
 ModuleT = t.TypeVar("ModuleT", bound="Module")
+StmtTargetType = t.Union[str, "_Sentinel", LazyFormat, "Stringer"]
 
 
 class _Sentinel:
@@ -293,10 +295,7 @@ class Module:
         return submodule  # type: ignore
 
     def stmt(
-        self: ModuleT,
-        fmt: t.Union[str, _Sentinel, LazyFormat],
-        *args: t.Any,
-        **kwargs: t.Any,
+        self: ModuleT, fmt: StmtTargetType, *args: t.Any, **kwargs: t.Any,
     ) -> ModuleT:
         if hasattr(fmt, "emit"):
             if getattr(fmt, "emit", None) is not None:  # Emittable
