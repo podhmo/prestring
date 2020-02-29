@@ -3,6 +3,7 @@ import contextlib
 from io import StringIO
 from prestring import Module as _Module
 from prestring import (
+    StmtTargetType,
     _Sentinel,
     NEWLINE,
     INDENT,
@@ -211,11 +212,7 @@ class PythonModule(_Module):
         self.sep()
 
     def stmt(
-        self,
-        fmt: t.Union[str, _Sentinel, LazyFormat],
-        *args: t.Any,
-        await_: bool = False,
-        **kwargs: t.Any,
+        self, fmt: StmtTargetType, *args: t.Any, await_: bool = False, **kwargs: t.Any,
     ) -> "PythonModule":
         if not await_:
             return super().stmt(fmt, *args, **kwargs)

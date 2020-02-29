@@ -1,14 +1,12 @@
 from functools import update_wrapper
 import typing as t
 import typing_extensions as tx
-from prestring import _Sentinel, ModuleT
-from prestring.utils import LazyFormat, LazyArgumentsAndKeywords, UnRepr
+from prestring import StmtTargetType, ModuleT
+from prestring.utils import LazyArgumentsAndKeywords, UnRepr, Stringer
 
 
 class InternalModule(tx.Protocol):
-    def stmt(
-        self, fmt: t.Union[str, _Sentinel, LazyFormat], *args: t.Any, **kwargs: t.Any
-    ) -> ModuleT:
+    def stmt(self, fmt: StmtTargetType, *args: t.Any, **kwargs: t.Any) -> ModuleT:
         ...
 
     def import_(self, modname: str, as_: t.Optional[str] = None) -> "Symbol":
@@ -54,9 +52,7 @@ class CodeObjectModule(CodeObjectModuleMixin):
         self.m = m
         self.assign_op = assign_op
 
-    def stmt(
-        self, fmt: t.Union[str, _Sentinel, LazyFormat], *args: t.Any, **kwargs: t.Any
-    ) -> ModuleT:
+    def stmt(self, fmt: StmtTargetType, *args: t.Any, **kwargs: t.Any) -> ModuleT:
         return self.m.stmt(fmt, *args, **kwargs)
 
     def import_(self, modname: str, as_: t.Optional[str] = None) -> "Symbol":
@@ -65,11 +61,6 @@ class CodeObjectModule(CodeObjectModuleMixin):
 
 class Emittable(tx.Protocol):
     def emit(self, *, m: InternalModule) -> InternalModule:
-        ...
-
-
-class Stringer(tx.Protocol):
-    def __str__(self) -> str:
         ...
 
 
