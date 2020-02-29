@@ -6,7 +6,7 @@ import os.path
 import dataclasses
 import filecmp
 from io import StringIO
-from .minifs import MiniFS, File
+from .minifs import MiniFS, File, T, DefaultT
 from .utils import reify
 
 logger = logging.getLogger(__name__)
@@ -14,11 +14,11 @@ ActionType = tx.Literal["update", "create"]
 
 
 class Writer(tx.Protocol):
-    def write(self, name: str, file: File, *, _retry: bool = False) -> None:
+    def write(self, name: str, file: File[T], *, _retry: bool = False) -> None:
         ...
 
 
-def cleanup_all(output: "output") -> None:
+def cleanup_all(output: "output[DefaultT]") -> None:
     import shutil
 
     logger.info("cleanup %s", output.root)
@@ -26,18 +26,18 @@ def cleanup_all(output: "output") -> None:
 
 
 @dataclasses.dataclass(frozen=False, unsafe_hash=False)
-class output:
+class output(t.Generic[DefaultT]):
     root: str
 
     prefix: str = ""
     suffix: str = ""
 
     # for MiniFS
-    opener: t.Callable[..., t.Any] = StringIO  # todo: typing
+    opener: t.Optional[t.Callable[[], DefaultT]] = None
     sep: str = "/"
     store: t.Dict[str, t.Any] = dataclasses.field(default_factory=dict)
 
-    cleanup: t.Optional[t.Callable[["output"], None]] = None
+    cleanup: t.Optional[t.Callable[["output[DefaultT]"], None]] = None
     verbose: bool = os.environ.get("VERBOSE", "") != ""
     use_console: bool = os.environ.get("CONSOLE", "") != ""
     nocheck: bool = os.environ.get("NOCHECK", "") != ""
@@ -54,8 +54,9 @@ class output:
             return "create"
 
     @reify
-    def fs(self) -> MiniFS:
-        return MiniFS(opener=self.opener, sep=self.sep)
+    def fs(self) -> MiniFS[DefaultT]:
+        opener = self.opener or StringIO
+        return MiniFS(opener=opener, sep=self.sep)  # type: ignore # xxx
 
     @reify
     def writer(self) -> Writer:
@@ -65,7 +66,7 @@ class output:
         else:
             return _ActualWriter(self)
 
-    def __enter__(self) -> MiniFS:
+    def __enter__(self) -> MiniFS[DefaultT]:
         return self.fs
 
     def __exit__(
@@ -86,16 +87,16 @@ class output:
 class _ActualWriter:
     TMP_SUFFIX = "_TMP"
 
-    def __init__(self, output: output):
+    def __init__(self, output: output[DefaultT]):
         self.output = output
 
-    def write(self, name: str, file: File, *, _retry: bool = False) -> None:
+    def write(self, name: str, file: File[T], *, _retry: bool = False) -> None:
         if self.output.nocheck:
             self._write_without_check(name, file)
         else:
             self._write_with_check(name, file)
 
-    def _write_with_check(self, name: str, file: File) -> None:
+    def _write_with_check(self, name: str, file: File[T]) -> None:
         fullpath = self.output.fullpath(name)
         if not os.path.exists(fullpath):
             self._write_without_check(name, file, action="create")
@@ -119,7 +120,7 @@ class _ActualWriter:
     def _write_without_check(
         self,
         name: str,
-        file: File,
+        file: File[T],
         *,
         action: t.Optional[ActionType] = None,
         _retry: bool = False,
@@ -141,7 +142,7 @@ class _ActualWriter:
 class _ConsoleWriter:
     def __init__(
         self,
-        output: output,
+        output: output[DefaultT],
         *,
         stdout: t.IO[str] = sys.stdout,
         stderr: t.IO[str] = sys.stderr,
@@ -150,7 +151,7 @@ class _ConsoleWriter:
         self.stdout = stdout
         self.stderr = stderr
 
-    def write(self, name: str, f: File, *, _retry: bool = False) -> None:
+    def write(self, name: str, f: File[T], *, _retry: bool = False) -> None:
         fullpath = self.output.fullpath(name)
         if not self.output.verbose:
             logger.info("[F]\t%s\t%s", self.output.guess_action(fullpath), fullpath)
@@ -178,7 +179,7 @@ class _ConsoleWriter:
 class _MarkdownWriter:
     def __init__(
         self,
-        output: output,
+        output: output[DefaultT],
         *,
         stdout: t.IO[str] = sys.stdout,
         stderr: t.IO[str] = sys.stderr,
@@ -187,7 +188,7 @@ class _MarkdownWriter:
         self.stdout = stdout
         self.stderr = stderr
 
-    def write(self, name: str, f: File, *, _retry: bool = False) -> None:
+    def write(self, name: str, f: File[T], *, _retry: bool = False) -> None:
         fullpath = self.output.fullpath(name)
 
         o = StringIO()

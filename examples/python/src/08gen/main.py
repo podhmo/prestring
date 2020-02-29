@@ -1,3 +1,4 @@
+import typing as t
 import logging
 from prestring.python import Module
 from prestring.output import output
@@ -28,11 +29,10 @@ def run(outdir: str) -> None:
                 )
 
 
-def main(argv=None):
+def main(argv: t.Optional[t.List[str]] = None) -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description=None)
-    parser.print_usage = parser.print_help
     parser.add_argument("-o", "--outdir", required=False)
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO)
