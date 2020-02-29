@@ -6,7 +6,7 @@ import os.path
 import dataclasses
 import filecmp
 from io import StringIO
-from .minifs import MiniFS, File
+from .minifs import MiniFS, File, T
 from .utils import reify
 
 logger = logging.getLogger(__name__)
@@ -14,7 +14,7 @@ ActionType = tx.Literal["update", "create"]
 
 
 class Writer(tx.Protocol):
-    def write(self, name: str, file: File, *, _retry: bool = False) -> None:
+    def write(self, name: str, file: File[T], *, _retry: bool = False) -> None:
         ...
 
 
@@ -89,13 +89,13 @@ class _ActualWriter:
     def __init__(self, output: output):
         self.output = output
 
-    def write(self, name: str, file: File, *, _retry: bool = False) -> None:
+    def write(self, name: str, file: File[T], *, _retry: bool = False) -> None:
         if self.output.nocheck:
             self._write_without_check(name, file)
         else:
             self._write_with_check(name, file)
 
-    def _write_with_check(self, name: str, file: File) -> None:
+    def _write_with_check(self, name: str, file: File[T]) -> None:
         fullpath = self.output.fullpath(name)
         if not os.path.exists(fullpath):
             self._write_without_check(name, file, action="create")
@@ -119,7 +119,7 @@ class _ActualWriter:
     def _write_without_check(
         self,
         name: str,
-        file: File,
+        file: File[T],
         *,
         action: t.Optional[ActionType] = None,
         _retry: bool = False,
@@ -150,7 +150,7 @@ class _ConsoleWriter:
         self.stdout = stdout
         self.stderr = stderr
 
-    def write(self, name: str, f: File, *, _retry: bool = False) -> None:
+    def write(self, name: str, f: File[T], *, _retry: bool = False) -> None:
         fullpath = self.output.fullpath(name)
         if not self.output.verbose:
             logger.info("[F]\t%s\t%s", self.output.guess_action(fullpath), fullpath)
@@ -187,7 +187,7 @@ class _MarkdownWriter:
         self.stdout = stdout
         self.stderr = stderr
 
-    def write(self, name: str, f: File, *, _retry: bool = False) -> None:
+    def write(self, name: str, f: File[T], *, _retry: bool = False) -> None:
         fullpath = self.output.fullpath(name)
 
         o = StringIO()

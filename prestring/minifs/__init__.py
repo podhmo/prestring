@@ -5,7 +5,7 @@ from ._glob import glob
 from ._flatten import flatten
 
 T = t.TypeVar("T")
-Leaf = t.Union["File"]  # the value, stored by nested dict
+Leaf = t.Union["File[T]"]  # the value, stored by nested dict
 Content = t.Union[t.Any, t.IO[str]]
 
 
@@ -13,24 +13,24 @@ class NestedDict(tx.Protocol):
     def __getitem__(self, k: str) -> "NestedDict":
         ...
 
-    def __setitem__(self, k: str, v: t.Union["Leaf", "NestedDict"]) -> None:
+    def __setitem__(self, k: str, v: t.Union["Leaf[T]", "NestedDict"]) -> None:
         ...
 
 
-class FlatDict(tx.Protocol):
-    def __getitem__(self, k: str) -> Leaf:
+class FlatDict(tx.Protocol[T]):
+    def __getitem__(self, k: str) -> "Leaf[T]":
         ...
 
-    def __setitem__(self, k: str, v: Leaf) -> None:
+    def __setitem__(self, k: str, v: "Leaf[T]") -> None:
         ...
 
 
-class File:
-    def __init__(self, name: str, content: Content) -> None:
+class File(t.Generic[T]):
+    def __init__(self, name: str, content: T) -> None:
         self.name = name
         self.content = content
 
-    def __enter__(self) -> Content:
+    def __enter__(self) -> T:
         return self.content
 
     def __exit__(
@@ -48,8 +48,8 @@ class File:
         content = self.content
         if hasattr(content, "read"):
             if hasattr(content, "seek"):
-                content.seek(0)
-            content = content.read()
+                content.seek(0)  # type: ignore
+            content = content.read()  # type: ignore
         print(content, file=wf, end="")
 
 
@@ -64,8 +64,8 @@ class MiniFS:
         *,
         sep: str = "/",
         store: t.Optional[t.Dict[str, t.Any]] = None,
-        opener: t.Callable[[], t.Any],
-        container_factory: t.Callable[..., File] = File,
+        opener: t.Callable[[], T],
+        container_factory: t.Callable[..., File[T]] = File[T],
     ) -> None:
         self._store = store or {}
         self.sep = sep
@@ -78,8 +78,8 @@ class MiniFS:
         name: t.Union[str, pathlib.Path],
         mode: str,
         *,
-        opener: t.Optional[t.Callable[[], t.Any]] = None,
-    ) -> Leaf:
+        opener: t.Optional[t.Callable[[], T]] = None,
+    ) -> "Leaf[T]":
         name = str(name)
         if mode == "r":
             return _access(self._store, name, sep=self.sep)
@@ -106,7 +106,7 @@ def _touch(
     d: NestedDict,
     filename: str,
     *,
-    content: Leaf,
+    content: "Leaf[T]",
     sep: str = "/",
     force_create: bool = False,
 ) -> None:
@@ -123,13 +123,13 @@ def _touch(
     target[path[-1]] = content
 
 
-def _access(d: NestedDict, filename: str, *, sep: str = "/") -> Leaf:
+def _access(d: NestedDict, filename: str, *, sep: str = "/") -> "Leaf[T]":
     path = filename.split(sep)
     target = d
     try:
         for k in path[:-1]:
             target = target[k]
-        val = t.cast(FlatDict, target)[path[-1]]
+        val: Leaf[T] = t.cast(FlatDict[T], target)[path[-1]]
         return val
     except (KeyError, IndexError):
         raise FileNotFoundError(filename) from None
