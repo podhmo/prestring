@@ -5,6 +5,7 @@ from ._glob import glob
 from ._flatten import flatten
 
 T = t.TypeVar("T")
+DefaultT = t.TypeVar("DefaultT")
 Leaf = t.Union["File[T]"]  # the value, stored by nested dict
 Content = t.Union[t.Any, t.IO[str]]
 
@@ -53,7 +54,7 @@ class File(t.Generic[T]):
         print(content, file=wf, end="")
 
 
-class MiniFS:
+class MiniFS(t.Generic[DefaultT]):
     """in memory tiny file system like object"""
 
     store: NestedDict  # recursive
@@ -64,7 +65,7 @@ class MiniFS:
         *,
         sep: str = "/",
         store: t.Optional[t.Dict[str, t.Any]] = None,
-        opener: t.Callable[[], T],
+        opener: t.Callable[[], DefaultT],
         container_factory: t.Callable[..., File[T]] = File[T],
     ) -> None:
         self._store = store or {}
@@ -84,8 +85,8 @@ class MiniFS:
         if mode == "r":
             return _access(self._store, name, sep=self.sep)
         elif mode == "w":
-            opener = opener or self.opener
-            content = self.container_factory(name, opener())
+            content = opener() if opener is not None else self.opener()
+            content = self.container_factory(name, content)
             _touch(self._store, name, content=content, force_create=True, sep=self.sep)
             return content
         else:
