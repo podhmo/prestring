@@ -22,14 +22,16 @@ class CodeObjectModuleMixin:
 
     # need: stmt and import_
 
-    def let(self: InternalModule, name: str, val: "Emittable") -> "Emittable":
+    def let(self: InternalModule, name: str, val: t.Union[str, Stringer]) -> "Symbol":
         """like `<name> = ob`"""
         self.stmt("{} {} {}", name, self.assign_op, val)
         return Symbol(name)
 
     def letN(
-        self: InternalModule, names: t.Union[str, t.Tuple[str, ...]], val: "Emittable"
-    ) -> t.List["Emittable"]:
+        self: InternalModule,
+        names: t.Union[str, t.Tuple[str, ...]],
+        val: t.Union[str, Stringer],
+    ) -> t.List["Symbol"]:
         """like `<name> = ob`"""
         self.stmt("{} {} {}", ", ".join(names), self.assign_op, val)
         return [Symbol(name) for name in names]
