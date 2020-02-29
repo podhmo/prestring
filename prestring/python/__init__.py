@@ -2,6 +2,7 @@ import typing as t
 import contextlib
 from io import StringIO
 from prestring import Module as _Module
+from prestring import ModuleT
 from prestring import (
     StmtTargetType,
     _Sentinel,
@@ -211,12 +212,11 @@ class PythonModule(_Module):
             yield Symbol(name)
         self.sep()
 
-    def stmt(
-        self, fmt: StmtTargetType, *args: t.Any, await_: bool = False, **kwargs: t.Any,
-    ) -> "PythonModule":
+    def stmt(self, fmt: StmtTargetType, *args: t.Any, **kwargs: t.Any,) -> "ModuleT":
+        await_ = kwargs.pop("await_", False)
         if not await_:
-            return super().stmt(fmt, *args, **kwargs)
-        return super().stmt(LazyFormat("await {}", fmt), *args, **kwargs)
+            return super().stmt(fmt, *args, **kwargs)  # type: ignore
+        return super().stmt(LazyFormat("await {}", fmt), *args, **kwargs)  # type: ignore
 
     def return_(self, expr: t.Any, *args: t.Any, await_: bool = False) -> None:
         prefix = f"return {'await ' if await_ else ''}"

@@ -4,6 +4,8 @@ import typing_extensions as tx
 from prestring import StmtTargetType, ModuleT
 from prestring.utils import LazyArgumentsAndKeywords, UnRepr, Stringer
 
+InternalModuleT = t.TypeVar("InternalModuleT", bound="InternalModule")
+
 
 class InternalModule(tx.Protocol):
     def stmt(self, fmt: StmtTargetType, *args: t.Any, **kwargs: t.Any) -> ModuleT:
@@ -80,7 +82,7 @@ def as_value(
 
 
 class Object(Emittable):
-    def __init__(self, name: str, *, emit: t.Callable[..., InternalModule]) -> None:
+    def __init__(self, name: str, *, emit: t.Callable[..., InternalModuleT]) -> None:
         self.name = name
         self._emit = emit
         self._use_count = 0
@@ -174,7 +176,7 @@ class Call:
 
 
 def codeobject(
-    emit: t.Callable[[InternalModule, str], InternalModule],
+    emit: t.Callable[[InternalModuleT, str], InternalModuleT],
     *,
     name: t.Optional[str] = None,
 ) -> Object:
