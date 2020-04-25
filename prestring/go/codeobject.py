@@ -1,5 +1,8 @@
 from prestring.go import Module as _Module
-from prestring.codeobject import CodeObjectModuleMixin
+from prestring.codeobject import CodeObjectModuleMixin, Symbol
+
+
+__all__ = ["Module", "Symbol"]
 
 
 class Module(CodeObjectModuleMixin, _Module):
