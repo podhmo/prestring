@@ -113,7 +113,7 @@ class Accessor:
                         continue
 
                 if type_repr(snode.type) == "tname":  # with type
-                    len(snode.children) == "3"
+                    assert len(snode.children) == 3
                     arg_name = snode.children[0].value  # type:ignore
                     assert snode.children[1].type == token.COLON
                     arg_type = str(snode.children[2]).strip()
@@ -308,7 +308,7 @@ class Transformer(StrictPyTreeVisitor):
             if snode.prefix:
                 prefixes.append(snode)
 
-            typ = type_repr(snode.type)
+            typ = snode.type
             if typ == token.INDENT:
                 found_indent = True
                 break
@@ -394,19 +394,19 @@ class Transformer(StrictPyTreeVisitor):
                 typ = type_repr(snode.type)
                 if typ == "import_as_names":
                     for ssnode in snode.children:
-                        if type_repr(ssnode.type) == token.COMMA:
+                        if ssnode.type == token.COMMA:
                             continue
                         names.append(str(ssnode).strip())
                 elif typ == "import_as_name":
                     assert len(snode.children) == 3
                     names.append(str(snode).strip())
-                elif typ == token.COMMA:
+                elif typ == str(token.COMMA):
                     continue
-                elif typ == token.LPAR:
+                elif typ == str(token.LPAR):
                     continue
-                elif typ == token.RPAR:
+                elif typ == str(token.RPAR):
                     continue
-                elif snode.value == "import":  # type: ignore
+                elif type_repr(snode.value) == "import":  # type: ignore
                     continue
                 else:
                     names.append(snode.value)  # type: ignore
