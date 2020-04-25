@@ -28,9 +28,7 @@ class CodeObjectModuleMixin:
         return Symbol(name)
 
     def letN(
-        self: InternalModule,
-        names: t.Union[str, t.Tuple[str, ...]],
-        val: t.Union[str, Stringer],
+        self: InternalModule, names: t.Sequence[str], val: t.Union[str, Stringer],
     ) -> t.List["Symbol"]:
         """like `<name> = ob`"""
         self.stmt("{} {} {}", ", ".join(names), self.assign_op, val)
