@@ -217,11 +217,15 @@ class Group:
 
 class ImportGroup(Group):
     def import_(self, name: str, as_: t.Optional[str] = None) -> None:
+        if not name:
+            return
+
         pair = (name, as_)
         if pair in self.added:
             return
         self.added.add(pair)
         assert self.submodule is not None
+
         if as_ is None:
             self.submodule.stmt('"{}"'.format(name))
         else:
