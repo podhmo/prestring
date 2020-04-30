@@ -71,8 +71,12 @@ class GoModule(_Module):
     def return_(self, name: str) -> None:
         self.stmt(LazyFormat("return {}", name))
 
-    def type_alias(self, name: str, value: t.Any) -> None:
+    def new_type(self, name: str, value: t.Any) -> None:
         self.stmt(LazyFormat("type {} {}", name, value))
+        self.sep()
+
+    def type_alias(self, name: str, value: t.Any) -> None:
+        self.stmt(LazyFormat("type {} = {}", name, value))
         self.sep()
 
     @contextlib.contextmanager
@@ -107,19 +111,19 @@ class GoModule(_Module):
         self.sep()
 
     @contextlib.contextmanager
-    def if_(self, cond: str) -> t.Iterator[None]:
-        with self.block(LazyFormat("if {} ", cond)):
+    def if_(self, cond: str, *args: t.Any, **kwargs: t.Any) -> t.Iterator[None]:
+        with self.block(LazyFormat("if " + cond + " ", *args, *kwargs)):
             yield
 
     @contextlib.contextmanager
-    def elif_(self, cond: str) -> t.Iterator[None]:
+    def elif_(self, cond: str, *args: t.Any, **kwargs: t.Any) -> t.Iterator[None]:
         self.unnewline()
-        with self.block(LazyFormat(" else if {} ", cond)):
+        with self.block(LazyFormat(" else if" + cond + " ", *args, **kwargs)):
             yield
 
     @contextlib.contextmanager
-    def for_(self, cond: str) -> t.Iterator[None]:
-        with self.block(LazyFormat("for {} ", cond)):
+    def for_(self, cond: str, *args: t.Any, **kwargs: t.Any) -> t.Iterator[None]:
+        with self.block(LazyFormat("for " + cond + " ", *args, *kwargs)):
             yield
 
     @contextlib.contextmanager
