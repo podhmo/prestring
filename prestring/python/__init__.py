@@ -66,14 +66,11 @@ class PythonModule(_Module):
         self,
         value: t.Any = "",  # str,FromStatement,...
         newline: bool = True,
-        factory: t.Optional[t.Callable[..., _ModuleT]] = None,
+        factory: t.Optional[t.Callable[..., "PythonModule"]] = None,
     ) -> _ModuleT:
-        submodule = t.cast(
-            PythonModule,
-            super().submodule(value=value, newline=newline, factory=factory,),
-        )  # xxx
+        submodule = super().submodule(value=value, newline=newline, factory=factory)
         submodule.width = self.width
-        return submodule  # type:ignore
+        return submodule  # type: ignore
 
     def create_evaulator(self) -> PythonEvaluator:
         return PythonEvaluator(StringIO(), newline=self.newline, indent=self.indent)

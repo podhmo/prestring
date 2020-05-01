@@ -182,6 +182,9 @@ class MultiBranchClause:
             yield self.m
 
 
+GroupT = t.TypeVar("GroupT", bound="Group")
+
+
 class Group:
     def __init__(self, m: GoModule) -> None:
         self.m = m
@@ -191,7 +194,7 @@ class Group:
     def __getattr__(self, name: str) -> t.Any:
         return getattr(self.m, name)
 
-    def __enter__(self) -> "Group":
+    def __enter__(self: GroupT) -> GroupT:
         self.m.stmt(" (")
         self.m.body.append(INDENT)
         self.submodule = self.m.submodule("", newline=False)
