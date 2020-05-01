@@ -18,6 +18,7 @@ from prestring.utils import (
     LazyFormat,
     LazyJoin,
 )
+from prestring.types import StrOrStringer
 
 logger = logging.getLogger(__name__)
 
@@ -61,18 +62,22 @@ class GoModule(_Module):
             end = "}" + end
         self.stmt(end)
 
-    def comment(self, comment: str) -> None:
+    def comment(self, comment: StrOrStringer) -> None:
         self.stmt(LazyFormat("// {}", comment))
 
     def package(self, name: str) -> None:
         self.stmt("package {}".format(name))
         self.sep()
 
-    def return_(self, name: str) -> None:
+    def return_(self, name: StrOrStringer) -> None:
         self.stmt(LazyFormat("return {}", name))
 
-    def type_alias(self, name: str, value: t.Any) -> None:
+    def new_type(self, name: str, value: t.Any) -> None:
         self.stmt(LazyFormat("type {} {}", name, value))
+        self.sep()
+
+    def type_alias(self, name: str, value: t.Any) -> None:
+        self.stmt(LazyFormat("type {} = {}", name, value))
         self.sep()
 
     @contextlib.contextmanager
@@ -107,19 +112,19 @@ class GoModule(_Module):
         self.sep()
 
     @contextlib.contextmanager
-    def if_(self, cond: str) -> t.Iterator[None]:
-        with self.block(LazyFormat("if {} ", cond)):
+    def if_(self, cond: str, *args: t.Any, **kwargs: t.Any) -> t.Iterator[None]:
+        with self.block(LazyFormat("if " + cond + " ", *args, *kwargs)):
             yield
 
     @contextlib.contextmanager
-    def elif_(self, cond: str) -> t.Iterator[None]:
+    def elif_(self, cond: str, *args: t.Any, **kwargs: t.Any) -> t.Iterator[None]:
         self.unnewline()
-        with self.block(LazyFormat(" else if {} ", cond)):
+        with self.block(LazyFormat(" else if" + cond + " ", *args, **kwargs)):
             yield
 
     @contextlib.contextmanager
-    def for_(self, cond: str) -> t.Iterator[None]:
-        with self.block(LazyFormat("for {} ", cond)):
+    def for_(self, cond: str, *args: t.Any, **kwargs: t.Any) -> t.Iterator[None]:
+        with self.block(LazyFormat("for " + cond + " ", *args, *kwargs)):
             yield
 
     @contextlib.contextmanager
@@ -178,6 +183,9 @@ class MultiBranchClause:
             yield self.m
 
 
+GroupT = t.TypeVar("GroupT", bound="Group")
+
+
 class Group:
     def __init__(self, m: GoModule) -> None:
         self.m = m
@@ -187,7 +195,7 @@ class Group:
     def __getattr__(self, name: str) -> t.Any:
         return getattr(self.m, name)
 
-    def __enter__(self) -> "Group":
+    def __enter__(self: GroupT) -> GroupT:
         self.m.stmt(" (")
         self.m.body.append(INDENT)
         self.submodule = self.m.submodule("", newline=False)
@@ -217,11 +225,15 @@ class Group:
 
 class ImportGroup(Group):
     def import_(self, name: str, as_: t.Optional[str] = None) -> None:
+        if not name:
+            return
+
         pair = (name, as_)
         if pair in self.added:
             return
         self.added.add(pair)
         assert self.submodule is not None
+
         if as_ is None:
             self.submodule.stmt('"{}"'.format(name))
         else:
