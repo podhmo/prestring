@@ -11,12 +11,12 @@ from prestring.utils import (  # NOQA
     LazyKeywordsRepr,
     LazyArgumentsAndKeywords,
     NameStore,
-    Stringer,
 )
+from .types import Stringer
 
 logger = logging.getLogger(__name__)
 ModuleT = t.TypeVar("ModuleT", bound="Module")
-StmtTargetType = t.Union[str, "_Sentinel", LazyFormat, "Stringer"]
+StmtTargetType = t.Union[str, "_Sentinel", LazyFormat, Stringer]
 
 
 class _Sentinel:

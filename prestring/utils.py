@@ -1,16 +1,11 @@
 import typing as t
-import typing_extensions as tx
 from functools import partial, update_wrapper
 from collections import defaultdict
+from .types import StrOrStringer
 
 # TODO: move to langhelpers
 # TODO: remove t.Any
 T = t.TypeVar("T")
-
-
-class Stringer(tx.Protocol):
-    def __str__(self) -> str:
-        ...
 
 
 # stolen from pyramid
@@ -253,9 +248,7 @@ class LazyJoin:
 
 
 class LazyFormat:
-    def __init__(
-        self, fmt: t.Union[str, Stringer], *args: t.Any, **kwargs: t.Any
-    ) -> None:
+    def __init__(self, fmt: StrOrStringer, *args: t.Any, **kwargs: t.Any) -> None:
         self.fmt = fmt
         self.args = args
         self.kwargs = kwargs

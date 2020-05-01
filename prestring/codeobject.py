@@ -2,7 +2,8 @@ from functools import update_wrapper
 import typing as t
 import typing_extensions as tx
 from prestring import StmtTargetType, ModuleT
-from prestring.utils import LazyArgumentsAndKeywords, UnRepr, Stringer
+from prestring.utils import LazyArgumentsAndKeywords, UnRepr
+from .types import Stringer
 
 InternalModuleT = t.TypeVar("InternalModuleT", bound="InternalModule")
 

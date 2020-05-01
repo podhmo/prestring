@@ -18,6 +18,7 @@ from prestring.utils import (
     LazyFormat,
     LazyJoin,
 )
+from prestring.types import StrOrStringer
 
 logger = logging.getLogger(__name__)
 
@@ -61,14 +62,14 @@ class GoModule(_Module):
             end = "}" + end
         self.stmt(end)
 
-    def comment(self, comment: str) -> None:
+    def comment(self, comment: StrOrStringer) -> None:
         self.stmt(LazyFormat("// {}", comment))
 
     def package(self, name: str) -> None:
         self.stmt("package {}".format(name))
         self.sep()
 
-    def return_(self, name: str) -> None:
+    def return_(self, name: StrOrStringer) -> None:
         self.stmt(LazyFormat("return {}", name))
 
     def new_type(self, name: str, value: t.Any) -> None:
