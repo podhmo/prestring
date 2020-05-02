@@ -111,27 +111,28 @@ class Lexer:
         self.container_factory = container_factory or list
         self.sentence_factory = sentence_factory or Sentence
 
-    def loop(
-        self, tokens: t.List[t.Any], sentence: Sentence, iterator: t.Iterable[t.Any]
-    ) -> t.Tuple[t.List[t.Any], Sentence]:
-        for v in iterator:
+    def lex(
+        self,
+        source: t.Iterator[t.Any],
+        *,
+        tokens: t.Optional[t.List[t.Any]] = None,
+        sentence: t.Optional[Sentence] = None,
+    ) -> t.List[t.Any]:
+        tokens = tokens or self.container_factory()
+        sentence = sentence or self.sentence_factory()
+
+        for v in source:
             if getattr(v, "kind", None) == "sep":
                 sentence.newline = v
                 tokens.append(sentence)
                 sentence = self.sentence_factory()
             elif hasattr(v, "as_token"):
-                sentence = v.as_token(self, tokens, sentence)
+                tokens = v.as_token(self, tokens, sentence)
             elif v is INDENT or v is UNINDENT:
                 tokens.append(v)
             else:
                 sentence.append(v)
-        return (tokens, sentence)
 
-    def __call__(self, prestring: PreString) -> t.List[t.Any]:
-        tokens = self.container_factory()
-        sentence = self.sentence_factory()
-
-        tokens, sentence = self.loop(tokens, sentence, prestring)
         if not sentence.is_empty():
             tokens.append(sentence)
         return tokens
@@ -331,7 +332,7 @@ class Module:
 
     def __str__(self) -> str:
         evaluator = self.create_evaulator()
-        tokens = self.lexer(self.body)
+        tokens = self.lexer.lex(self.body)
         framelist = self.parser.parse(tokens)
         return self.emitter.emit(framelist, evaluator)
 

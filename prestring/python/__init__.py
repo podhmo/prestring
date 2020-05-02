@@ -292,15 +292,14 @@ class FromStatement:
 
     def as_token(
         self, lexer: _Lexer, tokens: t.List[t.Any], sentence: Sentence
-    ) -> Sentence:
+    ) -> t.List[t.Any]:
         if not self.symbols:
-            return Sentence()
+            return tokens
 
         if len(self.symbols) == 1:
-            lexer.loop(tokens, sentence, self.iterator_for_one_symbol(sentence))
+            return lexer.lex(self.iterator_for_one_symbol(sentence), tokens=tokens)
         else:
-            lexer.loop(tokens, sentence, self.iterator_for_many_symbols(sentence))
-        return Sentence()
+            return lexer.lex(self.iterator_for_many_symbols(sentence), tokens=tokens)
 
 
 Module = PythonModule
