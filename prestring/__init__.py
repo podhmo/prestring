@@ -293,7 +293,7 @@ class Module:
             submodule.append(value)
         else:
             submodule.stmt(value)
-        self.body.append(submodule.body)
+        self.body.append(submodule)
         return submodule
 
     def stmt(
@@ -336,5 +336,10 @@ class Module:
         tokens = self.lexer.lex(self.body)
         framelist = self.parser.parse(tokens)
         return self.emitter.emit(framelist, evaluator)
+
+    def on_lex(
+        self, lexer: Lexer, tokens: t.List[t.Any], sentence: Sentence
+    ) -> t.List[t.Any]:
+        return lexer.lex(self.body, tokens=tokens)
 
     format = LazyFormat
