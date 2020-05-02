@@ -2,6 +2,7 @@ import typing as t
 import contextlib
 import logging
 import re
+import warnings
 from prestring import Module as _Module
 from prestring.naming import titleize
 from prestring import (
@@ -87,20 +88,34 @@ class GoModule(_Module):
             yield
 
     @contextlib.contextmanager
-    def func(self, name: str, *args: t.Any, return_: str = "") -> t.Iterator[None]:
+    def func(
+        self, name: str, *args: t.Any, returns: str = "", return_: str = ""
+    ) -> t.Iterator[None]:
+        if return_:
+            warnings.warn(
+                "return_ option is deprecated. use returns", stacklevel=3,
+            )
+            returns = returns or return_
+
         with self.block(
-            LazyFormat("func {}({}) {}", name, LazyArguments(list(args)), return_)
+            LazyFormat("func {}({}){}", name, LazyArguments(list(args)), returns)
         ):
             yield
         self.sep()
 
     @contextlib.contextmanager
     def method(
-        self, ob: str, name: str, *args: t.Any, return_: str = ""
+        self, ob: str, name: str, *args: t.Any, returns: str = "", return_: str = ""
     ) -> t.Iterator[None]:
+        if return_:
+            warnings.warn(
+                "return_ option is deprecated. use returns", stacklevel=3,
+            )
+            returns = returns or return_
+
         with self.block(
             LazyFormat(
-                "func ({}) {}({}) {}", ob, name, LazyArguments(list(args)), return_
+                "func ({}) {}({}) {}", ob, name, LazyArguments(list(args)), returns
             )
         ):
             yield
