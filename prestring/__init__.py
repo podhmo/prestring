@@ -213,11 +213,11 @@ class Evaluator:
         if not frame:
             return
         for code in frame[:-1]:
-            self._evaluate(code, i)
-            self.evaluate_newline(code, i)
-        self._evaluate(frame[-1], i)
+            self.do_code(code, i)
+            self.do_newline(code, i)
+        self.do_code(frame[-1], i)
 
-    def _evaluate(
+    def do_code(
         self, code: t.Union[t.List[t.Any], t.Tuple[t.Any, ...], t.Any], i: int
     ) -> None:
         if isinstance(code, (list, tuple)):
@@ -226,16 +226,16 @@ class Evaluator:
             sentence = str(code)
             if sentence == "":
                 return
-            self.evaluate_indent(i)
+            self.do_indent(i)
             self.io.write(sentence)  # Sentence is also ok.
 
-    def evaluate_newline(self, code: t.Any, i: int) -> None:
+    def do_newline(self, code: t.Any, i: int) -> None:
         self.io.write(self.newline)
 
-    def evaluate_newframe(self) -> None:
+    def do_newframe(self) -> None:
         self.io.write(self.newline)
 
-    def evaluate_indent(self, i: int) -> None:
+    def do_indent(self, i: int) -> None:
         for _ in range(i):
             self.io.write(self.indent)
 
