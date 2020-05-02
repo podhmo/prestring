@@ -97,6 +97,9 @@ class GoModule(_Module):
             )
             returns = returns or return_
 
+        if returns:
+            returns = " " + returns.lstrip("")
+
         with self.block(
             LazyFormat("func {}({}){}", name, LazyArguments(list(args)), returns)
         ):
@@ -112,6 +115,9 @@ class GoModule(_Module):
                 "return_ option is deprecated. use returns", stacklevel=3,
             )
             returns = returns or return_
+
+        if returns:
+            returns = " " + returns.lstrip("")
 
         with self.block(
             LazyFormat(
