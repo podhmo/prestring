@@ -8,9 +8,8 @@ from prestring import (
     NEWLINE,
     INDENT,
     UNINDENT,
+    Sentence as Sentence,
     Lexer as _Lexer,
-    Parser as _Parser,
-    Emitter as _Emitter,
 )
 
 from prestring.utils import (
@@ -28,16 +27,12 @@ class GoModule(_Module):
     def __init__(
         self,
         value: str = "",
+        *,
         newline: str = "\n",
         indent: str = "\t",
-        lexer: t.Optional[_Lexer] = None,
-        parser: t.Optional[_Parser] = None,
-        emitter: t.Optional[_Emitter] = None,
         **kwargs: t.Any,
     ) -> None:
-        super().__init__(
-            value, newline, indent, lexer=lexer, parser=parser, emitter=emitter
-        )
+        super().__init__(value, newline=newline, indent=indent, **kwargs)
 
     def sep(self) -> None:
         self.body.append(NEWLINE)
@@ -142,12 +137,10 @@ class GoModule(_Module):
         return MultiBranchClause(m)
 
     def import_group(self) -> "ImportGroup":
-        m: GoModule = self.submodule("import", newline=False)
-        return ImportGroup(m)
+        return ImportGroup(self, prefix="import")
 
     def const_group(self) -> "Group":
-        m: GoModule = self.submodule("const", newline=False)
-        return Group(m)
+        return Group(self, prefix="const")
 
 
 class MultiBranchClause:
@@ -187,30 +180,31 @@ GroupT = t.TypeVar("GroupT", bound="Group")
 
 
 class Group:
-    def __init__(self, m: GoModule) -> None:
+    def __init__(self, m: GoModule, *, prefix: StrOrStringer) -> None:
         self.m = m
-        self.submodule: t.Optional[GoModule] = None
+        self.prefix = prefix
+        self.outermodule: t.Optional[GoModule] = None
+        self.innermodule: t.Optional[GoModule] = None
         self.added: t.Set[t.Any] = set()
 
     def __getattr__(self, name: str) -> t.Any:
-        return getattr(self.m, name)
+        return getattr(self.outermodule, name)
 
     def __enter__(self: GroupT) -> GroupT:
-        self.m.stmt(" (")
-        self.m.body.append(INDENT)
-        self.submodule = self.m.submodule("", newline=False)
+        m = self.outermodule = self.m.submodule(
+            self.prefix, newline=False, on_lex=self.on_lex
+        )
+        m.stmt(" (")
+        m.body.append(INDENT)
+        self.innermodule = m.submodule("", newline=False)
         return self
 
     def __call__(self, name: str) -> None:
         if name in self.added:
             return
         self.added.add(name)
-        assert self.submodule is not None
-        self.submodule.stmt(name)
-
-    def clear_ifempty(self) -> None:
-        if self.submodule is None or str(self.submodule) == "":
-            self.m.clear()
+        assert self.innermodule is not None
+        self.innermodule.stmt(name)
 
     def __exit__(
         self,
@@ -218,9 +212,18 @@ class Group:
         value: t.Optional[BaseException],
         tb: t.Any,
     ) -> None:
-        self.m.body.append(UNINDENT)
-        self.m.stmt(")")
-        self.m.sep()
+        m = self.outermodule
+        assert m is not None
+        m.body.append(UNINDENT)
+        m.stmt(")")
+        m.sep()
+
+    def on_lex(
+        self, lexer: _Lexer, tokens: t.List[t.Any], sentence: Sentence
+    ) -> t.List[t.Any]:
+        if self.outermodule is None or str(self.innermodule) == "":
+            return tokens
+        return lexer.lex(self.outermodule.body, tokens=tokens)
 
 
 class ImportGroup(Group):
@@ -232,12 +235,12 @@ class ImportGroup(Group):
         if pair in self.added:
             return
         self.added.add(pair)
-        assert self.submodule is not None
+        assert self.innermodule is not None
 
         if as_ is None:
-            self.submodule.stmt('"{}"'.format(name))
+            self.innermodule.stmt('"{}"'.format(name))
         else:
-            self.submodule.stmt('{} "{}"'.format(as_, name))
+            self.innermodule.stmt('{} "{}"'.format(as_, name))
 
     __call__ = import_
 

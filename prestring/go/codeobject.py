@@ -25,7 +25,5 @@ class Module(CodeObjectModuleMixin, _Module):
 def gofile(name: str) -> Module:
     m = Module()
     m.package(name)
-    m.sep()
     m.import_("")
-    m.sep()
     return m

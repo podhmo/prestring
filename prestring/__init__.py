@@ -255,11 +255,15 @@ class Module:
     def __init__(
         self,
         value: str = "",
+        *,
         newline: str = "\n",
         indent: str = "    ",
         lexer: t.Optional[Lexer] = None,
         parser: t.Optional[Parser] = None,
         emitter: t.Optional[Emitter] = None,
+        on_lex: t.Optional[
+            t.Callable[[Lexer, t.List[t.Any], Sentence], t.List[t.Any]]
+        ] = None,
     ):
         self.body = self.create_body(value)
         self.indent = indent
@@ -267,6 +271,7 @@ class Module:
         self.lexer = lexer or Lexer(container_factory=list, sentence_factory=Sentence)
         self.parser = parser or Parser(framelist_factory=FrameList)
         self.emitter = emitter or Emitter()
+        self.on_lex = on_lex or self.default_on_lex
 
     def clear(self) -> None:
         self.body.clear()
@@ -278,8 +283,12 @@ class Module:
     def submodule(
         self: ModuleT,
         value: t.Any = "",
+        *,
         newline: bool = True,
         factory: t.Optional[t.Callable[..., ModuleT]] = None,
+        on_lex: t.Optional[
+            t.Callable[[Lexer, t.List[t.Any], Sentence], t.List[t.Any]]
+        ] = None,
     ) -> ModuleT:
         factory_ = factory or self.__class__
         submodule = factory_(
@@ -288,12 +297,13 @@ class Module:
             lexer=self.lexer,
             parser=self.parser,
             emitter=self.emitter,
+            on_lex=on_lex,
         )
         if value == "" or not newline:
             submodule.append(value)
         else:
             submodule.stmt(value)
-        self.body.append(submodule.body)
+        self.body.append(submodule)
         return submodule
 
     def stmt(
@@ -336,5 +346,10 @@ class Module:
         tokens = self.lexer.lex(self.body)
         framelist = self.parser.parse(tokens)
         return self.emitter.emit(framelist, evaluator)
+
+    def default_on_lex(
+        self, lexer: Lexer, tokens: t.List[t.Any], sentence: Sentence
+    ) -> t.List[t.Any]:
+        return lexer.lex(self.body, tokens=tokens)
 
     format = LazyFormat
