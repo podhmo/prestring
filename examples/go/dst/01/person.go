@@ -18,7 +18,7 @@ type Person struct {
 	Status PersonStatus `json:"status"`
 }
 
-func main()  {
+func main() {
 	person := &Person{Name: "foo", Age: 20, Status: PersonHungry}
 	b, err := json.Marshal(person)
 	if err != nil  {

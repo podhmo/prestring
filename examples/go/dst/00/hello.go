@@ -6,11 +6,11 @@ import (
 )
 
 // Hello is print Hello
-func Hello(name string)  {
+func Hello(name string) {
 	fmt.Printf("%s: Hello", name)
 }
 
-func main()  {
+func main() {
 	var name string
 	if len(os.Args) > 1  {
 		name = os.Args[1]
