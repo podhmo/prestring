@@ -3,15 +3,17 @@ import sys
 import os
 import subprocess
 import tempfile
+from prestring.types import StrOrStringer
 
 
 def gofmt(
-    code: str,
+    code: StrOrStringer,
     *,
     always: bool = True,
     cmd: t.Optional[t.List[str]] = None,
     encoding: str = "utf-8"
 ) -> str:
+    code = str(code)
     if always or not bool(os.environ.get("GOFMT")):
         return code
 
