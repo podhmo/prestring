@@ -24,11 +24,11 @@ PEPNEWLINE = _Sentinel(name="PEP-NEWLINE", kind="sep")
 
 
 class PythonEvaluator(_Evaluator):
-    def evaluate_newframe(self) -> None:
+    def do_newframe(self) -> None:
         self.io.write(self.newline)
         self.io.write(self.newline)
 
-    def evaluate_newline(self, code: t.Any, i: int) -> None:
+    def do_newline(self, code: t.Any, i: int) -> None:
         self.io.write(self.newline)
         if i <= 0 and hasattr(code, "newline") and code.newline is PEPNEWLINE:
             self.io.write(self.newline)
