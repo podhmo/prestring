@@ -105,36 +105,38 @@ class Sentence:
 class Lexer:
     def __init__(
         self,
-        container_factory: t.Callable[[], t.List[t.Any]],
-        sentence_factory: t.Callable[[], Sentence],
+        container_factory: t.Optional[t.Callable[[], t.List[t.Any]]],
+        sentence_factory: t.Optional[t.Callable[[], Sentence]],
     ) -> None:
         self.container_factory = container_factory or list
         self.sentence_factory = sentence_factory or Sentence
 
-    def loop(
-        self, tokens: t.List[t.Any], sentence: Sentence, iterator: t.Iterable[t.Any]
-    ) -> t.Tuple[t.List[t.Any], Sentence]:
-        for v in iterator:
+    def lex(
+        self,
+        source: t.Iterable[t.Any],
+        *,
+        tokens: t.Optional[t.List[t.Any]] = None,
+        sentence: t.Optional[Sentence] = None,
+    ) -> t.List[t.Any]:
+        r: t.List[t.Any] = tokens or self.container_factory()
+        if sentence is None:
+            sentence = self.sentence_factory()
+
+        for v in source:
             if getattr(v, "kind", None) == "sep":
                 sentence.newline = v
-                tokens.append(sentence)
+                r.append(sentence)
                 sentence = self.sentence_factory()
-            elif hasattr(v, "as_token"):
-                sentence = v.as_token(self, tokens, sentence)
+            elif hasattr(v, "on_lex"):
+                r = v.on_lex(self, r, sentence)
             elif v is INDENT or v is UNINDENT:
-                tokens.append(v)
+                r.append(v)
             else:
                 sentence.append(v)
-        return (tokens, sentence)
 
-    def __call__(self, prestring: PreString) -> t.List[t.Any]:
-        tokens = self.container_factory()
-        sentence = self.sentence_factory()
-
-        tokens, sentence = self.loop(tokens, sentence, prestring)
         if not sentence.is_empty():
-            tokens.append(sentence)
-        return tokens
+            r.append(sentence)
+        return r
 
 
 class FrameList:
@@ -181,7 +183,7 @@ class Parser:
     def __init__(self, framelist_factory: t.Callable[[], FrameList]) -> None:
         self.framelist_factory = framelist_factory
 
-    def __call__(self, tokens: t.List[t.Union[_Sentinel, t.Any]]) -> FrameList:
+    def parse(self, tokens: t.List[t.Union[_Sentinel, t.Any]]) -> FrameList:
         framelist = self.framelist_factory()
         for v in tokens:
             if v is INDENT:
@@ -194,13 +196,13 @@ class Parser:
         return framelist
 
 
-class Application:
-    def __call__(self, framelist: FrameList, evaluator: "Evaluator") -> "Evaluator":
+class Emitter:
+    def emit(self, framelist: FrameList, evaluator: "Evaluator") -> str:
         for frame in framelist[:-1]:
             evaluator.evaluate(frame)
-            evaluator.evaluate_newframe()
+            evaluator.do_newframe()
         evaluator.evaluate(framelist[-1])
-        return evaluator
+        return str(evaluator)
 
 
 class Evaluator:
@@ -213,11 +215,11 @@ class Evaluator:
         if not frame:
             return
         for code in frame[:-1]:
-            self._evaluate(code, i)
-            self.evaluate_newline(code, i)
-        self._evaluate(frame[-1], i)
+            self.do_code(code, i)
+            self.do_newline(code, i)
+        self.do_code(frame[-1], i)
 
-    def _evaluate(
+    def do_code(
         self, code: t.Union[t.List[t.Any], t.Tuple[t.Any, ...], t.Any], i: int
     ) -> None:
         if isinstance(code, (list, tuple)):
@@ -226,16 +228,16 @@ class Evaluator:
             sentence = str(code)
             if sentence == "":
                 return
-            self.evaluate_indent(i)
+            self.do_indent(i)
             self.io.write(sentence)  # Sentence is also ok.
 
-    def evaluate_newline(self, code: t.Any, i: int) -> None:
+    def do_newline(self, code: t.Any, i: int) -> None:
         self.io.write(self.newline)
 
-    def evaluate_newframe(self) -> None:
+    def do_newframe(self) -> None:
         self.io.write(self.newline)
 
-    def evaluate_indent(self, i: int) -> None:
+    def do_indent(self, i: int) -> None:
         for _ in range(i):
             self.io.write(self.indent)
 
@@ -257,14 +259,14 @@ class Module:
         indent: str = "    ",
         lexer: t.Optional[Lexer] = None,
         parser: t.Optional[Parser] = None,
-        application: t.Optional[Application] = None,
+        emitter: t.Optional[Emitter] = None,
     ):
         self.body = self.create_body(value)
         self.indent = indent
         self.newline = newline
         self.lexer = lexer or Lexer(container_factory=list, sentence_factory=Sentence)
         self.parser = parser or Parser(framelist_factory=FrameList)
-        self.application = application or Application()
+        self.emitter = emitter or Emitter()
 
     def clear(self) -> None:
         self.body.clear()
@@ -285,7 +287,7 @@ class Module:
             newline=self.newline,
             lexer=self.lexer,
             parser=self.parser,
-            application=self.application,
+            emitter=self.emitter,
         )
         if value == "" or not newline:
             submodule.append(value)
@@ -331,8 +333,8 @@ class Module:
 
     def __str__(self) -> str:
         evaluator = self.create_evaulator()
-        tokens = self.lexer(self.body)
-        framelist = self.parser(tokens)
-        return str(self.application(framelist, evaluator))
+        tokens = self.lexer.lex(self.body)
+        framelist = self.parser.parse(tokens)
+        return self.emitter.emit(framelist, evaluator)
 
     format = LazyFormat

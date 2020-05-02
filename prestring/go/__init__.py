@@ -10,7 +10,7 @@ from prestring import (
     UNINDENT,
     Lexer as _Lexer,
     Parser as _Parser,
-    Application as _Application,
+    Emitter as _Emitter,
 )
 
 from prestring.utils import (
@@ -32,11 +32,11 @@ class GoModule(_Module):
         indent: str = "\t",
         lexer: t.Optional[_Lexer] = None,
         parser: t.Optional[_Parser] = None,
-        application: t.Optional[_Application] = None,
+        emitter: t.Optional[_Emitter] = None,
         **kwargs: t.Any,
     ) -> None:
         super().__init__(
-            value, newline, indent, lexer=lexer, parser=parser, application=application
+            value, newline, indent, lexer=lexer, parser=parser, emitter=emitter
         )
 
     def sep(self) -> None:

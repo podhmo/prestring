@@ -77,7 +77,7 @@ class GOWriter(object):
     def write_alias(self, alias, m=None):
         m = m or self.prestring_module()
         alias = alias.data
-        m.type_alias(alias["name"], alias["original"]["value"])
+        m.new_type(alias["name"], alias["original"]["value"])
         with m.const_group() as const:
             for c in alias.get("candidates", []):
                 self.write_comment(c, m=const) or const.comment("{} : a member of {}".format(c["name"], alias["name"]))

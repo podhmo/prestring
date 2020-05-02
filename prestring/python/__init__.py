@@ -13,7 +13,7 @@ from prestring import (
     Evaluator as _Evaluator,
     Lexer as _Lexer,
     Parser as _Parser,
-    Application as _Application,
+    Emitter as _Emitter,
 )
 from prestring import ModuleT as _ModuleT
 from prestring.utils import LazyArgumentsAndKeywords, LazyFormat
@@ -24,11 +24,11 @@ PEPNEWLINE = _Sentinel(name="PEP-NEWLINE", kind="sep")
 
 
 class PythonEvaluator(_Evaluator):
-    def evaluate_newframe(self) -> None:
+    def do_newframe(self) -> None:
         self.io.write(self.newline)
         self.io.write(self.newline)
 
-    def evaluate_newline(self, code: t.Any, i: int) -> None:
+    def do_newline(self, code: t.Any, i: int) -> None:
         self.io.write(self.newline)
         if i <= 0 and hasattr(code, "newline") and code.newline is PEPNEWLINE:
             self.io.write(self.newline)
@@ -51,13 +51,13 @@ class PythonModule(_Module):
         indent: str = "    ",
         lexer: t.Optional[_Lexer] = None,
         parser: t.Optional[_Parser] = None,
-        application: t.Optional[_Application] = None,
+        emitter: t.Optional[_Emitter] = None,
         width: int = 100,
         **kwargs: t.Any,
     ) -> None:
         self.width = width
         super().__init__(
-            value, newline, indent, lexer=lexer, parser=parser, application=application
+            value, newline, indent, lexer=lexer, parser=parser, emitter=emitter
         )
         self.from_map: t.Dict[str, PythonModule] = {}  # module -> PythonModule
         self.imported_map: t.Dict[str, Symbol] = {}
@@ -290,17 +290,16 @@ class FromStatement:
         yield ")"
         yield NEWLINE
 
-    def as_token(
+    def on_lex(
         self, lexer: _Lexer, tokens: t.List[t.Any], sentence: Sentence
-    ) -> Sentence:
+    ) -> t.List[t.Any]:
         if not self.symbols:
-            return Sentence()
+            return tokens
 
         if len(self.symbols) == 1:
-            lexer.loop(tokens, sentence, self.iterator_for_one_symbol(sentence))
+            return lexer.lex(self.iterator_for_one_symbol(sentence), tokens=tokens)
         else:
-            lexer.loop(tokens, sentence, self.iterator_for_many_symbols(sentence))
-        return Sentence()
+            return lexer.lex(self.iterator_for_many_symbols(sentence), tokens=tokens)
 
 
 Module = PythonModule
