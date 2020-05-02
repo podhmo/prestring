@@ -12,8 +12,6 @@ from prestring import (
     Sentence as Sentence,
     Evaluator as _Evaluator,
     Lexer as _Lexer,
-    Parser as _Parser,
-    Emitter as _Emitter,
 )
 from prestring import ModuleT as _ModuleT
 from prestring.utils import LazyArgumentsAndKeywords, LazyFormat
@@ -47,28 +45,30 @@ class PythonModule(_Module):
     def __init__(
         self,
         value: str = "",
+        *,
         newline: str = "\n",
         indent: str = "    ",
-        lexer: t.Optional[_Lexer] = None,
-        parser: t.Optional[_Parser] = None,
-        emitter: t.Optional[_Emitter] = None,
         width: int = 100,
         **kwargs: t.Any,
     ) -> None:
         self.width = width
-        super().__init__(
-            value, newline, indent, lexer=lexer, parser=parser, emitter=emitter
-        )
+        super().__init__(value, newline=newline, indent=indent, **kwargs)
         self.from_map: t.Dict[str, PythonModule] = {}  # module -> PythonModule
         self.imported_map: t.Dict[str, Symbol] = {}
 
     def submodule(
         self,
         value: t.Any = "",  # str,FromStatement,...
+        *,
         newline: bool = True,
         factory: t.Optional[t.Callable[..., "PythonModule"]] = None,
+        on_lex: t.Optional[
+            t.Callable[[_Lexer, t.List[t.Any], Sentence], t.List[t.Any]]
+        ] = None,
     ) -> _ModuleT:
-        submodule = super().submodule(value=value, newline=newline, factory=factory)
+        submodule = super().submodule(
+            value=value, newline=newline, factory=factory, on_lex=on_lex
+        )
         submodule.width = self.width
         return submodule  # type: ignore
 
