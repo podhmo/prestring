@@ -2,9 +2,7 @@ test:
 	python setup.py test
 
 example:
-	make -C examples/python default
-	make -C examples/go clean default
-	make -C examples/text default
+	$(MAKE) -C examples
 
 ci:
 	$(MAKE) lint typing test example
