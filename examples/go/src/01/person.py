@@ -9,7 +9,7 @@ with m.import_group() as im:
     im("log", as_="logging")
 
 
-m.type_alias('PersonStatus', 'string')
+m.new_type('PersonStatus', 'string')
 with m.const_group() as c:
     c('PersonHungry = PersonStatus("hungry")')
     c('PersonAngry = PersonStatus("angry")')
