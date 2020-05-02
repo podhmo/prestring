@@ -213,6 +213,7 @@ class Group:
         tb: t.Any,
     ) -> None:
         m = self.outermodule
+        assert m is not None
         m.body.append(UNINDENT)
         m.stmt(")")
         m.sep()
