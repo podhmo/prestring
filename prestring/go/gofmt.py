@@ -25,7 +25,7 @@ def gofmt(
         # fixme
         if sys.version_info < (3, 7):
             p = subprocess.run(cmd, stdin=wf, stdout=subprocess.PIPE, check=True)
-            return p.stdout.encode(encoding)
+            return p.stdout.decode(encoding)
         else:
             p = subprocess.run(
                 cmd, stdin=wf, stdout=subprocess.PIPE, text=True, check=True
