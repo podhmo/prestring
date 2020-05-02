@@ -18,7 +18,7 @@ default: 00 01 02 03 04
 
 04:
 	mkdir -p dst/$@/
-	python src/$@/empty.py > dst/$@/models.go
+	python src/$@/empty.py > dst/$@/empty.go
 
 
 clean:
