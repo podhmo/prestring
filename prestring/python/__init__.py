@@ -13,7 +13,7 @@ from prestring import (
     Evaluator as _Evaluator,
     Lexer as _Lexer,
     Parser as _Parser,
-    Application as _Application,
+    Emitter as _Emitter,
 )
 from prestring import ModuleT as _ModuleT
 from prestring.utils import LazyArgumentsAndKeywords, LazyFormat
@@ -51,13 +51,13 @@ class PythonModule(_Module):
         indent: str = "    ",
         lexer: t.Optional[_Lexer] = None,
         parser: t.Optional[_Parser] = None,
-        application: t.Optional[_Application] = None,
+        emitter: t.Optional[_Emitter] = None,
         width: int = 100,
         **kwargs: t.Any,
     ) -> None:
         self.width = width
         super().__init__(
-            value, newline, indent, lexer=lexer, parser=parser, application=application
+            value, newline, indent, lexer=lexer, parser=parser, emitter=emitter
         )
         self.from_map: t.Dict[str, PythonModule] = {}  # module -> PythonModule
         self.imported_map: t.Dict[str, Symbol] = {}

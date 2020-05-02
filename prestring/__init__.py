@@ -194,13 +194,13 @@ class Parser:
         return framelist
 
 
-class Application:
-    def __call__(self, framelist: FrameList, evaluator: "Evaluator") -> "Evaluator":
+class Emitter:
+    def emit(self, framelist: FrameList, evaluator: "Evaluator") -> str:
         for frame in framelist[:-1]:
             evaluator.evaluate(frame)
             evaluator.evaluate_newframe()
         evaluator.evaluate(framelist[-1])
-        return evaluator
+        return str(evaluator)
 
 
 class Evaluator:
@@ -257,14 +257,14 @@ class Module:
         indent: str = "    ",
         lexer: t.Optional[Lexer] = None,
         parser: t.Optional[Parser] = None,
-        application: t.Optional[Application] = None,
+        emitter: t.Optional[Emitter] = None,
     ):
         self.body = self.create_body(value)
         self.indent = indent
         self.newline = newline
         self.lexer = lexer or Lexer(container_factory=list, sentence_factory=Sentence)
         self.parser = parser or Parser(framelist_factory=FrameList)
-        self.application = application or Application()
+        self.emitter = emitter or Emitter()
 
     def clear(self) -> None:
         self.body.clear()
@@ -285,7 +285,7 @@ class Module:
             newline=self.newline,
             lexer=self.lexer,
             parser=self.parser,
-            application=self.application,
+            emitter=self.emitter,
         )
         if value == "" or not newline:
             submodule.append(value)
@@ -333,6 +333,6 @@ class Module:
         evaluator = self.create_evaulator()
         tokens = self.lexer(self.body)
         framelist = self.parser(tokens)
-        return str(self.application(framelist, evaluator))
+        return self.emitter.emit(framelist, evaluator)
 
     format = LazyFormat
