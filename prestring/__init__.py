@@ -126,8 +126,8 @@ class Lexer:
                 sentence.newline = v
                 tokens.append(sentence)
                 sentence = self.sentence_factory()
-            elif hasattr(v, "as_token"):
-                tokens = v.as_token(self, tokens, sentence)
+            elif hasattr(v, "on_lex"):
+                tokens = v.on_lex(self, tokens, sentence)
             elif v is INDENT or v is UNINDENT:
                 tokens.append(v)
             else:

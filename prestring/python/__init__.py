@@ -290,7 +290,7 @@ class FromStatement:
         yield ")"
         yield NEWLINE
 
-    def as_token(
+    def on_lex(
         self, lexer: _Lexer, tokens: t.List[t.Any], sentence: Sentence
     ) -> t.List[t.Any]:
         if not self.symbols:
