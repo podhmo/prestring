@@ -181,7 +181,7 @@ class Parser:
     def __init__(self, framelist_factory: t.Callable[[], FrameList]) -> None:
         self.framelist_factory = framelist_factory
 
-    def __call__(self, tokens: t.List[t.Union[_Sentinel, t.Any]]) -> FrameList:
+    def parse(self, tokens: t.List[t.Union[_Sentinel, t.Any]]) -> FrameList:
         framelist = self.framelist_factory()
         for v in tokens:
             if v is INDENT:
@@ -332,7 +332,7 @@ class Module:
     def __str__(self) -> str:
         evaluator = self.create_evaulator()
         tokens = self.lexer(self.body)
-        framelist = self.parser(tokens)
+        framelist = self.parser.parse(tokens)
         return self.emitter.emit(framelist, evaluator)
 
     format = LazyFormat
