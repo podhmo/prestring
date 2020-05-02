@@ -1,20 +1,24 @@
-default: 00 01 02 03
+default: 00 01 02 03 04
 
 00:
-	mkdir -p dst/00/
-	python src/00/hello.py > dst/00/hello.go
+	mkdir -p dst/$@
+	python src/$@/hello.py > dst/$@/hello.go
 
 01:
-	mkdir -p dst/01/
-	python src/01/person.py > dst/01/person.go
+	mkdir -p dst/$@/
+	python src/$@/person.py > dst/$@/person.go
 
 02:
-	mkdir -p dst/02/
-	python src/02/go-routine.py > dst/02/goroutine.go
+	mkdir -p dst/$@/
+	python src/$@/go-routine.py > dst/$@/goroutine.go
 
 03:
-	mkdir -p dst/03/
-	python src/03/models.py > dst/03/models.go
+	mkdir -p dst/$@/
+	python src/$@/models.py > dst/$@/models.go
+
+04:
+	mkdir -p dst/$@/
+	python src/$@/empty.py > dst/$@/models.go
 
 
 clean:
