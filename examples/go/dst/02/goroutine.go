@@ -62,7 +62,7 @@ func merge(ctx context.Context, cs ...<-chan int) <-chan int {
 	return out
 }
 
-func main()  {
+func main() {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 

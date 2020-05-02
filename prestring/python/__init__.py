@@ -1,5 +1,6 @@
 import typing as t
 import contextlib
+import warnings
 from io import StringIO
 from prestring import Module as _Module
 from prestring import ModuleT
@@ -49,8 +50,12 @@ class PythonModule(_Module):
         newline: str = "\n",
         indent: str = "    ",
         width: int = 100,
+        import_unique: t.Optional[bool] = None,
         **kwargs: t.Any,
     ) -> None:
+        if import_unique is not None:
+            warnings.warn("import_unique is omitted. ignored", stacklevel=2)
+
         self.width = width
         super().__init__(value, newline=newline, indent=indent, **kwargs)
         self.from_map: t.Dict[str, PythonModule] = {}  # module -> PythonModule
