@@ -105,37 +105,38 @@ class Sentence:
 class Lexer:
     def __init__(
         self,
-        container_factory: t.Callable[[], t.List[t.Any]],
-        sentence_factory: t.Callable[[], Sentence],
+        container_factory: t.Optional[t.Callable[[], t.List[t.Any]]],
+        sentence_factory: t.Optional[t.Callable[[], Sentence]],
     ) -> None:
         self.container_factory = container_factory or list
         self.sentence_factory = sentence_factory or Sentence
 
     def lex(
         self,
-        source: t.Iterator[t.Any],
+        source: t.Iterable[t.Any],
         *,
         tokens: t.Optional[t.List[t.Any]] = None,
         sentence: t.Optional[Sentence] = None,
     ) -> t.List[t.Any]:
-        tokens = tokens or self.container_factory()
-        sentence = sentence or self.sentence_factory()
+        r: t.List[t.Any] = tokens or self.container_factory()
+        if sentence is None:
+            sentence = self.sentence_factory()
 
         for v in source:
             if getattr(v, "kind", None) == "sep":
                 sentence.newline = v
-                tokens.append(sentence)
+                r.append(sentence)
                 sentence = self.sentence_factory()
             elif hasattr(v, "on_lex"):
-                tokens = v.on_lex(self, tokens, sentence)
+                r = v.on_lex(self, r, sentence)
             elif v is INDENT or v is UNINDENT:
-                tokens.append(v)
+                r.append(v)
             else:
                 sentence.append(v)
 
         if not sentence.is_empty():
-            tokens.append(sentence)
-        return tokens
+            r.append(sentence)
+        return r
 
 
 class FrameList:
@@ -199,7 +200,7 @@ class Emitter:
     def emit(self, framelist: FrameList, evaluator: "Evaluator") -> str:
         for frame in framelist[:-1]:
             evaluator.evaluate(frame)
-            evaluator.evaluate_newframe()
+            evaluator.do_newframe()
         evaluator.evaluate(framelist[-1])
         return str(evaluator)
 
