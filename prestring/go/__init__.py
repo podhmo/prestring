@@ -121,7 +121,7 @@ class GoModule(_Module):
 
         with self.block(
             LazyFormat(
-                "func ({}) {}({}) {}", ob, name, LazyArguments(list(args)), returns
+                "func ({}) {}({}){}", ob, name, LazyArguments(list(args)), returns
             )
         ):
             yield
