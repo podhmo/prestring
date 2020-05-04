@@ -1,10 +1,10 @@
 import typing as t
 from prestring.go import Module as _Module
-from prestring.go import ImportGroup
+from prestring.go import ImportGroup, goname
 from prestring.codeobject import CodeObjectModuleMixin, Symbol
 from prestring.utils import reify
 
-__all__ = ["Module", "Symbol", "gofile"]
+__all__ = ["Module", "Symbol", "gofile", "goname"]
 
 
 class Module(CodeObjectModuleMixin, _Module):
