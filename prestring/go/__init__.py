@@ -21,7 +21,8 @@ from prestring.utils import (
 from prestring.types import StrOrStringer
 
 logger = logging.getLogger(__name__)
-
+GoModuleT = t.TypeVar("GoModuleT", bound="GoModule")
+GroupT = t.TypeVar("GroupT", bound="Group")
 
 # TODO: remove import_group, const_group
 class GoModule(_Module):
@@ -165,7 +166,7 @@ class GoModule(_Module):
 
 
 class MultiBranchClause:
-    def __init__(self, m: GoModule) -> None:
+    def __init__(self, m: GoModuleT) -> None:
         self.m = m
 
     def __getattr__(self, name: str) -> t.Any:
@@ -176,7 +177,7 @@ class MultiBranchClause:
         return self
 
     @contextlib.contextmanager
-    def case(self, value: t.Any) -> t.Iterator[GoModule]:
+    def case(self, value: t.Any) -> t.Iterator[GoModuleT]:
         self.m.stmt("case {}:".format(value))
         with self.m.scope():
             yield self.m
@@ -191,13 +192,10 @@ class MultiBranchClause:
         self.m.sep()
 
     @contextlib.contextmanager
-    def default(self) -> t.Iterator[GoModule]:
+    def default(self) -> t.Iterator[GoModuleT]:
         self.m.stmt("default:")
         with self.m.scope():
             yield self.m
-
-
-GroupT = t.TypeVar("GroupT", bound="Group")
 
 
 class Group:
