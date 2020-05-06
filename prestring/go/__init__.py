@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 GoModuleT = t.TypeVar("GoModuleT", bound="GoModule")
 GroupT = t.TypeVar("GroupT", bound="Group")
 
+
 # TODO: remove import_group, const_group
 class GoModule(_Module):
     def __init__(
