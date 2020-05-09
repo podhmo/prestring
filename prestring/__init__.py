@@ -127,6 +127,8 @@ class Lexer:
                 sentence.newline = v
                 r.append(sentence)
                 sentence = self.sentence_factory()
+            elif hasattr(v, "emit"):
+                r.append(v)
             elif hasattr(v, "on_lex"):
                 r = v.on_lex(self, r, sentence)
             elif v is INDENT or v is UNINDENT:
