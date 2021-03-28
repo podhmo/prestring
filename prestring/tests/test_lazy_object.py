@@ -39,10 +39,20 @@ class LazyArgumentsTests(unittest.TestCase):
                 "z": t.Sequence[t.Optional[int]],
             },
         )
-        self.assertEqual(
-            str(target),
-            "x: int, y: 'typing.Union[int, NoneType]', z: 'typing.Sequence[typing.Union[int, NoneType]]'",
-        )
+
+        # TODO: fix, this is work-around
+        import sys
+
+        if (3, 9) > sys.version_info:
+            self.assertEqual(
+                str(target),
+                "x: int, y: 'typing.Union[int, NoneType]', z: 'typing.Sequence[typing.Union[int, NoneType]]'",
+            )
+        else:
+            self.assertEqual(
+                str(target),
+                "x: int, y: 'typing.Optional[int]', z: 'typing.Sequence[typing.Optional[int]]'",
+            )
 
 
 @test_target("prestring:LazyKeywords")
