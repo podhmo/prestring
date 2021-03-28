@@ -1,9 +1,8 @@
 prestring
 ========================================
 
-.. image:: https://travis-ci.org/podhmo/prestring.svg?branch=master
-    :target: https://travis-ci.org/podhmo/prestring
-
+.. |Python package| image:: https://github.com/podhmo/prestring/actions/workflows/python-package.yml/badge.svg
+    :target: https://github.com/podhmo/prestring/actions/workflows/python-package.yml
 
 this package is heavily inspired by `srcgen <https://github.com/tomerfiliba/srcgen>`_ .
 
