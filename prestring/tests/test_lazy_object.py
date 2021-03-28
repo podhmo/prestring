@@ -29,23 +29,20 @@ class LazyArgumentsTests(unittest.TestCase):
         self.assertEqual(str(target), "x: int, y: bool, *")
 
     def test_with_actual_types2(self):
-        try:
-            import typing as t
+        import typing as t
 
-            target = self._makeOne(
-                ["x", "y", "z"],
-                types={
-                    "x": int,
-                    "y": t.Optional[int],
-                    "z": t.Sequence[t.Optional[int]],
-                },
-            )
-            self.assertEqual(
-                str(target),
-                "x: int, y: 'typing.Union[int, NoneType]', z: 'typing.Sequence[typing.Union[int, NoneType]]'",
-            )
-        except ImportError:
-            pass
+        target = self._makeOne(
+            ["x", "y", "z"],
+            types={
+                "x": int,
+                "y": t.Optional[int],
+                "z": t.Sequence[t.Optional[int]],
+            },
+        )
+        self.assertEqual(
+            str(target),
+            "x: int, y: 'typing.Union[int, NoneType]', z: 'typing.Sequence[typing.Union[int, NoneType]]'",
+        )
 
 
 @test_target("prestring:LazyKeywords")
