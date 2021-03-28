@@ -1,7 +1,7 @@
 prestring
 ========================================
 
-.. |Python package| image:: https://github.com/podhmo/prestring/actions/workflows/python-package.yml/badge.svg
+.. image:: https://github.com/podhmo/prestring/actions/workflows/python-package.yml/badge.svg
     :target: https://github.com/podhmo/prestring/actions/workflows/python-package.yml
 
 this package is heavily inspired by `srcgen <https://github.com/tomerfiliba/srcgen>`_ .
